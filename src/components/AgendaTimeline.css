@@ -1,0 +1,253 @@
+/* ==========================================================================
+   Agenda — el programa impreso, puesto sobre el campo oscuro.
+
+   De la pieza se conservan las cuatro cosas que la hacen reconocible: la
+   lámina clara, las horas apiladas a la izquierda, la franja a ancho completo
+   para lo logístico y la etiqueta en itálica de categoría. Lo que cambia es
+   el peso: el riel de horas manda la lectura y el título ya no compite con él
+   en azul, porque en pantalla el azul es el color de los enlaces.
+   ========================================================================== */
+
+.gt-agenda {
+  --gt-agenda-pad: clamp(1.25rem, 3.5vw, 3rem);
+  padding-inline: var(--gt-agenda-pad);
+}
+
+.gt-agenda__fila {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  padding-block: clamp(1.25rem, 2.5vw, 2rem);
+  border-top: var(--gt-borde) solid var(--gt-linea-tinta);
+  scroll-margin-top: 8rem;
+  transition: background var(--gt-dur-media) var(--gt-ease);
+}
+
+.gt-agenda__fila:first-child {
+  border-top: 0;
+}
+
+/* Bloque señalado desde la curva de carga (`:target`) o desde el perfil de un
+   ponente en otra ruta (`data-marcado`, que pone Layout porque `:target` no
+   reacciona al pushState del router). Sangra a los bordes de la lámina con el
+   mismo recurso que las franjas logísticas: un `box-shadow` con spread se
+   derramaba también hacia arriba y abajo y teñía las filas vecinas.          */
+.gt-agenda__fila:target,
+.gt-agenda__fila[data-marcado],
+.gt-agenda__fila[data-activo] {
+  margin-inline: calc(-1 * var(--gt-agenda-pad));
+  padding-inline: var(--gt-agenda-pad);
+}
+
+.gt-agenda__fila:target,
+.gt-agenda__fila[data-marcado] {
+  background: color-mix(in srgb, var(--gt-celeste-tinte) 62%, var(--gt-blanco));
+}
+
+/* Señalado desde la línea del día: más leve que el destino de una navegación,
+   porque es un estado de paso.                                               */
+.gt-agenda__fila[data-activo] {
+  background: color-mix(in srgb, var(--gt-celeste-tinte) 34%, var(--gt-blanco));
+}
+
+.gt-agenda__fila--logistico[data-activo] {
+  background: color-mix(in srgb, var(--gt-celeste) 34%, var(--gt-carta));
+}
+
+/* --- Riel de horas ---------------------------------------------------------- */
+
+.gt-agenda__riel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gt-agenda__inicio {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 1.35rem;
+  font-weight: var(--gt-fw-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--gt-tinta);
+}
+
+.gt-agenda__inicio small {
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gt-agenda__fin {
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-medium);
+  color: var(--gt-texto-suave);
+}
+
+/* --- Cuerpo ----------------------------------------------------------------- */
+
+.gt-agenda__cuerpo {
+  min-width: 0;
+}
+
+/* #1C6FB4 sobre blanco = 5.15:1, cumple AA también a este tamaño. */
+.gt-agenda__categoria {
+  margin-bottom: var(--gt-space-2);
+  color: var(--gt-azul-medio);
+}
+
+.gt-agenda__titulo {
+  font-size: var(--gt-fs-h3);
+  font-weight: var(--gt-fw-bold);
+  line-height: 1.2;
+  letter-spacing: var(--gt-tracking-tight);
+  color: var(--gt-tinta);
+  text-wrap: balance;
+}
+
+/* --- Personas ---------------------------------------------------------------- */
+
+.gt-agenda__personas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-3) var(--gt-space-8);
+  margin-top: var(--gt-space-4);
+}
+
+.gt-agenda__personas--rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--gt-space-3) var(--gt-space-6);
+}
+
+.gt-agenda__nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  color: var(--gt-tinta);
+  text-decoration: none;
+  border-radius: var(--gt-radio-chico);
+}
+
+/* Iniciales: el mismo recurso que el monograma de los perfiles, en pequeño.
+   Sustituyen a la foto que ninguna pieza trae (pendiente #2).                */
+.gt-agenda__inicial {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 12px 0 12px 0;
+  background: var(--gt-carta);
+  border: var(--gt-borde) solid var(--gt-linea-tinta);
+  color: var(--gt-navy);
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-bold);
+  letter-spacing: 0.02em;
+  transition: background var(--gt-transicion), color var(--gt-transicion),
+    border-color var(--gt-transicion);
+}
+
+.gt-agenda__persona {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* #1C6FB4 sobre blanco = 5.15:1. El subrayado aparece al pasar o enfocar: en
+   reposo el nombre se lee como en la pieza.                                  */
+.gt-agenda__persona-nombre {
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-semibold);
+  line-height: 1.25;
+  color: var(--gt-azul-medio);
+}
+
+.gt-agenda__nombre:hover .gt-agenda__persona-nombre,
+.gt-agenda__nombre:focus-visible .gt-agenda__persona-nombre {
+  text-decoration: underline;
+}
+
+.gt-agenda__nombre:hover .gt-agenda__inicial {
+  background: var(--gt-navy);
+  border-color: var(--gt-navy);
+  color: var(--gt-blanco);
+}
+
+.gt-agenda__cargo {
+  font-size: var(--gt-fs-micro);
+  line-height: 1.35;
+  color: var(--gt-texto-suave);
+}
+
+/* --- Panel -------------------------------------------------------------------- */
+
+.gt-agenda__panel {
+  display: grid;
+  gap: var(--gt-space-6);
+  margin-top: var(--gt-space-4);
+}
+
+.gt-agenda__rol {
+  color: var(--gt-texto-suave);
+  margin-bottom: var(--gt-space-2);
+}
+
+.gt-agenda__grupo .gt-agenda__personas {
+  margin-top: 0;
+}
+
+/* --- Franja logística ---------------------------------------------------------
+   Sangra hasta los bordes de la lámina, así que compensa el padding con
+   márgenes negativos y lo repone como relleno propio.                        */
+
+.gt-agenda__fila--logistico {
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  margin-inline: calc(-1 * var(--gt-agenda-pad));
+  padding-inline: var(--gt-agenda-pad);
+  padding-block: var(--gt-space-4);
+  background: var(--gt-celeste-tinte);
+  border-top: 0;
+}
+
+.gt-agenda__fila--logistico .gt-agenda__inicio {
+  font-size: var(--gt-fs-body);
+}
+
+.gt-agenda__fila--logistico .gt-agenda__titulo {
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--gt-navy);
+}
+
+.gt-agenda__fila--logistico + .gt-agenda__fila {
+  border-top: 0;
+}
+
+/* --- Móvil -------------------------------------------------------------------
+   A 390 px el riel de 6.5 rem deja el título en una tira de pocos caracteres:
+   las horas pasan arriba, en línea.                                          */
+
+@media (max-width: 44rem) {
+  .gt-agenda__fila,
+  .gt-agenda__fila--logistico {
+    grid-template-columns: 1fr;
+    gap: var(--gt-space-3);
+  }
+
+  .gt-agenda__riel {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--gt-space-3);
+  }
+
+  .gt-agenda__personas--rejilla {
+    grid-template-columns: 1fr;
+  }
+}

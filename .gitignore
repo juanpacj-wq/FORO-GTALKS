@@ -1,0 +1,26 @@
+node_modules/
+dist/
+*.local
+
+# ─── Secretos y material sensible ───
+# `.env` a secas no basta: un `.env.local`, `.env.produccion` o `.env.bak` creado con prisa el día
+# del despliegue quedaría fuera de la regla. Se cubre la familia entera, y se salva el ejemplo.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+
+# Registros: pueden contener el correo corporativo de los asistentes.
+*.log
+
+# Fase 0 del rediseno: venv y salida del extractor de PDFs.
+# Se regenera con:  .venv-design/Scripts/python scripts/extract-pdf-design.py
+.venv-design/
+design-extract/
+
+# Capturas de verificación visual (scripts/screenshot.mjs)
+shots/

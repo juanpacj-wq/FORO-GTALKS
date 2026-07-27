@@ -1,0 +1,55 @@
+.gt-placeholder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background: var(--gt-navy);
+  border-radius: clamp(1.75rem, 5vw, 3.5rem) 0 clamp(1.75rem, 5vw, 3.5rem) 0;
+}
+
+.gt-placeholder__titulo {
+  font-size: var(--gt-fs-h3);
+  font-weight: var(--gt-fw-semibold);
+  color: var(--gt-blanco);
+  max-width: 24ch;
+}
+
+.gt-placeholder__cuerpo {
+  max-width: 42ch;
+  margin-top: var(--gt-space-4);
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-placeholder__estado {
+  margin-top: var(--gt-space-6);
+}
+
+.gt-placeholder__pasos {
+  display: grid;
+  gap: var(--gt-space-4);
+  align-content: start;
+}
+
+.gt-placeholder__paso {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: var(--gt-space-3);
+  padding-top: var(--gt-space-4);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+  font-size: var(--gt-fs-sm);
+  color: var(--gt-blanco);
+  line-height: 1.45;
+}
+
+.gt-placeholder__numero {
+  color: var(--gt-celeste);
+  padding-top: 0.28em;
+}
+
+@media (max-width: 52rem) {
+  .gt-placeholder {
+    grid-template-columns: 1fr;
+  }
+}

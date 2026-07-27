@@ -1,0 +1,42 @@
+/* El monograma es decorativo (aria-hidden): el nombre completo va siempre
+   escrito al lado. Toma el color del contexto, así funciona igual sobre el
+   campo oscuro y sobre lámina clara.                                         */
+
+.gt-monograma {
+  display: grid;
+  place-items: center;
+  flex: none;
+  aspect-ratio: 1;
+  background: color-mix(in oklab, currentColor 9%, transparent);
+  border: var(--gt-borde) solid var(--gt-linea);
+  color: inherit;
+  font-weight: var(--gt-fw-bold);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+  transition: background var(--gt-transicion), color var(--gt-transicion),
+    border-color var(--gt-transicion);
+}
+
+.gt-monograma--sm {
+  width: 2.75rem;
+  border-radius: 12px 0 12px 0;
+  font-size: 0.8125rem;
+}
+
+.gt-monograma--md {
+  width: 3.5rem;
+  border-radius: 16px 0 16px 0;
+  font-size: 1rem;
+}
+
+.gt-monograma--lg {
+  width: clamp(5.5rem, 12vw, 8rem);
+  border-radius: 34px 0 34px 0;
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+}
+
+.gt-monograma--foto {
+  object-fit: cover;
+  background: none;
+}

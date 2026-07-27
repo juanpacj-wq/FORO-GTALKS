@@ -1,0 +1,12 @@
+/* Radios medidos: 144.7 y 163.8 pt sobre una banda de 633 pt de ancho, o sea
+   23% y 26% del ancho. En clamp() para que la proporción aguante desde móvil
+   hasta desktop sin que la curva se coma la franja en pantallas estrechas.   */
+
+.gt-arco {
+  width: 100%;
+  border-radius: clamp(3rem, 13vw, 12rem) clamp(3.4rem, 14.7vw, 13.6rem) 0 0;
+}
+
+.gt-arco--invertido {
+  border-radius: 0 0 clamp(3.4rem, 14.7vw, 13.6rem) clamp(3rem, 13vw, 12rem);
+}

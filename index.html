@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>1° Foro GECELCA — Energía en Acción</title>
+    <meta
+      name="description"
+      content="Un espacio que reúne a líderes, expertos y actores clave del sector energético para
+        conversar sobre los desafíos, oportunidades y tendencias que están definiendo la
+        transformación energética. Miércoles 5 de agosto de 2026."
+    />
+    <!-- El campo del sitio es oscuro: el color de la barra del navegador y el
+         de los controles nativos (scrollbar, autofill) tienen que ir con él.
+         Sin `color-scheme` el scroll sale blanco al lado de una página navy. -->
+    <meta name="theme-color" content="#101b33" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- El enlace se comparte por Teams y por correo dentro de la empresa. Aun
+         detrás del gate, estas etiquetas son las que evitan que la vista previa
+         salga como una URL pelada. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="1° Foro GECELCA — Energía en Acción" />
+    <meta
+      property="og:description"
+      content="Miércoles 5 de agosto de 2026 · G Working. Agenda, ponentes y todo lo del foro."
+    />
+    <meta property="og:image" content="/img/hero-aerogeneradores.webp" />
+    <meta property="og:locale" content="es_CO" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Urbanist autohospedada: el sitio vive tras un login corporativo y no debe
+         depender de fonts.googleapis.com. El romano latino se usa en toda la
+         página, así que se precarga; los otros tres subconjuntos los pide el
+         navegador solo si los necesita (unicode-range en src/design/fonts.css). -->
+    <link
+      rel="preload"
+      href="/fonts/urbanist-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <!-- La foto del hero es el LCP y la pinta React, así que el navegador no la
+         descubre hasta que el bundle se ejecuta. Precargarla adelanta la
+         petición al parseo del HTML. -->
+    <link
+      rel="preload"
+      href="/img/hero-aerogeneradores.webp"
+      imagesrcset="/img/hero-aerogeneradores.webp 1x, /img/hero-aerogeneradores@2x.webp 2x"
+      as="image"
+      type="image/webp"
+      fetchpriority="high"
+    />
+
+    <!-- Aquí vivía un script inline que limpiaba el marcador `?auth=ok` de la URL. Se eliminó
+         junto con el marcador: el callback del gate ahora redirige limpio al destino, así que no
+         hay nada que limpiar. Con eso la CSP de la SPA queda en `script-src 'self'`, sin hashes
+         ni nonces que mantener. Ver server/app.js y docs/SEGURIDAD.md. -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

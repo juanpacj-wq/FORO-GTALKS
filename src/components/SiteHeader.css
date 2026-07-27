@@ -1,0 +1,229 @@
+/* ==========================================================================
+   Header
+   --------------------------------------------------------------------------
+   Sobre el hero es transparente: el campo oscuro ya es el fondo, y una barra
+   sólida ahí solo parte la composición. Al bajar aparece el plano y el
+   hairline, con `animation-timeline: scroll()`. Si el navegador no soporta
+   scroll-driven animations, se queda transparente en su sitio (nunca oculta
+   nada, así que no hay estado roto que arreglar).
+   ========================================================================== */
+
+.gt-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--gt-z-header);
+  color: var(--gt-blanco);
+}
+
+/* El plano del header va en un pseudo-elemento para poder animar su opacidad
+   sin tocar la del contenido.                                                */
+.gt-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: color-mix(in srgb, var(--gt-abisal) 82%, transparent);
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+  backdrop-filter: blur(14px) saturate(1.4);
+  opacity: 0;
+  transition: opacity var(--gt-dur-media) var(--gt-ease);
+}
+
+/* El plano aparece al bajar del hero. Se controla con una clase desde React y
+   no con `animation-timeline: scroll()`: esa línea de tiempo se queda inactiva
+   en cuanto el scroller no es el que `nearest` resuelve, y el header se
+   quedaba transparente por encima de la lámina blanca del programa —texto
+   blanco sobre blanco—. Aquí la legibilidad manda sobre la pureza CSS.       */
+.gt-header--solido::before {
+  opacity: 1;
+}
+
+.gt-header__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-6);
+  min-height: 4.5rem;
+  padding-block: var(--gt-space-3);
+}
+
+.gt-header__marca {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  color: var(--gt-blanco);
+  text-decoration: none;
+  transition: color var(--gt-transicion);
+}
+
+.gt-header__marca:hover {
+  color: var(--gt-celeste);
+}
+
+/* --- Nav de escritorio ------------------------------------------------------ */
+
+.gt-header__nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-6);
+}
+
+.gt-header__enlace {
+  position: relative;
+  display: block;
+  padding-block: var(--gt-space-2);
+  color: var(--gt-blanco);
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* La marca de ruta activa es una regla de 2 px bajo el texto, no una píldora
+   rellena: el sistema separa con líneas.                                     */
+.gt-header__enlace::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--gt-celeste);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--gt-dur-media) var(--gt-ease);
+}
+
+.gt-header__enlace:hover {
+  color: var(--gt-celeste);
+}
+
+.gt-header__enlace:hover::after,
+.gt-header__enlace:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Activa: además del subrayado cambia el peso, para no depender solo del
+   color ni de una línea fina.                                                */
+.gt-header__enlace.active {
+  color: var(--gt-celeste);
+  font-weight: var(--gt-fw-bold);
+}
+
+.gt-header__enlace.active::after {
+  transform: scaleX(1);
+}
+
+/* --- Rail de anclas (solo en la home) ---------------------------------------
+   Índice de la página, no una segunda navegación: por eso va en tipografía de
+   dato, con hairline arriba, y sin fondo propio.                             */
+
+.gt-header__anclas {
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-header__anclas ul {
+  display: flex;
+  gap: var(--gt-space-6);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gt-header__anclas ul::-webkit-scrollbar {
+  display: none;
+}
+
+.gt-header__ancla {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding-block: var(--gt-space-3);
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-semibold);
+  letter-spacing: var(--gt-tracking-micro);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Punto delante: en reposo es un hairline, en la sección activa se llena. */
+.gt-header__ancla::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border: var(--gt-borde) solid currentColor;
+  border-radius: 50%;
+  transition: background var(--gt-transicion), transform var(--gt-transicion);
+}
+
+.gt-header__ancla:hover {
+  color: var(--gt-blanco);
+}
+
+.gt-header__ancla[aria-current] {
+  color: var(--gt-celeste);
+}
+
+.gt-header__ancla[aria-current]::before {
+  background: var(--gt-celeste);
+  transform: scale(1.3);
+}
+
+/* --- Hamburguesa ------------------------------------------------------------ */
+
+.gt-header__hamburguesa {
+  display: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  margin-right: calc(-1 * var(--gt-space-2));
+}
+
+.gt-header__rayas,
+.gt-header__rayas::before,
+.gt-header__rayas::after {
+  display: block;
+  width: 1.4rem;
+  height: 1.5px;
+  background: var(--gt-blanco);
+}
+
+.gt-header__rayas {
+  position: relative;
+}
+
+.gt-header__rayas::before,
+.gt-header__rayas::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  /* `scaleX` en vez de `width`: la raya corta crece sin tocar el layout. */
+  transform-origin: left;
+  transition: transform var(--gt-dur-media) var(--gt-ease);
+}
+
+.gt-header__rayas::before {
+  top: -6px;
+}
+
+.gt-header__rayas::after {
+  top: 6px;
+  transform: scaleX(0.64);
+}
+
+.gt-header__hamburguesa:hover .gt-header__rayas::after {
+  transform: scaleX(1);
+}
+
+@media (max-width: 52rem) {
+  .gt-header__nav {
+    display: none;
+  }
+  .gt-header__hamburguesa {
+    display: grid;
+  }
+  .gt-header__barra {
+    min-height: 3.75rem;
+  }
+}

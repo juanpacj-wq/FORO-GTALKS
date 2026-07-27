@@ -1,0 +1,92 @@
+.gt-footer {
+  background: var(--gt-abisal);
+  padding-block: clamp(3rem, 7vw, 5rem);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-footer__cima {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--gt-space-8);
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.gt-footer__marca {
+  display: grid;
+  justify-items: start;
+  gap: var(--gt-space-3);
+  color: var(--gt-blanco);
+}
+
+.gt-footer__evento {
+  max-width: 30ch;
+  text-align: right;
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.3;
+  color: var(--gt-blanco);
+  text-wrap: balance;
+}
+
+.gt-footer__cuando {
+  display: block;
+  margin-top: var(--gt-space-2);
+  color: var(--gt-celeste);
+  font-size: var(--gt-fs-xs);
+  font-weight: var(--gt-fw-medium);
+  letter-spacing: 0.02em;
+}
+
+.gt-footer__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: start;
+  gap: var(--gt-space-8);
+  padding-top: clamp(1.5rem, 3vw, 2.5rem);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-footer__rotulo {
+  color: var(--gt-humo);
+}
+
+.gt-footer__valor {
+  margin-top: var(--gt-space-2);
+  font-size: var(--gt-fs-sm);
+  line-height: 1.45;
+  color: var(--gt-blanco);
+}
+
+.gt-footer__tel {
+  color: var(--gt-celeste);
+  text-decoration: none;
+  border-bottom: var(--gt-borde) solid transparent;
+}
+
+.gt-footer__tel:hover {
+  border-bottom-color: currentColor;
+}
+
+/* El logo Gecelca es azul sobre transparente: sobre el campo oscuro no se
+   vería. Se invierte a blanco, que es lo que hace la pieza impresa cuando lo
+   pone sobre fondo oscuro.                                                   */
+.gt-footer__gecelca {
+  justify-self: end;
+  width: 9rem;
+  filter: brightness(0) invert(1);
+  opacity: 0.85;
+}
+
+@media (max-width: 52rem) {
+  .gt-footer__cima {
+    align-items: flex-start;
+  }
+  .gt-footer__evento {
+    text-align: left;
+  }
+  .gt-footer__gecelca {
+    justify-self: start;
+  }
+}

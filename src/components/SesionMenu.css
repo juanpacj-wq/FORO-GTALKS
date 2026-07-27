@@ -1,0 +1,179 @@
+/* ==========================================================================
+   Menú de sesión — quién entró y cómo salir.
+   Vive en el extremo derecho de la barra, después de la navegación.
+   ========================================================================== */
+
+.gt-sesion {
+  position: relative;
+  flex: none;
+}
+
+.gt-sesion__boton {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  padding: 0.35rem 0.35rem 0.35rem 0.5rem;
+  border: var(--gt-borde) solid var(--gt-linea);
+  border-radius: var(--gt-radio-pildora);
+  color: var(--gt-blanco);
+  text-align: left;
+  transition: border-color var(--gt-transicion), background var(--gt-transicion);
+}
+
+.gt-sesion__boton:hover,
+.gt-sesion__boton[aria-expanded='true'] {
+  border-color: var(--gt-linea-fuerte);
+  background: rgb(255 255 255 / 0.06);
+}
+
+/* Iniciales en la forma en «hoja» del sistema, la misma del monograma de los perfiles. */
+.gt-sesion__inicial {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 10px 0 10px 0;
+  background: var(--gt-celeste);
+  color: var(--gt-navy);
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-bold);
+  letter-spacing: 0.02em;
+}
+
+.gt-sesion__texto {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+  max-width: 13rem;
+}
+
+.gt-sesion__nombre {
+  font-size: var(--gt-fs-xs);
+  font-weight: var(--gt-fw-semibold);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gt-sesion__cargo {
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-regular);
+  line-height: 1.25;
+  color: var(--gt-humo);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gt-sesion__chevron {
+  flex: none;
+  width: 0;
+  height: 0;
+  margin-right: 0.4rem;
+  border-inline: 0.3rem solid transparent;
+  border-top: 0.34rem solid var(--gt-humo);
+  transition: transform var(--gt-transicion);
+}
+
+.gt-sesion__boton[aria-expanded='true'] .gt-sesion__chevron {
+  transform: rotate(180deg);
+}
+
+/* --- Panel ------------------------------------------------------------------ */
+
+.gt-sesion__panel {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  right: 0;
+  z-index: var(--gt-z-header);
+  width: min(20rem, calc(100vw - 2 * var(--gt-margen)));
+  padding: var(--gt-space-4);
+  background: var(--gt-abisal);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: 18px 0 18px 0;
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.45);
+}
+
+.gt-sesion__panel-nombre {
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-bold);
+  line-height: 1.25;
+  color: var(--gt-blanco);
+}
+
+.gt-sesion__panel-cargo {
+  margin-top: 0.15rem;
+  font-size: var(--gt-fs-xs);
+  color: var(--gt-celeste);
+}
+
+.gt-sesion__panel-area,
+.gt-sesion__panel-correo {
+  margin-top: 0.15rem;
+  font-size: var(--gt-fs-micro);
+  color: var(--gt-humo);
+  word-break: break-word;
+}
+
+.gt-sesion__panel-correo {
+  padding-bottom: var(--gt-space-3);
+  margin-bottom: var(--gt-space-2);
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+}
+
+/* --- Acciones ---------------------------------------------------------------- */
+
+.gt-sesion__accion {
+  display: block;
+  padding: var(--gt-space-3) 0;
+  color: var(--gt-blanco);
+  font-size: var(--gt-fs-xs);
+  font-weight: var(--gt-fw-semibold);
+  text-decoration: none;
+}
+
+.gt-sesion__accion:hover {
+  color: var(--gt-celeste);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
+.gt-sesion__accion--salir {
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+/* --- Variante del panel móvil ------------------------------------------------- */
+
+.gt-sesion--movil {
+  margin-top: var(--gt-space-8);
+  padding-top: var(--gt-space-4);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-sesion__rotulo {
+  color: var(--gt-humo);
+  margin-bottom: var(--gt-space-2);
+}
+
+.gt-sesion--movil .gt-sesion__nombre {
+  font-size: var(--gt-fs-sm);
+  white-space: normal;
+}
+
+.gt-sesion--movil .gt-sesion__cargo {
+  margin-bottom: var(--gt-space-2);
+  white-space: normal;
+}
+
+@media (max-width: 62rem) {
+  /* En pantallas medias el nombre se come la barra: queda solo el monograma. */
+  .gt-sesion__texto,
+  .gt-sesion__chevron {
+    display: none;
+  }
+  .gt-sesion__boton {
+    padding: 0.3rem;
+  }
+}

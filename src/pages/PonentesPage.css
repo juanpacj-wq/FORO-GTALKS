@@ -1,0 +1,28 @@
+/* Chasis de las páginas interiores: campo oscuro, título con riel y una
+   medida de lectura corta para la entradilla.                                */
+
+.gt-pagina {
+  background: var(--gt-noche);
+  padding-top: clamp(7rem, 14vh, 9.5rem);
+  padding-bottom: var(--gt-seccion);
+  min-height: 70vh;
+}
+
+.gt-pagina__intro {
+  max-width: 52ch;
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.5;
+}
+
+.gt-ponentes__lista {
+  display: grid;
+  /* `min()` con 100%: sin él, a 320 px la pista mínima de 21rem es más ancha
+     que la ventana y la fila se sale.                                        */
+  grid-template-columns: repeat(auto-fit, minmax(min(21rem, 100%), 1fr));
+  column-gap: clamp(2rem, 5vw, 4rem);
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+}

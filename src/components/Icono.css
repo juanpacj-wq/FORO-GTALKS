@@ -1,0 +1,12 @@
+/* El símbolo se usa como máscara y el color lo pone el fondo: así hereda
+   currentColor de verdad, cosa que un <img src="*.svg"> no hace.
+   El alto y el ancho los fija el componente en línea, a partir de la
+   proporción real del viewBox.                                              */
+
+.gt-icono {
+  display: inline-block;
+  flex: none;
+  background-color: currentColor;
+  -webkit-mask: var(--gt-icono-src) no-repeat center / contain;
+  mask: var(--gt-icono-src) no-repeat center / contain;
+}

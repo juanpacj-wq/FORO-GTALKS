@@ -1,0 +1,486 @@
+/* ==========================================================================
+   Home
+   --------------------------------------------------------------------------
+   Cinco campos encadenados: hero oscuro → manifiesto celeste → lámina blanca
+   → programa sobre oscuro → gente. El sistema impreso separa bandas con
+   arcos; aquí los arcos se usan solo en las dos primeras transiciones, que es
+   donde cambia el color, y el resto se apoya en hairlines.
+   ========================================================================== */
+
+/* ============================================================== bienvenida */
+
+.gt-hero {
+  position: relative;
+  background: var(--gt-noche);
+  /* El header es transparente y flota encima: el contenido arranca por
+     debajo de la barra y del riel de anclas.                                 */
+  padding-top: clamp(7rem, 15vh, 10.5rem);
+}
+
+.gt-hero__grid {
+  position: relative;
+  z-index: 2; /* la foto monta sobre el arco */
+  display: grid;
+  gap: clamp(2.5rem, 7vw, 4rem);
+  align-items: center;
+  width: min(100% - 2 * var(--gt-margen), var(--gt-ancho-contenido));
+  margin-inline: auto;
+  padding-bottom: clamp(3rem, 8vw, 5.5rem);
+}
+
+.gt-hero__arco {
+  position: relative;
+  z-index: 1;
+}
+
+/* A partir de aquí la foto deja de tener margen derecho: sangra hasta el
+   borde de la ventana y es lo que rompe la simetría de dos columnas.
+
+   La primera columna replica exactamente el margen del contenedor —de ahí el
+   `max()` con el mismo cálculo— para que el titular arranque en la misma
+   vertical que la marca del header. Sin eso, el hero queda a la deriva.      */
+@media (min-width: 64rem) {
+  .gt-hero__grid {
+    width: auto;
+    margin-inline: 0;
+    align-items: end;
+    /* El padding —y no una primera columna— replica el margen del contenedor:
+       una columna extra sumaría además el `column-gap` y desalinearía.       */
+    padding-left: max(var(--gt-margen), calc((100% - var(--gt-ancho-contenido)) / 2));
+    grid-template-columns: minmax(0, 1fr) minmax(0, clamp(26rem, 27vw, 33rem));
+    column-gap: clamp(2rem, 4vw, 4rem);
+  }
+  .gt-hero__texto {
+    grid-column: 1;
+    justify-self: start;
+    max-width: clamp(30rem, 46vw, 40rem);
+  }
+  /* En dos columnas el titular ya no dispone del ancho de la ventana: la
+     escala se ata al ancho real de su columna para que «en Acción» no parta.  */
+  .gt-hero__titulo {
+    font-size: clamp(3.2rem, calc(1.7rem + 4.1vw), 6rem);
+  }
+  .gt-hero__media {
+    grid-column: 2;
+    /* La foto se pasa del borde inferior del hero y monta sobre la banda
+       celeste: es lo que engancha las dos bandas en una sola composición.   */
+    margin-bottom: calc(-1 * clamp(2rem, 7vw, 5rem));
+  }
+}
+
+/* --- Titular --------------------------------------------------------------- */
+
+.gt-hero__titulo {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  font-size: var(--gt-fs-display);
+  font-weight: var(--gt-fw-black);
+  line-height: var(--gt-lh-tight);
+  letter-spacing: var(--gt-tracking-display);
+}
+
+/* El numeral es el «1» de Bely Display sacado del PDF como contorno. Va
+   tono sobre tono —celeste apagado contra el campo— para que el único acento
+   brillante del hero sea «en Acción».                                        */
+.gt-hero__numeral {
+  flex: none;
+  color: color-mix(in oklab, var(--gt-celeste) 34%, var(--gt-noche));
+  translate: 0 -0.04em;
+}
+
+.gt-hero__palabras {
+  display: grid;
+  min-width: 0;
+}
+
+.gt-hero__linea {
+  display: block;
+}
+
+/* --gt-celeste sobre el campo oscuro: 10.4:1. */
+.gt-hero__acento {
+  color: var(--gt-celeste);
+}
+
+.gt-hero__bajada {
+  margin-top: clamp(1rem, 2vw, 1.5rem);
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  color: var(--gt-blanco);
+  letter-spacing: 0.01em;
+}
+
+.gt-hero__intro {
+  max-width: 38ch;
+  margin-top: var(--gt-space-6);
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-sm);
+}
+
+/* --- Ficha técnica ---------------------------------------------------------
+   Tres datos duros al pie del titular, separados por hairlines. No es una
+   fila de métricas de landing: es lo que hay que saber para ir.              */
+
+.gt-ficha {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: clamp(2rem, 4vw, 3rem);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-ficha__item {
+  flex: 1 1 9rem;
+  padding-top: var(--gt-space-4);
+  padding-right: var(--gt-space-6);
+}
+
+.gt-ficha__item + .gt-ficha__item {
+  padding-left: var(--gt-space-6);
+  border-left: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-ficha__rotulo {
+  color: var(--gt-humo);
+}
+
+.gt-ficha__valor {
+  margin: var(--gt-space-2) 0 0;
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-semibold);
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+/* En estrecho los tres datos se apilan: envueltos en fila dejaban una regla
+   vertical colgando bajo el tercero.                                        */
+@media (max-width: 40rem) {
+  .gt-ficha {
+    display: grid;
+    border-top: 0;
+  }
+  .gt-ficha__item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--gt-space-4);
+    padding: var(--gt-space-3) 0;
+    border-top: var(--gt-borde) solid var(--gt-linea);
+  }
+  .gt-ficha__item + .gt-ficha__item {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .gt-ficha__rotulo {
+    flex: none;
+    width: 5rem;
+  }
+  .gt-ficha__valor {
+    margin: 0;
+  }
+}
+
+/* --- Foto ------------------------------------------------------------------- */
+
+.gt-hero__media {
+  position: relative;
+}
+
+@media (min-width: 64rem) {
+  /* Sangrada a la derecha, la esquina redonda solo tiene sentido arriba a la
+     izquierda: las otras tres tocan borde de ventana o el arco de abajo.     */
+  .gt-hero__foto .gt-marco__lienzo {
+    border-radius: var(--gt-marco-radio) 0 0 0;
+  }
+}
+
+/* Sello G-TALKS montado sobre el canto de la foto. */
+.gt-hero__sello {
+  position: absolute;
+  top: clamp(1.25rem, 4vw, 2.5rem);
+  right: clamp(1.25rem, 4vw, 2rem);
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: var(--gt-space-2);
+  padding: var(--gt-space-3) var(--gt-space-4);
+  background: var(--gt-noche);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  color: var(--gt-blanco);
+}
+
+@media (min-width: 64rem) {
+  .gt-hero__sello {
+    right: auto;
+    left: 0;
+    translate: -50% 0;
+  }
+}
+
+/* --- Entrada ---------------------------------------------------------------
+   Una sola secuencia al cargar, corta y escalonada. No hay revelados por
+   scroll en el contenido: nada de esta página depende de que una animación
+   se dispare para poder leerse.                                              */
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes gt-linea-entra {
+    from {
+      clip-path: inset(0 0 112% 0);
+      transform: translateY(0.28em);
+    }
+  }
+
+  .gt-hero__linea {
+    animation: gt-linea-entra 560ms var(--gt-ease) both;
+  }
+  .gt-hero__linea:nth-child(2) {
+    animation-delay: 70ms;
+  }
+  .gt-hero__linea:nth-child(3) {
+    animation-delay: 140ms;
+  }
+  .gt-hero__numeral {
+    animation: gt-aparecer 620ms var(--gt-ease-suave) both;
+  }
+  .gt-hero__bajada {
+    animation: gt-subir 520ms var(--gt-ease) 200ms both;
+  }
+  .gt-hero__intro {
+    animation: gt-subir 520ms var(--gt-ease) 260ms both;
+  }
+  .gt-ficha {
+    animation: gt-subir 520ms var(--gt-ease) 320ms both;
+  }
+  .gt-hero__media {
+    animation: gt-aparecer 700ms var(--gt-ease-suave) 120ms both;
+  }
+}
+
+/* ============================================================== manifiesto */
+
+.gt-manifiesto {
+  background: var(--gt-celeste);
+  color: var(--gt-navy);
+  padding-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+
+/* El texto no puede quedar pegado al arco blanco de abajo: el aire va aquí y
+   no en la sección, porque el arco es hermano del contenedor.                */
+.gt-manifiesto__grid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--gt-space-8);
+  padding-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.gt-manifiesto__marca {
+  display: grid;
+  justify-items: center;
+  gap: var(--gt-space-2);
+  flex: none;
+  color: color-mix(in oklab, var(--gt-navy) 58%, var(--gt-celeste));
+}
+
+@media (max-width: 52rem) {
+  .gt-manifiesto__marca {
+    display: none;
+  }
+}
+
+/* Navy sobre celeste: 7.22:1. */
+.gt-manifiesto__texto {
+  max-width: 28ch;
+  font-size: clamp(1.45rem, 3.3vw, 2.5rem);
+  font-weight: var(--gt-fw-medium);
+  line-height: 1.22;
+  letter-spacing: var(--gt-tracking-tight);
+  text-wrap: balance;
+}
+
+/* =========================================================== sobre el foro */
+
+.gt-sobre {
+  padding-block: var(--gt-seccion);
+}
+
+.gt-sobre__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(2.5rem, 6vw, 5rem);
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+}
+
+.gt-sobre__texto {
+  max-width: 40rem;
+}
+
+.gt-sobre__parrafo + .gt-sobre__parrafo {
+  margin-top: var(--gt-space-6);
+}
+
+/* El primer párrafo entra como bajada; los otros dos, en cuerpo. */
+.gt-sobre__parrafo:first-of-type {
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.45;
+  color: var(--gt-tinta);
+}
+
+/* La foto se queda a la vista mientras se leen los tres párrafos y el
+   llamado: es lo que evita que la columna derecha se vacíe.                  */
+.gt-sobre__foto {
+  position: sticky;
+  top: 8rem;
+  margin-top: var(--gt-space-8);
+}
+
+@media (max-width: 56rem) {
+  .gt-sobre__grid {
+    grid-template-columns: 1fr;
+  }
+  /* `relative`, no `static`: el marco es el contenedor del contorno absoluto y
+     dejarlo sin posicionar lo suelta al viewport. */
+  .gt-sobre__foto {
+    position: relative;
+    top: auto;
+    max-width: 22rem;
+    margin-top: 0;
+  }
+}
+
+/* Caja destacada de la pieza, resuelta como plano navy con la forma en hoja
+   en vez de como rectángulo celeste redondeado.                              */
+.gt-llamado {
+  margin-top: clamp(2.5rem, 5vw, 3.5rem);
+  padding: clamp(2rem, 4vw, 3.25rem);
+  background: var(--gt-navy);
+  color: var(--gt-blanco);
+  border-radius: clamp(2rem, 6vw, 5rem) 0 clamp(2rem, 6vw, 5rem) 0;
+}
+
+.gt-llamado__texto {
+  max-width: 46ch;
+  font-size: var(--gt-fs-h3);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.45;
+}
+
+.gt-llamado__texto strong {
+  font-weight: var(--gt-fw-bold);
+  color: var(--gt-celeste);
+}
+
+/* ================================================================== agenda */
+
+.gt-agenda-seccion {
+  background: var(--gt-noche);
+  padding-block: var(--gt-seccion);
+}
+
+/* La lámina del programa: el papel de la pieza impresa, apoyado sobre el
+   campo oscuro. Es la única sombra de todo el sitio.                         */
+.gt-agenda__envoltorio {
+  margin-top: clamp(2rem, 4vw, 3rem);
+  border-radius: var(--gt-radio-tarjeta);
+  box-shadow: var(--gt-sombra-lamina);
+  overflow: hidden;
+}
+
+.gt-agenda__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gt-space-3) var(--gt-space-6);
+  padding: var(--gt-space-4) clamp(1.25rem, 3.5vw, 3rem);
+  background: var(--gt-carta);
+  border-bottom: var(--gt-borde) solid var(--gt-linea-tinta);
+  color: var(--gt-navy);
+}
+
+.gt-agenda__cabecera-dato {
+  font-size: var(--gt-fs-xs);
+  font-weight: var(--gt-fw-medium);
+  color: var(--gt-texto-suave);
+}
+
+/* ====================================================================== cita
+   La tercera foto de las piezas —fichas de madera sobre una mesa— es la más
+   floja de las tres y en gris se veía turbia. Con el mismo duotono que el
+   resto y con el texto anclado a la izquierda deja de ser un fondo de stock y
+   pasa a ser una banda de la marca.                                          */
+
+.gt-cita {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-items: center;
+  min-height: clamp(15rem, 30vw, 22rem);
+  padding-block: clamp(3rem, 7vw, 5rem);
+  padding-inline: max(var(--gt-margen), calc((100% - var(--gt-ancho-contenido)) / 2));
+  background: var(--gt-navy-deep);
+  overflow: hidden;
+}
+
+/* Mismo duotono que PhotoFrame: la foto en gris se compone en `screen` sobre
+   el navy y el celeste la tiñe en `multiply`.                                */
+.gt-cita__foto {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 62%;
+  filter: grayscale(1) contrast(1.2) brightness(0.95);
+  mix-blend-mode: screen;
+}
+
+.gt-cita::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--gt-celeste);
+  mix-blend-mode: multiply;
+}
+
+/* Velo hacia la izquierda para que el texto no dependa del detalle de la
+   foto. El fondo opaco de la sección ya garantiza el contraste medido.       */
+.gt-cita::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    100deg,
+    var(--gt-noche) 4%,
+    color-mix(in srgb, var(--gt-noche) 62%, transparent) 46%,
+    transparent 78%
+  );
+}
+
+.gt-cita__texto {
+  max-width: 22ch;
+  color: var(--gt-blanco);
+  font-size: clamp(1.5rem, 3.4vw, 2.5rem);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.22;
+  letter-spacing: var(--gt-tracking-tight);
+  text-wrap: balance;
+}
+
+/* ================================================================ ponentes */
+
+.gt-roster {
+  background: var(--gt-noche);
+  padding-block: var(--gt-seccion);
+}
+
+.gt-roster__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(21rem, 100%), 1fr));
+  column-gap: clamp(2rem, 5vw, 4rem);
+  margin-top: clamp(2rem, 4vw, 3rem);
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+}

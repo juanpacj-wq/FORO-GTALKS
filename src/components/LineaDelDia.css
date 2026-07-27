@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Línea del día
+   --------------------------------------------------------------------------
+   Una sola pista. El ancho de cada tramo es su duración real —columnas `fr`
+   proporcionales a los minutos— y el alto es constante para todos: en la
+   agenda de un día no hay una segunda magnitud que medir, y fingirla obliga a
+   leer el gráfico dos veces.
+
+   Lo que distingue a un tipo de bloque de otro es el tratamiento: plano,
+   plano atenuado, contorno o trama. Así la comparación de duraciones queda
+   limpia y el tipo se sigue reconociendo de un vistazo.
+   ========================================================================== */
+
+.gt-linea {
+  margin-top: clamp(2rem, 5vw, 3.5rem);
+}
+
+.gt-linea__marco {
+  position: relative;
+  padding-bottom: 1.9rem; /* sitio para el eje de horas */
+}
+
+.gt-linea__riel {
+  display: grid;
+  grid-template-columns: var(--gt-pistas);
+  gap: 2px;
+  height: clamp(3.25rem, 6vw, 4.5rem);
+  /* La forma en «hoja» del sistema, aplicada a la pista entera: el mismo corte
+     asimétrico que el marco de las fotos y el monograma. Es lo que hace que la
+     línea se lea como pieza de esta marca y no como un gráfico cualquiera.   */
+  border-radius: 20px 0 20px 0;
+  overflow: hidden;
+}
+
+/* --- Tramo -------------------------------------------------------------------
+   Cada uno es su propio contenedor de consulta: la etiqueta de dentro aparece
+   solo si el tramo es lo bastante ancho para que quepa sin recortarse. Es la
+   forma correcta de resolverlo —depende del ancho del tramo, no del de la
+   ventana— y evita el clásico texto cortado a la mitad.                       */
+
+.gt-linea__tramo {
+  container-type: inline-size;
+  position: relative;
+  min-width: 0;
+  transform-origin: bottom;
+}
+
+.gt-linea__enlace {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  padding: var(--gt-space-2) 0.4rem 0.35rem;
+  color: var(--gt-navy);
+  text-decoration: none;
+  transition: background var(--gt-transicion), box-shadow var(--gt-transicion),
+    opacity var(--gt-transicion);
+}
+
+.gt-linea__enlace:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Escala de tratamiento, de mayor a menor peso en la jornada. */
+.gt-linea__tramo--panel .gt-linea__enlace {
+  background: var(--gt-celeste);
+}
+
+.gt-linea__tramo--ponencia .gt-linea__enlace {
+  background: color-mix(in oklab, var(--gt-celeste) 74%, var(--gt-navy));
+}
+
+.gt-linea__tramo--hito .gt-linea__enlace {
+  background: color-mix(in oklab, var(--gt-celeste) 46%, var(--gt-navy));
+  color: var(--gt-blanco);
+}
+
+/* Los bloques logísticos son pausa, no programa: se dibujan como aire con una
+   trama diagonal fina en vez de como un plano más.                            */
+.gt-linea__tramo--logistico .gt-linea__enlace {
+  color: var(--gt-humo);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    var(--gt-linea) 4px,
+    var(--gt-linea) 5px
+  );
+  box-shadow: inset 0 0 0 1px var(--gt-linea);
+}
+
+/* --- Etiqueta interior -------------------------------------------------------- */
+
+.gt-linea__interior {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.gt-linea__hora,
+.gt-linea__nombre {
+  display: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gt-linea__hora {
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.gt-linea__nombre {
+  font-size: 0.625rem;
+  font-weight: var(--gt-fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+@container (min-width: 46px) {
+  .gt-linea__hora {
+    display: block;
+  }
+}
+
+@container (min-width: 104px) {
+  .gt-linea__nombre {
+    display: block;
+  }
+}
+
+/* --- Foco de atención ---------------------------------------------------------
+   Al señalar un tramo, los demás bajan de intensidad. Es lo que convierte el
+   gráfico en algo que se puede recorrer en vez de solo mirar.
+
+   `[data-activo]` lo pone la página cuando el bloque se señala desde la lista
+   del programa: las dos vistas son del mismo dato y se marcan a la vez.       */
+
+.gt-linea__riel:has(.gt-linea__enlace:hover) .gt-linea__enlace,
+.gt-linea__riel:has(.gt-linea__enlace:focus-visible) .gt-linea__enlace,
+.gt-linea__riel:has([data-activo]) .gt-linea__enlace {
+  opacity: 0.42;
+}
+
+.gt-linea__enlace:hover,
+.gt-linea__enlace:focus-visible,
+.gt-linea__tramo[data-activo] .gt-linea__enlace {
+  opacity: 1 !important;
+  box-shadow: inset 0 3px 0 var(--gt-celeste-alto);
+}
+
+.gt-linea__tramo--logistico .gt-linea__enlace:hover,
+.gt-linea__tramo--logistico .gt-linea__enlace:focus-visible,
+.gt-linea__tramo--logistico[data-activo] .gt-linea__enlace {
+  box-shadow: inset 0 3px 0 var(--gt-celeste-alto), inset 0 0 0 1px var(--gt-linea-fuerte);
+}
+
+/* --- Marcador de «ahora» -------------------------------------------------------
+   Solo aparece el 5 de agosto, dentro del horario del foro.                    */
+
+.gt-linea__ahora {
+  position: absolute;
+  top: -0.9rem;
+  bottom: 1.9rem;
+  width: 2px;
+  background: var(--gt-blanco);
+  translate: -1px 0;
+  pointer-events: none;
+}
+
+.gt-linea__ahora .gt-dato {
+  position: absolute;
+  top: -1.1rem;
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.15rem 0.4rem;
+  background: var(--gt-blanco);
+  color: var(--gt-noche);
+  border-radius: 3px;
+}
+
+/* --- Eje de horas ----------------------------------------------------------- */
+
+.gt-linea__eje {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 1.9rem;
+  border-top: var(--gt-borde) solid var(--gt-linea-fuerte);
+}
+
+.gt-linea__marca {
+  position: absolute;
+  top: 0.5rem;
+  translate: -50% 0;
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-semibold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.gt-linea__marca::before {
+  content: '';
+  position: absolute;
+  top: -0.5rem;
+  left: 50%;
+  width: var(--gt-borde);
+  height: 0.35rem;
+  background: var(--gt-linea-fuerte);
+}
+
+/* --- Pie ---------------------------------------------------------------------
+   Una sola línea que cambia con el tramo señalado. Evita doce tooltips que se
+   salgan por los bordes y le da al gráfico algo que decir en reposo.          */
+
+.gt-linea__pie {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gt-space-4);
+  margin-top: var(--gt-space-4);
+  min-height: 3.25rem;
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-linea__pie-hora {
+  flex: none;
+  color: var(--gt-celeste);
+  white-space: nowrap;
+}
+
+.gt-linea__pie-titulo {
+  max-width: 58ch;
+  color: var(--gt-blanco);
+  font-weight: var(--gt-fw-medium);
+  line-height: 1.4;
+}
+
+/* --- Entrada -------------------------------------------------------------------
+   Los tramos se levantan de izquierda a derecha conforme la sección entra en
+   pantalla; el desfase lo pone cada tramo con su propio `animation-range`.
+   Solo `transform`, y el mínimo es 0.55: si la línea de tiempo no llega a
+   activarse, la animación no se aplica y la pista se dibuja entera.           */
+
+@keyframes gt-tramo-entra {
+  from {
+    transform: scaleY(0.55);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .gt-linea__tramo {
+      animation-name: gt-tramo-entra;
+      animation-duration: auto;
+      animation-timing-function: var(--gt-ease);
+      animation-fill-mode: both;
+      animation-timeline: view();
+    }
+  }
+}
+
+@media (max-width: 46rem) {
+  .gt-linea__riel {
+    height: 2.75rem;
+    gap: 1px;
+  }
+  /* A 390 px no caben ocho horas en punto sin solaparse. */
+  .gt-linea__marca--impar {
+    display: none;
+  }
+  .gt-linea__pie {
+    flex-direction: column;
+    gap: var(--gt-space-1);
+    min-height: 4.5rem;
+  }
+  .gt-linea__pie-titulo {
+    font-weight: var(--gt-fw-regular);
+  }
+}

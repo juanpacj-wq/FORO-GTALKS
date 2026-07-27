@@ -1,0 +1,133 @@
+.gt-marco {
+  position: relative;
+  margin: 0;
+  /* El radio medido (136px) es enorme en móvil, donde la foto mide ~320px:
+     se comería la imagen entera. Se limita a un tercio del lado menor.       */
+  --gt-marco-radio: min(var(--gt-radio-foto), 32%);
+}
+
+.gt-marco__lienzo {
+  position: relative;
+  display: block;
+  isolation: isolate; /* encierra los blend-mode del duotono */
+  overflow: hidden;
+  background: var(--gt-navy-deep);
+  aspect-ratio: var(--gt-marco-ratio, auto);
+}
+
+.gt-marco__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gt-marco__tinte,
+.gt-marco__grano {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* --- Duotono ---------------------------------------------------------------
+   La foto en escala de grises se compone en `screen` sobre el navy: las
+   sombras se vuelven navy y las luces, blancas. Encima, el celeste en
+   `multiply` tiñe esas luces. Resultado: dos colores medidos y nada más.     */
+
+.gt-marco--duotono .gt-marco__img {
+  filter: grayscale(1) contrast(1.12) brightness(1.04);
+  mix-blend-mode: screen;
+}
+
+.gt-marco--duotono .gt-marco__tinte {
+  background: var(--gt-celeste);
+  mix-blend-mode: multiply;
+}
+
+/* Grano propio de la foto, más marcado que el del campo: iguala la textura
+   entre las tres fotos, que vienen de escaneos distintos.                    */
+.gt-marco--duotono .gt-marco__grano {
+  background-image: var(--gt-grano);
+  background-size: 160px 160px;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+}
+
+.gt-marco--natural .gt-marco__tinte,
+.gt-marco--natural .gt-marco__grano {
+  display: none;
+}
+
+/* --- Paralaje ----------------------------------------------------------------
+   La imagen se desplaza dentro de su marco mientras la página pasa por ella.
+   Va con `animation-timeline: view()`, que solo mueve un `transform`: si el
+   navegador no lo soporta, la foto se queda quieta y no falta nada. El 1.06 de
+   escala es el margen que hace falta para que el recorrido no descubra el
+   borde del recorte.                                                          */
+
+@keyframes gt-paralaje {
+  from {
+    transform: scale(1.06) translateY(-2.4%);
+  }
+  to {
+    transform: scale(1.06) translateY(2.4%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* La línea de tiempo se declara en el marco y NO en la imagen. `view()`
+       resuelve contra el scrollport más cercano, y el de la imagen es el
+       propio recorte (`overflow: hidden` del lienzo): ahí la foto está siempre
+       centrada, así que el progreso se quedaba clavado en el 50% y nada se
+       movía. Con nombre, el sujeto es el marco y el scroller, la página.     */
+    .gt-marco--paralaje {
+      view-timeline-name: --gt-marco-vista;
+    }
+
+    .gt-marco--paralaje .gt-marco__img {
+      animation-name: gt-paralaje;
+      /* `auto` es obligatorio: el atajo `animation:` deja la duración en 0s y
+         con una línea de tiempo por scroll eso congela la animación.         */
+      animation-duration: auto;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --gt-marco-vista;
+      animation-range: cover 0% cover 100%;
+    }
+  }
+}
+
+/* --- Forma en hoja ---------------------------------------------------------- */
+
+.gt-marco--izq .gt-marco__lienzo,
+.gt-marco--izq .gt-marco__contorno {
+  border-radius: var(--gt-marco-radio) 0 var(--gt-marco-radio) 0;
+}
+
+.gt-marco--der .gt-marco__lienzo,
+.gt-marco--der .gt-marco__contorno {
+  border-radius: 0 var(--gt-marco-radio) 0 var(--gt-marco-radio);
+}
+
+/* Contorno fino desplazado: está en las piezas, una línea de 1 pt con la
+   misma forma corrida respecto a la foto.                                    */
+.gt-marco__contorno {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: var(--gt-borde) solid;
+  translate: var(--gt-space-4) calc(-1 * var(--gt-space-4));
+}
+
+.gt-marco--der .gt-marco__contorno {
+  translate: calc(-1 * var(--gt-space-4)) calc(-1 * var(--gt-space-4));
+}
+
+@media (max-width: 40rem) {
+  .gt-marco__contorno {
+    translate: var(--gt-space-2) calc(-1 * var(--gt-space-2));
+  }
+  .gt-marco--der .gt-marco__contorno {
+    translate: calc(-1 * var(--gt-space-2)) calc(-1 * var(--gt-space-2));
+  }
+}

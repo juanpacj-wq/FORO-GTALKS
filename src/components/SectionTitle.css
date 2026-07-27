@@ -1,0 +1,66 @@
+.gt-titulo-seccion {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gt-space-6);
+}
+
+.gt-titulo-seccion__texto {
+  flex: none;
+  max-width: 22ch;
+  font-weight: var(--gt-fw-black);
+  letter-spacing: var(--gt-tracking-display);
+}
+
+.gt-titulo-seccion__riel {
+  flex: 1;
+  height: var(--gt-borde);
+  background: var(--gt-linea);
+  /* baseline alinea la línea con la última línea del título; este empuje la
+     sube a la altura de las mayúsculas, que es donde se lee como riel.       */
+  translate: 0 -0.35em;
+  transform-origin: left;
+}
+
+/* El riel se traza al entrar. Arranca en 0.12 y no en 0: aunque una línea de
+   tiempo inactiva deja la animación sin aplicar —y entonces el riel se pinta
+   entero—, un estado inicial de cero anchura sería un dato oculto esperando
+   a fallar.                                                                  */
+@keyframes gt-riel-traza {
+  from {
+    transform: scaleX(0.12);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .gt-titulo-seccion__riel {
+      animation-name: gt-riel-traza;
+      animation-duration: auto;
+      animation-timing-function: var(--gt-ease);
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: cover 6% cover 38%;
+    }
+  }
+}
+
+.gt-titulo-seccion__apunte {
+  flex: none;
+  color: var(--gt-texto-suave);
+  translate: 0 -0.2em;
+}
+
+@media (max-width: 40rem) {
+  .gt-titulo-seccion {
+    flex-wrap: wrap;
+    gap: var(--gt-space-3);
+  }
+  .gt-titulo-seccion__texto {
+    max-width: none;
+  }
+  .gt-titulo-seccion__riel {
+    order: 3;
+    flex-basis: 100%;
+    translate: 0;
+  }
+}

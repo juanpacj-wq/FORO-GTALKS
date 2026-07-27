@@ -1,0 +1,71 @@
+# ==============================================================================
+#  Foro G-TALKS — unit de systemd
+#
+#  Instalación:
+#    sudo cp gtalks.service /etc/systemd/system/
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable --now gtalks
+#
+#  Entre ediciones el servicio se PARA (`systemctl disable --now gtalks`). Ver docs/SEGURIDAD.md.
+# ==============================================================================
+[Unit]
+Description=Foro GECELCA G-TALKS — gate Entra ID
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gtalks
+Group=gtalks
+WorkingDirectory=/opt/gtalks
+
+# Los secretos NO viven en el directorio de la app: así un `git pull` no puede pisarlos y el
+# usuario del servicio no necesita permiso para leerlos.
+# Permisos 0600 root:root — systemd parsea este archivo como PID 1, antes de bajar privilegios,
+# así que el usuario del servicio nunca lo abre. Es más estrecho que el 0640 habitual y funciona.
+EnvironmentFile=/etc/gtalks/env
+Environment=NODE_ENV=production
+
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=5s
+# El proceso cierra ordenadamente con SIGTERM (ver server/index.js).
+KillSignal=SIGTERM
+TimeoutStopSec=15s
+
+# --- Endurecimiento --------------------------------------------------------
+# Más estricto que el modelo del proyecto hermano: allí hay BD y uploads, aquí NO hay nada que
+# escribir —el sitio es estático y las sesiones viven en memoria a propósito—, salvo el registro
+# de acceso. De ahí que ReadWritePaths tenga una sola ruta.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0077
+
+# Única ruta escribible: el registro de asistencia (AUDIT_LOG_PATH).
+ReadWritePaths=/var/log/gtalks
+
+# El proceso escucha en 127.0.0.1 (server/index.js); esto lo refuerza a nivel de kernel.
+IPAddressAllow=localhost
+IPAddressDeny=any
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,72 @@
+/* ==========================================================================
+   Urbanist, autohospedada.
+   --------------------------------------------------------------------------
+   El sitio vive detrás de un login corporativo (Microsoft Entra ID), así que
+   no puede depender de fonts.googleapis.com: una petición a un tercero desde
+   una página con sesión es innecesaria y además fallaría en redes cerradas.
+
+   Los archivos salen de Google Fonts (Urbanist, SIL Open Font License 1.1) y
+   están en public/fonts/. Total: 64 KB en disco, y el navegador solo descarga
+   el subconjunto que necesite gracias a unicode-range.
+
+   Ojo con dos cosas verificadas con fontTools (no supuestas):
+
+   1. El romano ES una fuente variable, eje wght 100..900. Por eso hay un solo
+      archivo para Regular y Bold, y se declara `font-weight: 100 900`.
+   2. La itálica NO es variable: es estática a 400. Se declara `font-weight:
+      400` a propósito. Si se declarara un rango, el navegador la usaría para
+      cualquier peso y sintetizaría una negrita falsa. En las piezas la itálica
+      solo aparece en Regular (etiquetas «Ponencia» / «Panel»), así que basta.
+
+   3. Los acentos del español (á é í ó ú ñ ü ¡ ¿ « » ° — ’) están todos en el
+      subconjunto `latin`, no en `latin-ext`. `latin-ext` se conserva para
+      nombres propios que puedan llegar desde Entra en la escarapela.
+   ========================================================================== */
+
+/* latin */
+@font-face {
+  font-family: "Urbanist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/urbanist-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin-ext */
+@font-face {
+  font-family: "Urbanist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/urbanist-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin — itálica estática 400 */
+@font-face {
+  font-family: "Urbanist";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/urbanist-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* latin-ext — itálica estática 400 */
+@font-face {
+  font-family: "Urbanist";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/urbanist-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
