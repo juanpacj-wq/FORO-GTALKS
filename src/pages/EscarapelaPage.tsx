@@ -235,7 +235,7 @@ export default function EscarapelaPage() {
                 <MarcaQR />
                 <span className="gt-aviso-qr__texto">
                   <strong>Importante:</strong> el código QR ubicado en la parte posterior de la
-                  escarapela será utilizado para registrar tu ingreso al evento.
+                  escarapela será utilizado para registrar tu asistencia al evento.
                 </span>
                 <span className="gt-aviso-qr__accion">
                   {girada ? 'Ver el frente' : 'Ver el respaldo'}
@@ -246,7 +246,7 @@ export default function EscarapelaPage() {
                 <MarcaQR />
                 <span className="gt-aviso-qr__texto">
                   <strong>Importante:</strong> el código QR ubicado en la parte posterior de la
-                  escarapela será utilizado para registrar tu ingreso al evento.
+                  escarapela será utilizado para registrar tu asistencia al evento.
                 </span>
               </p>
             )}
