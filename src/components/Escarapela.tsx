@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 // `useState` sigue en uso para el tic del reloj del QR; el del volteo se fue a la página.
 import { QrCodeDataType, encode } from 'uqr'
 import { EVENTO, iniciales } from '../data/foro'
@@ -109,6 +109,41 @@ export default function Escarapela({
   // Línea bajo el nombre: cargo → área → correo, la misma cascada del menú de sesión.
   const segundaLinea = usuario.cargo || usuario.area || usuario.email
 
+  // El cargo tiene 9.46cqw de luz hasta la píldora (top 120.70 − top 111.24): una línea de su
+  // cuerpo base (4.79cqw × 1.15) cabe; la segunda invadía la banda de ASISTENTE «Gerente De
+  // Tecnologia De Informacion» lo demostró en producción—. El blindaje MIDE el texto pintado en
+  // vez de estimar por caracteres (los avances por glifo no son parejos) y encoge el cuerpo
+  // hasta asentarlo en una línea, como la pieza. El piso no es de gusto: sale de la geometría —
+  // por debajo de 4.0cqw, DOS líneas (2 × 1.15 × 4.0 = 9.2cqw) también caben en la luz—, así
+  // que ni el peor cargo imaginable toca la píldora. Se re-mide al resolver `document.fonts`:
+  // con las métricas del fallback, la cifra saldría de otra fuente.
+  const cargoRef = useRef<HTMLParagraphElement>(null)
+  useLayoutEffect(() => {
+    const el = cargoRef.current
+    if (!el) return
+    const ajustar = () => {
+      // Con Range y no con scrollWidth: scrollWidth y clientWidth son ENTEROS, y un desborde
+      // de medio píxel se esconde en ese redondeo el texto «casi cabe», el ajuste no actúa y
+      // la línea parte igual—. El Range da el ancho fraccional del texto pintado. La holgura
+      // del 0.5 % y el redondeo hacia ABAJO matan el otro borde: toFixed redondeando hacia
+      // arriba devolvía un cuerpo una pizca mayor que el calculado, y volvía a partir.
+      el.style.fontSize = ''
+      el.style.whiteSpace = 'nowrap'
+      const rango = document.createRange()
+      rango.selectNodeContents(el)
+      const necesario = rango.getBoundingClientRect().width
+      const disponible = el.getBoundingClientRect().width
+      el.style.whiteSpace = ''
+      if (!disponible || !necesario) return
+      if (necesario > disponible) {
+        const cuerpo = Math.max(Math.floor(((4.79 * disponible) / necesario) * 0.995 * 100) / 100, 4.0)
+        el.style.fontSize = `${cuerpo}cqw`
+      }
+    }
+    ajustar()
+    document.fonts?.ready.then(ajustar)
+  }, [segundaLinea])
+
   // La pieza asienta «SOFÍA MUNÉVAR» (13 caracteres) en una línea con una versal de 67px, que
   // en Urbanist son 9.35cqw de cuerpo. Un nombre más largo lo reduce en proporción para asentar
   // igual, con un piso legible: sin esto, «María Cristina Giraldo» partía en dos líneas yaun
@@ -177,7 +212,7 @@ export default function Escarapela({
                 {usuario.nombre_completo}
               </p>
               <span className="gt-carne__regla" aria-hidden="true" />
-              <p className="gt-carne__cargo">{segundaLinea}</p>
+              <p className="gt-carne__cargo" ref={cargoRef}>{segundaLinea}</p>
 
               <p className="gt-carne__pildora">
                 <Icono nombre="carne-personas" alto="6.74cqw" className="gt-carne__pildora-icono" />

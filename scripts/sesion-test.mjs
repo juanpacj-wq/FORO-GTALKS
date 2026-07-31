@@ -155,6 +155,33 @@ check(
 )
 await carneSinCargo.close()
 
+// El blindaje del cargo largo: la pieza reserva UNA línea entre la regla y la píldora, y un
+// cargo que partía en dos («Gerente De Tecnologia De Informacion», caso real de producción)
+// invadía la banda de ASISTENTE. El carné lo encoge para asentarlo en una línea; si ni al piso
+// cabe, dos líneas más pequeñas caben en la luz. Aquí se ejercen los dos casos.
+for (const [cargoLargo, descripcion] of [
+  ['Gerente De Tecnologia De Informacion', 'el caso real de producción'],
+  ['Gerente De Tecnologia De Informacion Y Transformacion Digital Corporativa', 'el peor caso'],
+]) {
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await p.route('**/api/me', (ruta) =>
+    ruta.fulfill({ json: { ...IDENTIDAD, user: { ...IDENTIDAD.user, cargo: cargoLargo } } }),
+  )
+  await p.goto(base + '/escarapela', { waitUntil: 'networkidle' })
+  await p.evaluate(() => document.fonts.ready)
+  await p.waitForTimeout(150)
+  const cajas = await p.evaluate(() => {
+    const cargo = document.querySelector('.gt-carne__cargo')?.getBoundingClientRect()
+    const pildora = document.querySelector('.gt-carne__pildora')?.getBoundingClientRect()
+    return cargo && pildora ? { cargoFondo: cargo.bottom, pildoraTecho: pildora.top } : null
+  })
+  check(
+    `un cargo largo no invade la píldora (${descripcion})`,
+    !!cajas && cajas.cargoFondo <= cajas.pildoraTecho + 0.5,
+  )
+  await p.close()
+}
+
 const carneSinNada = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
 await carneSinNada.route('**/api/me', (ruta) =>
   ruta.fulfill({ json: { ...IDENTIDAD, user: { ...IDENTIDAD.user, cargo: '', area: '' } } }),

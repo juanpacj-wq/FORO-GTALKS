@@ -347,10 +347,11 @@
   translate: -50% 0;
   width: 80cqw;
   margin: 0;
-  font-size: 4.79cqw; /* 49.1px */
+  font-size: 4.79cqw; /* 49.1px; con cargos largos lo encoge el componente (ver Escarapela.tsx) */
   font-weight: var(--gt-fw-regular); /* asta de 72/1000 em en la pieza */
   line-height: 1.15;  /* el line-height editorial de base.css descuadraría las cotas del carné */
   letter-spacing: 0.004em;
+  text-wrap: balance; /* solo actúa en el fallback de dos líneas del blindaje: que parta parejo */
 }
 
 .gt-carne__cara .gt-carne__pildora {
