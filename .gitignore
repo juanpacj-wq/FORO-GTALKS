@@ -61,7 +61,11 @@ deploy/deploy.env
 /9e1cf9d5-bad0-444b-b1fa-7ec681005d9f.jfif
 /cap-tmp.mjs
 /prompt_recreacion_escarapela.md
-/imagen correo.png
+
+# OJO: «imagen correo.png» (raíz) NO va aquí: es la pieza oficial del correo de
+# inscripción y viaja incrustada en cada mensaje. server/correo/ la carga del disco
+# al arrancar: si no está versionada, el clon del servidor no la trae y el envío se
+# apaga solo. Se aprendió apagando el correo en producción el 2026-07-31.
 
 # Anotaciones de operación con inventario interno del servidor (hostnames, IPs,
 # servicios). Como deploy/deploy.env: útil en la estación, no viaja a GitHub.

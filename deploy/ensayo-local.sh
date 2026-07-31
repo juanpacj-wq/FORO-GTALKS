@@ -52,7 +52,10 @@ git -C "$RAIZ" -c core.autocrlf=false -c core.eol=lf archive "$SHA" > "$T/pack.t
 # `grep -q` sale al primer acierto, `tar` recibe SIGPIPE y con `pipefail` la tubería
 # entera se lee como fallo. (Lo descubrió este mismo ensayo en su primera corrida.)
 LISTADO="$(tar -tf "$T/pack.tar")"
-for f in package-lock.json package.json server/index.js index.html vite.config.ts; do
+# «imagen correo.png» es el cuerpo del correo de inscripción: server/correo/ la lee del
+# disco al arrancar y, si falta en el paquete, el envío se apaga en silencio (pasó en
+# producción el 2026-07-31: la pieza quedó gitignored y el clon del servidor no la trajo).
+for f in package-lock.json package.json server/index.js index.html vite.config.ts 'imagen correo.png'; do
 	case $'\n'"$LISTADO"$'\n' in
 		*$'\n'"$f"$'\n'*) ok "trae $f" ;;
 		*) mal "falta $f en el paquete" ;;
