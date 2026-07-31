@@ -26,17 +26,17 @@ Contexto que asume este runbook, y que si cambia hay que revisar antes de pegar 
 Ninguno de estos pasos es en el servidor. Sin ellos el sitio público funcionará, pero el botón
 de la escarapela fallará con `AADSTS50011` (redirect URI no registrada).
 
-- [ ] **Entra ID — App Registration del login** (Azure Portal → Microsoft Entra ID →
-      App registrations → la app del foro → **Authentication** → plataforma **Web**): agregar
-      `https://cdp.gecelca.com.co/auth/redirect` como redirect URI y
-      `https://cdp.gecelca.com.co/` como post-logout redirect URI.
-- [ ] **Enterprise App**: «Asignación requerida = Sí» con los usuarios/grupos del foro asignados
-      (el grupo de seguridad del evento). Eso —no el código— decide quién puede iniciar sesión.
-- [ ] **Código publicado**: el commit que quieres desplegar está en `main` de GitHub
-      (`git push origin main` hecho desde la estación). El servidor clona `main`: lo que no esté
-      ahí, no existe para este runbook.
-- [ ] **A la mano** (los pegarás en la Fase 7): `M365_TENANT_ID`, `M365_CLIENT_ID`,
-      `M365_CLIENT_SECRET`.
+- [X] **Entra ID — App Registration del login** (Azure Portal → Microsoft Entra ID →
+  App registrations → la app del foro → **Authentication** → plataforma **Web**): agregar
+  `https://cdp.gecelca.com.co/auth/redirect` como redirect URI y
+  `https://cdp.gecelca.com.co/` como post-logout redirect URI.
+- [X] **Enterprise App**: «Asignación requerida = Sí» con los usuarios/grupos del foro asignados
+  (el grupo de seguridad del evento). Eso —no el código— decide quién puede iniciar sesión.
+- [X] **Código publicado**: el commit que quieres desplegar está en `main` de GitHub
+  (`git push origin main` hecho desde la estación). El servidor clona `main`: lo que no esté
+  ahí, no existe para este runbook.
+- [X] **A la mano** (los pegarás en la Fase 7): `M365_TENANT_ID`, `M365_CLIENT_ID`,
+  `M365_CLIENT_SECRET`.
 
 ---
 
@@ -96,7 +96,7 @@ Con la carpeta donde aparecieron, edita la primera línea y pega el bloque. Cons
 envía el archivo tal cual y los navegadores esperan la hoja de primera):
 
 ```bash
-CERT_ORIGEN=/ruta/donde/aparecieron   # ← EDITA con la carpeta del find de arriba
+CERT_ORIGEN=/etc/ssl/comunicaciones/private.key   # ← EDITA con la carpeta del find de arriba
 sudo bash -euo pipefail <<FIN
 install -m 0755 -d /etc/ssl/gtalks
 install -m 0644 "$CERT_ORIGEN/certificate.crt" /etc/ssl/gtalks/certificate.crt
@@ -365,18 +365,28 @@ portada salga **con su CSP** y que `/api/me` siga en **401** sin sesión (la ide
 Se prueba a través de nginx con `--resolve` para no depender del DNS del servidor — y de paso,
 si la cadena TLS quedó mal armada en la Fase 3, estos mismos `curl` fallarán por certificado.
 
+**Ojo con las cabeceras**: `esNavegacion()` (server/app.js) exige `Sec-Fetch-Mode: navigate`
+**y** `Sec-Fetch-Dest: document` a la vez. Con una sola, la portada responde el 404 JSON de
+subrecursos — que es lo correcto, pero no es lo que esta matriz mide. Salió en el primer
+despliegue real: un `curl` solo con `Dest` daba 404 con la app perfectamente sana.
+
 ```bash
 curl -s -o /dev/null -w 'health (interno)   : %{http_code}   (se espera 200)\n' http://127.0.0.1:3000/health
-curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 -H 'Sec-Fetch-Dest: document' \
+curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 \
+  -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' \
   -w 'portada por nginx  : %{http_code}   (se espera 200)\n' https://cdp.gecelca.com.co/
 echo "CSP en la portada  : $(curl -s -I --resolve cdp.gecelca.com.co:443:127.0.0.1 \
-  -H 'Sec-Fetch-Dest: document' https://cdp.gecelca.com.co/ | grep -ic content-security-policy)   (se espera 1)"
-curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' \
+  https://cdp.gecelca.com.co/ | grep -ic content-security-policy)   (se espera 1)"
+curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 \
+  -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' \
   -w 'api/me sin sesión  : %{http_code}   (se espera 401 — lo innegociable)\n' https://cdp.gecelca.com.co/api/me
-curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 -H 'Sec-Fetch-Dest: document' \
+curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 \
+  -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' \
   -w 'auth/login         : %{http_code}   (se espera 302)\n' https://cdp.gecelca.com.co/auth/login
 echo "login redirige a   : $(curl -s -I --resolve cdp.gecelca.com.co:443:127.0.0.1 \
-  -H 'Sec-Fetch-Dest: document' https://cdp.gecelca.com.co/auth/login | grep -i '^location' | head -1)"
+  -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' \
+  https://cdp.gecelca.com.co/auth/login | grep -i '^location' | head -1)"
 echo "── Certificado que sirve nginx:"
 echo | openssl s_client -connect 127.0.0.1:443 -servername cdp.gecelca.com.co 2>/dev/null \
   | openssl x509 -noout -subject -dates
