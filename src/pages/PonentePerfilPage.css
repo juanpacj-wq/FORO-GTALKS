@@ -1,18 +1,111 @@
+/* El perfil usa las dos superficies del sistema, y esa división es lo que
+   estructura la página: sobre el campo oscuro va quién es la personaretrato
+   y trayectoria—, y sobre el papel va lo que hace en el foro. El papel es el
+   mismo objeto que la tarjeta del programa en la home, porque es el mismo
+   dato: la agenda filtrada por una persona.                                  */
+
 .gt-perfil {
   background: var(--gt-noche);
-  padding-top: clamp(7rem, 14vh, 9.5rem);
-  padding-bottom: var(--gt-seccion);
+  /* Menos aire arriba que en las demás páginas interiores: aquí el retrato es
+     lo primero y ya pesa lo suficiente por sí solo.                          */
+  padding-top: clamp(6.5rem, 10vh, 8rem);
+  /* Y menos abajo que `--gt-seccion`: esta página termina en una navegación
+     compacta, no en una sección que necesite respirar contra la siguiente.   */
+  padding-bottom: clamp(3rem, 6vw, 5rem);
   min-height: 70vh;
 }
 
-.gt-perfil__cabecera {
-  display: flex;
-  align-items: center;
-  gap: clamp(1.25rem, 3vw, 2.5rem);
-  padding-bottom: clamp(2rem, 4vw, 3rem);
-  border-bottom: var(--gt-borde) solid var(--gt-linea);
+/* --- La rejilla del perfil ---------------------------------------------------
+   Dos columnas: el retrato y todo lo demás. El retrato **se estira al alto
+   exacto de la columna de texto** (`align-self: stretch` + `height: 100%` en
+   el lienzo), así que las dos columnas empiezan y terminan en la misma línea.
+
+   Esto es lo que resuelve el desperdicio de sitio que tenía la versión
+   anterior: el retrato era una viñeta de 216 px contra una columna de texto de
+   600, y sobraba media página a la derecha y otro tanto por debajo de la foto.
+
+   La primera pista es `auto` y no un ancho fijo porque la ocupan dos cosas de
+   tamaño distintoel retrato cuando existe, el monograma cuando no— y el
+   texto tiene que arrancar justo detrás en los dos casos.                    */
+
+.gt-perfil__intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
 }
 
+.gt-perfil__retrato {
+  width: clamp(16rem, 30vw, 29rem);
+  align-self: stretch;
+  /* Red de seguridad para el caso más cortodos líneas de texto y nada más—,
+     que hoy no ocurre porque ahí sube el programa, pero ocurriría si un día
+     alguien no tuviera ni biografía ni intervenciones.                       */
+  min-height: 22rem;
+}
+
+/* El lienzo pierde su proporción fija y toma el alto de la fila. El `4 / 5`
+   que sigue llegando por props es el que rige en móvil, donde la rejilla se
+   vuelve de una sola columna y no hay nada a lo que igualarse.               */
+.gt-perfil__retrato .gt-marco__lienzo {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+/* --- La placa, mientras no haya foto -----------------------------------------
+   Ocupa el sitio exacto del retratomisma columna, mismo alto, misma forma y
+   el mismo contorno desplazado— para que la maqueta no se mueva el día que la
+   foto llegue. Las iniciales van a tamaño de titular: a esa escala dejan de
+   ser un avatar por defecto y pasan a ser un grafismo, que es lo mismo que
+   hace el sistema con el numeral «1» y con el wordmark.                      */
+
+.gt-perfil__placa {
+  --gt-placa-radio: min(var(--gt-radio-foto), 32%);
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: var(--gt-navy);
+  border-radius: var(--gt-placa-radio) 0 var(--gt-placa-radio) 0;
+}
+
+.gt-perfil__placa::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: var(--gt-borde) solid var(--gt-celeste);
+  border-radius: inherit;
+  translate: var(--gt-space-4) calc(-1 * var(--gt-space-4));
+}
+
+.gt-perfil__iniciales {
+  color: var(--gt-celeste); /* 7.22:1 sobre navy */
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  font-weight: var(--gt-fw-black);
+  letter-spacing: var(--gt-tracking-display);
+  line-height: 1;
+  user-select: none;
+}
+
+.gt-perfil__texto {
+  min-width: 0;
+}
+
+.gt-perfil__identidad {
+  min-width: 0;
+}
+
+/* El hairline separa la identidad de lo que viene debajo, y cruza solo la
+   columna de texto: cruzar las dos partiría el retrato por la mitad.         */
+.gt-perfil__regla {
+  display: block;
+  height: var(--gt-borde);
+  margin-top: clamp(1.75rem, 3.5vw, 2.5rem);
+  background: var(--gt-linea);
+}
+
+/* Se queda en h2 y no sube a h1: el retrato ya aporta la escala de la página,
+   y un nombre propio a tamaño de titular de portada grita.                   */
 .gt-perfil__nombre {
   font-size: var(--gt-fs-h2);
   font-weight: var(--gt-fw-black);
@@ -26,18 +119,63 @@
   font-size: var(--gt-fs-sm);
 }
 
-.gt-perfil__cuerpo {
-  margin-top: clamp(2.5rem, 5vw, 4rem);
+/* --- Biografía ---------------------------------------------------------------
+   Prosa larga sobre campo oscuro: medida corta, interlineado del campo oscuro
+   y --gt-humo en vez de blanco puro, que a mil pulsaciones cansa.            */
+
+.gt-perfil__bio {
+  margin-top: clamp(1.75rem, 3.5vw, 2.5rem);
 }
 
-.gt-perfil__subtitulo {
-  font-size: var(--gt-fs-h3);
-  font-weight: var(--gt-fw-semibold);
+/* 70ch: el techo del rango cómodo (65–75). La columna mide unos 74ch en
+   escritorio, así que el tope apenas muerde y el bloque llega casi al borde en
+   vez de dejar el vacío de antes.                                            */
+.gt-perfil__bio p {
+  max-width: 70ch;
   color: var(--gt-humo);
+  text-wrap: pretty;
+}
+
+.gt-perfil__bio p + p {
+  margin-top: var(--gt-space-6);
+}
+
+/* El primer párrafo es siempre quién es la persona y qué estudióasí abre
+   cada ficha del documento de Comunicaciones—, así que se compone como
+   entradilla. Todas las biografías llegan aquí con dos párrafos o más: las que
+   el documento entrega en un bloque único se parten en foro.ts por un punto y
+   seguido, sin tocar el texto, justo para que esta regla las alcance.
+
+   El `:not(:only-child)` es la red: una bio de un solo párrafo pasa de las mil
+   pulsaciones y a tamaño de entradilla sería un muro, así que mientras nadie
+   la parta se compone como cuerpo. Lo vigila scripts/bios-verificar.py, que
+   falla si alguna se queda en un párrafo. La distinción la hace el selector,
+   no una bandera en los datos.                                              */
+.gt-perfil__bio p:first-child:not(:only-child) {
+  max-width: 58ch;
+  color: var(--gt-texto);
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.5;
+}
+
+/* --- El programa, sobre lámina -----------------------------------------------
+   La misma tarjeta vive en dos anchos distintosdentro de la columna de texto
+   cuando no hay biografía, y a ancho completo cuando sí—, así que se mide a sí
+   misma con una container query en vez de mirar la ventana. Es lo que ya hace
+   la línea del día, y por el mismo motivo: lo que decide si las horas caben en
+   su propia columna es el ancho de la tarjeta, no el del navegador.          */
+
+.gt-perfil__programa {
+  container-type: inline-size;
+  margin-top: clamp(1.75rem, 3.5vw, 2.5rem);
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1.25rem, 3.5vw, 2.75rem);
+  border-radius: var(--gt-radio-tarjeta) 0 var(--gt-radio-tarjeta) 0;
+  box-shadow: var(--gt-sombra-lamina);
 }
 
 .gt-perfil__lista {
-  margin-top: var(--gt-space-6);
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
 }
 
 .gt-perfil__item {
@@ -57,11 +195,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  color: var(--gt-celeste);
+  color: var(--gt-acento);
 }
 
 .gt-perfil__hora-fin {
-  color: var(--gt-humo);
+  color: var(--gt-texto-suave);
   font-weight: var(--gt-fw-regular);
   letter-spacing: 0.04em;
   text-transform: none;
@@ -77,7 +215,7 @@
 .gt-perfil__enlace {
   color: inherit;
   text-decoration: none;
-  background-image: linear-gradient(var(--gt-celeste), var(--gt-celeste));
+  background-image: linear-gradient(var(--gt-acento), var(--gt-acento));
   background-size: 0 1px;
   background-position: 0 100%;
   background-repeat: no-repeat;
@@ -87,12 +225,29 @@
 
 .gt-perfil__enlace:hover,
 .gt-perfil__enlace:focus-visible {
-  color: var(--gt-celeste);
+  color: var(--gt-acento);
   background-size: 100% 1px;
 }
 
 .gt-perfil__papel {
   align-self: center;
+}
+
+/* Por debajo de 34rem de tarjeta, el título del bloque se quedaba en cuatro
+   líneas de tres palabras: las tres columnas se apilan.                      */
+@container (max-width: 34rem) {
+  .gt-perfil__item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--gt-space-2);
+  }
+  .gt-perfil__hora {
+    flex-direction: row;
+    gap: var(--gt-space-2);
+  }
+  .gt-perfil__papel {
+    justify-self: start;
+    margin-top: var(--gt-space-2);
+  }
 }
 
 /* --- Anterior / siguiente ---------------------------------------------------- */
@@ -107,7 +262,7 @@
 
 .gt-perfil__salto {
   display: grid;
-  gap: var(--gt-space-2);
+  gap: var(--gt-space-3);
   max-width: 18rem;
   color: inherit;
   text-decoration: none;
@@ -119,7 +274,19 @@
 }
 
 .gt-perfil__salto-dir {
-  color: var(--gt-celeste);
+  color: var(--gt-acento);
+}
+
+/* La miniatura del vecino: convierte la navegación en «quién viene después» en
+   vez de en un par de flechas.                                               */
+.gt-perfil__salto-persona {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+
+.gt-perfil__salto--der .gt-perfil__salto-persona {
+  flex-direction: row-reverse;
 }
 
 .gt-perfil__salto-nombre {
@@ -128,7 +295,8 @@
   line-height: 1.25;
 }
 
-.gt-perfil__salto:hover .gt-perfil__salto-nombre {
+.gt-perfil__salto:hover .gt-perfil__salto-nombre,
+.gt-perfil__salto:focus-visible .gt-perfil__salto-nombre {
   text-decoration: underline;
   text-underline-offset: 0.22em;
 }
@@ -148,23 +316,29 @@
   border-color: var(--gt-celeste);
 }
 
+/* Por debajo de 52rem la columna de texto se quedaría en unos 40 caracteres:
+   la rejilla se deshace y el retrato vuelve a su proporción medida, la única
+   sensata cuando no hay una segunda columna con la que igualarse.            */
+@media (max-width: 52rem) {
+  .gt-perfil__intro {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: clamp(1.5rem, 4vw, 2rem);
+  }
+  .gt-perfil__retrato {
+    width: clamp(11rem, 46vw, 16rem);
+    align-self: start;
+    min-height: 0;
+  }
+  .gt-perfil__retrato .gt-marco__lienzo {
+    height: auto;
+    aspect-ratio: var(--gt-marco-ratio);
+  }
+  .gt-perfil__placa {
+    aspect-ratio: 4 / 5;
+  }
+}
+
 @media (max-width: 44rem) {
-  .gt-perfil__cabecera {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .gt-perfil__item {
-    grid-template-columns: 1fr;
-    gap: var(--gt-space-2);
-  }
-  .gt-perfil__hora {
-    flex-direction: row;
-    gap: var(--gt-space-2);
-  }
-  .gt-perfil__papel {
-    justify-self: start;
-    margin-top: var(--gt-space-2);
-  }
   .gt-perfil__nav {
     grid-template-columns: 1fr;
     justify-items: start;
@@ -172,5 +346,8 @@
   .gt-perfil__salto--der {
     justify-self: start;
     text-align: left;
+  }
+  .gt-perfil__salto--der .gt-perfil__salto-persona {
+    flex-direction: row;
   }
 }

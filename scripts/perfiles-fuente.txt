@@ -1,0 +1,65 @@
+# Texto de las biografías tal como lo entregó Comunicaciones.
+#
+# GENERADO por scripts/bios-verificar.py --regenerar. Es la REFERENCIA contra la que se
+# comprueba que src/data/foro.ts sigue siendo el documento, y existe porque el .docx no
+# siempre está en la máquina: llega por correo, se procesa, y la carpeta del envío está
+# ignorada por git. Sin esto la comprobación se quedaba sin patrón o, peor, caía a una
+# entrega anterior y cantaba fallos falsos que fue justo lo que pasó.
+#
+# Un párrafo por línea, sin plegar. Son los párrafos DEL DOCUMENTO: en foro.ts alguno va
+# partido para que el primero haga de entradilla, y lo que se compara es el texto unido
+# con espacios, no el reparto.
+#
+# Las correcciones declaradas en el script YA ESTÁN aplicadas aquí, que es donde se ven.
+
+=== JOSE FERNANDO PRADA | PERFIL DE LOS PONENTES (2).docx
+Ingeniero Electricista de la Universidad Nacional de Colombia, especialista en Finanzas de la Universidad EAFIT, con maestrías en Ingeniería Eléctrica y en Tecnología y Políticas Energéticas del Massachusetts Institute of Technology (MIT), y doctor en Ingeniería y Políticas Públicas de la Universidad Carnegie Mellon.
+Cuenta con más de 25 años de experiencia en el sector energético, donde ha liderado iniciativas estratégicas relacionadas con el mercado mayorista de energía, el cargo por confiabilidad, la transmisión eléctrica y la transición energética. Fue director ejecutivo y experto comisionado de la Comisión de Regulación de Energía y Gas (CREG).
+Antes de su paso por la CREG, se desempeñó como director para Latinoamérica en KEMA Consulting y ha sido consultor senior e investigador para organismos multilaterales, gobiernos y empresas de servicios públicos, aportando al desarrollo de políticas y proyectos energéticos en diferentes países.
+
+=== NICOLAS RINCON DIAZ | PERFIL DE LOS PONENTES (2).docx
+Ingeniero Sanitario y Ambiental, Magíster en Energía y Sostenibilidad, especialista en Gerencia del Ambiente con más de 18 años de experiencia en viabilidad ambiental de proyectos energéticos e infraestructura.
+Ha dirigido la elaboración de estudios de impacto ambiental para proyectos complejos en hidrocarburos, energías renovables (solar, eólica), infraestructura eléctrica, obras civiles y programas sísmicos. Su expertise incluye gestión de riesgos ambientales, evaluación de calidad de aguas, suelos y aspectos atmosféricos, interventorías en seguridad industrial y salud ocupacional, y cumplimiento de normatividad ambiental.
+Ha trabajado como docente en gestión ambiental y ha asesorado en aplicación de tecnologías limpias y desarrollo sostenible en proyectos del sector energía.
+
+=== CARLOS NARANJO MERINO | PERFIL DE LOS PONENTES (2).docx
+Ingeniero Químico de la Universidad Nacional, Especialista en ingeniería ambiental de la UPB. Docente de posgrados en Colombia.
+Cuenta con experiencia de más de 20 años en diseño de estrategia de sostenibilidad y reportes, estrategia de cambio climático, gestión de riesgos hídricos y huellas ambientales como huella de carbono y huella hídrica.
+Dentro de su experiencia ha asesorado a empresas líderes mundiales en Sostenibilidad como Grupo Ecopetrol, Grupo Nutresa, Grupo Argos, Grupo Bancolombia, Grupo ISA, Grupo de Energía de Bogotá, Grupo Colombina y Celsia entre otros.
+Ha sido autor de publicaciones como el Manual de Transporte Limpio v1 y v2, Guía Técnica orientada al cálculo y gestión del alcance 3 en la huella de carbono organizacional y varias publicaciones científicas en Análisis de Ciclo de Vida.
+
+=== KAREN HENRIQUEZ LEAL | PERFIL DE LOS PONENTES (2).docx
+Ingeniera Industrial de la Universidad del Norte, especialista en Finanzas y Magíster en Administración de Empresas de la misma institución. Cuenta con más de 19 años de trayectoria en el sector energético, con amplia experiencia en planeación, regulación, nuevos negocios y gestión financiera. Actualmente se desempeña como Vicepresidenta Financiera de GECELCA, cargo desde el cual lidera la estrategia financiera de la organización.
+Anteriormente ocupó las posiciones de Gerente Financiera y Analista de Regulación y Nuevos Negocios en GECELCA, así como Profesional de Planeación y Sistemas en CORELCA S.A. E.S.P., consolidando una sólida trayectoria en el análisis financiero, la regulación del sector eléctrico y la formulación de estrategias para el desarrollo del negocio.
+
+=== ALFREDO CHAMAT BARRIOS | PERFIL DE LOS PONENTES (2).docx
+Administrador de Empresas, especialista en Finanzas y Executive MBA, con más de 24 años de experiencia en los sectores de gas natural, energía y servicios públicos, liderando procesos estratégicos, financieros y comerciales.
+Actualmente es Vicepresidente de Gas y Energías en Petromil. Anteriormente fue Gerente General de Calamari LNG, primer importador y comercializador de gas natural licuado (LNG) en Colombia, donde lideró el abastecimiento de gas para centrales térmicas con una capacidad cercana a los 2.000 MW de generación.
+A lo largo de su trayectoria ha ocupado cargos de liderazgo en compañías como Surtigas y ha participado como panelista en importantes foros internacionales sobre LNG y gas natural. Además, cuenta con formación especializada en economía y gerencia del gas, trading de LNG y treasury management.
+
+=== CAROLINA PALACIO GARCERANT | PERFIL DE LOS PONENTES (2).docx
+Ingeniera Electricista de la Universidad del Norte, con formación especializada en mercados de energía, regulación, operación de sistemas eléctricos de potencia, gestión del riesgo, calidad y transición energética.
+Cuenta con más de 20 años de experiencia en el sector energético, desarrollados en GECELCA, donde actualmente se desempeña como Gerente de Regulación y Planeación Energética, liderando procesos estratégicos relacionados con la regulación, la planeación y la comercialización de energía.
+A lo largo de su trayectoria ha ocupado diversos cargos en la organización, consolidando una amplia experiencia en regulación comercial, transacciones del mercado eléctrico y nuevos negocios. Su formación ha sido fortalecida a través de programas especializados impartidos por entidades como XM, ISA, ANDESCO, ICONTEC, Bureau Veritas, CIDET y la Universidad del Norte.
+
+=== JORGE SIERRA ALMANZA | PERFIL DE LOS PONENTES (2).docx
+Fundador y CEO de Enersinc, Ingeniero Electricista con Maestría en Regulación Económica de la Universidad de los Andes y estudios de maestría en Estadística y Nuevas Tecnologías en el Massachusetts Institute of Technology (MIT).
+Cuenta con más de 23 años de experiencia internacional en modelado, simulación y regulación de mercados eléctricos, con amplia trayectoria en pronósticos, regulación y optimización de recursos energéticos para el sector eléctrico en Latinoamérica.
+Ha liderado proyectos de consultoría e innovación tecnológica para entidades públicas y privadas como el Ministerio de Minas y Energía, la CREG, el Banco Mundial, Ecopetrol, XM, BlackRock, EY, EDF, ENGIE y AES, incorporando analítica avanzada e inteligencia artificial para fortalecer la toma de decisiones en el sector energético.
+
+=== MIGUEL PRIETO LOCARNO | PERFIL DE LOS PONENTES (2).docx
+Ingeniero Industrial y Especialista en Finanzas de la Universidad del Norte. Cuenta con más de 10 años de experiencia en el sector energético, con énfasis en la estructuración, evaluación y desarrollo de proyectos de generación de energía, descarbonización y nuevos negocios.
+Actualmente es Gerente de Nuevos Negocios de GECELCA, donde lidera la identificación y estructuración de oportunidades de inversión, estudios de prefactibilidad y factibilidad, procesos de debida diligencia y el desarrollo de proyectos estratégicos para la transición energética.
+A lo largo de su trayectoria ha ocupado diversos cargos en GECELCA, consolidando experiencia en planeación estratégica, regulación, análisis financiero y gestión de riesgos. Ha participado en la estructuración y evaluación de proyectos que superan 1 GW de capacidad instalada, liderando procesos para impulsar el crecimiento sostenible del sector eléctrico.
+
+=== CHRISTIAN MORENO ROCHA | PERFIL DE LOS PONENTES (2).docx
+Docente e investigador con Doctorado en Energías Renovables y Sostenibilidad Energética. Máster en Eficiencia Energética y Energías Renovables, especialista en Gerencia Energética. Sólida formación en Ingeniería Eléctrica y Física Pura.
+Profesional con experiencia integral como docente universitario, investigador y asesor técnico. Actualmente investigador en el Instituto Ambiental de Estocolmo (SEI) en proyecto sobre aceptación social de energía eólica offshore en el Caribe colombiano. Docente de tiempo completo en Universidad de la Costa desde 2016, donde coordina programas académicos, lidera grupos de investigación y desarrolla proyectos sobre transición energética y optimización de recursos renovables. Autor de múltiples artículos de investigación en revistas académicas revisadas por pares sobre sostenibilidad energética.
+También docente de postgrado en Escuela Naval de Suboficiales, especializado en gestión eficiente de energía y desarrollo sostenible. Experiencia en asesoría técnica para implementación de proyectos energéticos sostenibles en el sector empresarial.
+
+=== ANGEL HERNANDEZ MONTES | PERFIL DE LOS PONENTES (2).docx
+Ingeniero Electricista de la Universidad del Norte y Magíster en Administración de Empresas de la misma institución. Complementó su formación con el Programa de Especialización en Servicios Públicos Domiciliarios de la Universidad Externado de Colombia y una amplia capacitación en regulación, mercados de energía, gestión del riesgo, negociación, generación eléctrica, liderazgo y servicios públicos, impartida por entidades como XM, ANDESCO, CIER, ACIEM, NATURGAS y la Universidad del Norte.
+Cuenta con más de 30 años de experiencia en el sector energético, desarrollando su trayectoria en GECELCA, donde inició como Profesional de la División de Energía y posteriormente ocupó los cargos de Profesional Especializado, Jefe de la División de Energía, Gerente de Energía y vicepresidente de Comercialización, consolidando una sólida trayectoria en las áreas de energía y comercialización del sector eléctrico.
+
+=== ERICK WEHDEKING ARCIERI | PERFIL DE LOS PONENTES (2).docx
+Administrador de Empresas, especialista en Finanzas y con estudios de MBA. Cuenta con más de 35 años de trayectoria en el sector energético, desarrollada al interior de GECELCA y su antecesora CORELCA, donde inició su carrera profesional en 1989. A lo largo de su trayectoria ha desempeñado cargos como Profesional Especializado de Facturación, Gerente Financiero, Vicepresidente Administrativo y Financiero, Vicepresidente Administrativo y Primer Suplente del Presidente, adquiriendo experiencia en los procesos comerciales, financieros y administrativos de la organización. En enero de 2026 fue designado Presidente de GECELCA S.A. E.S.P., luego de una extensa trayectoria en la compañía, desde donde asume la dirección de la empresa en un contexto marcado por los retos de la transición energética y el desarrollo de nuevas fuentes de generación.

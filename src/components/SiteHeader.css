@@ -32,7 +32,7 @@
 /* El plano aparece al bajar del hero. Se controla con una clase desde React y
    no con `animation-timeline: scroll()`: esa línea de tiempo se queda inactiva
    en cuanto el scroller no es el que `nearest` resuelve, y el header se
-   quedaba transparente por encima de la lámina blanca del programa —texto
+   quedaba transparente por encima de la lámina blanca del programatexto
    blanco sobre blanco—. Aquí la legibilidad manda sobre la pureza CSS.       */
 .gt-header--solido::before {
   opacity: 1;

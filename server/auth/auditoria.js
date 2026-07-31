@@ -1,5 +1,5 @@
 /**
- * Registro de acceso — quién entró al foro y cuándo.
+ * Registro de acceso quién entró al foro y cuándo.
  *
  * Es un dato personal, y por eso se separa en dos flujos con propósitos distintos:
  *
@@ -36,7 +36,7 @@ if (RUTA) {
  * @param {object} evento
  * @param {'ok'|'no_asignado'|'revocada'|'revalidacion_fallida'} evento.resultado
  * @param {string} [evento.oid]   identificador opaco del usuario en el tenant
- * @param {string} [evento.upn]   correo corporativo — solo va al registro de asistencia
+ * @param {string} [evento.upn]   correo corporativo solo va al registro de asistencia
  * @param {string[]} [evento.roles]
  */
 export function registrarAcceso({ resultado, oid = '', upn = '', roles = [] }) {

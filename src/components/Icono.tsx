@@ -1,12 +1,13 @@
 import type { CSSProperties } from 'react'
 import { ICONOS, type IconoNombre } from '../design/iconos'
+import { ICONOS_EXTRA, type IconoExtraNombre } from '../design/iconos-extra'
 import './Icono.css'
 
 /**
  * Pinta un símbolo monocromo del sistema heredando el color del contexto.
  *
  * No sirve cargar el SVG con una etiqueta `img`: así es un documento aparte y
- * su `currentColor` **no** hereda el `color` de la página — se resuelve a
+ * su `currentColor` **no** hereda el `color` de la página se resuelve a
  * negro. Por eso el símbolo va como máscara CSS y el color lo pone
  * `background-color: currentColor`.
  *
@@ -22,14 +23,15 @@ export default function Icono({
   className = '',
   titulo,
 }: {
-  nombre: IconoNombre
+  nombre: IconoNombre | IconoExtraNombre
   /** Alto del símbolo. El ancho sale de la proporción del SVG. */
   alto?: string
   className?: string
   /** Si se pasa, el símbolo se anuncia con este nombre; si no, es decorativo. */
   titulo?: string
 }) {
-  const { src, ratio } = ICONOS[nombre]
+  // Dos catálogos, un componente: el generado desde los PDF y el manual (iconos-extra).
+  const { src, ratio } = nombre in ICONOS ? ICONOS[nombre as IconoNombre] : ICONOS_EXTRA[nombre as IconoExtraNombre]
   const estilo = {
     '--gt-icono-src': `url("${src}")`,
     height: alto,

@@ -3,6 +3,11 @@
 #
 #   sudo cp gtalks /etc/logrotate.d/gtalks
 #
+# ⚠ AQUÍ SOLO ENTRA /var/log/gtalks/. El libro de inscripciones vive en
+#   /var/lib/gtalks/inscripciones.jsonl y NO se rota jamás: es el estado que recuerda a quién ya
+#   se le mandó el correo de inscripción, y `copytruncate` lo borraría. Tras el siguiente
+#   reinicio, el servidor volvería a escribirle a todo el mundo.
+#
 # 90 días = 12 rotaciones semanales. Ver docs/SEGURIDAD.md §Registro de acceso para el
 # responsable del borrado y el aviso de privacidad que se muestra en la pantalla de login.
 /var/log/gtalks/acceso.log {

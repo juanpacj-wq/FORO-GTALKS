@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="182.17 2475.92 51.62 46.24" role="img" aria-label="Gecelca">
+  <!-- La «G» de Gecelca sola: los dos paths del emblema, extraídos de logo-gecelca.svg
+       (mismos datos, viewBox acotado). Marca bicolor de colores fijos: va como imagen,
+       nunca por Icono/mask. La usa el centro del QR de la escarapela, según la pieza
+       «Diseño de Código QR.png» de la raíz. -->
+  <path d="M215.64 2487.95 C208.29 2475.92 190.89 2481.45 185.58 2491.95 C183.39 2495.79 182.71 2499.14 183.02 2502.99 C184.52 2521.62 206.80 2522.16 215.52 2507.10 C217.01 2504.54 217.97 2501.37 218.14 2497.31 C213.89 2497.54 209.65 2497.54 205.41 2498.19 C204.70 2504.12 199.77 2509.84 193.43 2509.35 C191.38 2509.43 189.32 2508.68 187.26 2506.11 C182.17 2499.29 188.44 2489.58 194.25 2485.58 C201.07 2481.07 210.15 2481.30 215.64 2487.95" fill-rule="evenodd" fill="#004A96" />
+  <path d="M187.51 2501.30 C206.96 2495.46 221.49 2495.11 233.79 2497.25 C217.87 2496.85 202.43 2498.09 187.51 2501.30" fill-rule="evenodd" fill="#006533" />
+</svg>

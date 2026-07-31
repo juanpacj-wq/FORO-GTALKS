@@ -1,26 +1,32 @@
-// Verificación del gate de Microsoft Entra ID sobre el sitio servido por server/.
+// Verificación del server público + identidad Entra ID (server/).
 // Sale con código 1 si algo falla.
 //
 //   npm run build
 //   npm run start:local                  # en una terminal (o `npm start` con el entorno puesto)
 //   node scripts/gate-test.mjs           # en otra
 //
-// La regla que verifica este archivo, y que es el requisito del sitio:
+// La regla que verifica este archivo, y que es el requisito del sitio desde la apertura:
 //
-//   NINGUNA navegación de una persona termina en un callejón sin salida que no sea Microsoft.
-//   Todo lo demás —subrecursos, fetch, API, métodos que no son de lectura— recibe 401, porque
-//   redirigirlos a Entra devuelve HTML donde se esperaba un script, una imagen o un JSON.
+//   El contenido del foro es PÚBLICO; ninguna navegación redirige sola a Microsoft.
+//   Lo único con sesión es la identidad: /api/me responde 401 sin ella, los métodos que no son
+//   de lectura pasan por el CSRF, y todo HTML sale con la Content-Security-Policy puesta.
 //
 // Usa `node:http` y NO `fetch`: undici fuerza `Sec-Fetch-Mode: cors` y no permite emular una
-// navegación de navegador, que es justo lo que hay que distinguir aquí. Con `fetch` este script
-// reportaría 401 en las navegaciones y el fallo estaría en la prueba, no en el servidor.
+// navegación de navegador, que sigue siendo lo que hay que distinguir (el fallback SPA responde
+// HTML a las navegaciones y 404 JSON a los subrecursos rotos).
 import http from 'node:http'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import { estadoEncuestas } from '../server/encuestas.js'
 
 const base = new URL(process.argv[2] ?? 'http://127.0.0.1:3000')
+const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 let fallos = 0
 function check(nombre, ok, detalle = '') {
-  console.log(`${ok ? '  ok  ' : ' FALLA'} ${nombre}${detalle ? ` — ${detalle}` : ''}`)
+  console.log(`${ok ? '  ok  ' : ' FALLA'} ${nombre}${detalle ? ` ${detalle}` : ''}`)
   if (!ok) fallos++
 }
 
@@ -55,67 +61,66 @@ const SUBRECURSO = (dest) => ({
   'sec-fetch-site': 'same-origin',
 })
 
-// ─────────────────────────────────────────────── navegaciones: todas a Microsoft
-console.log('\nNavegación sin sesión → autenticación de Microsoft')
+// ─────────────────────────────────────── navegaciones: públicas, con cabeceras
+console.log('\nNavegación sin sesión → el sitio se sirve, con la CSP puesta')
 
 for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas']) {
   const r = await pedir(ruta, { headers: NAVEGA })
-  check(
-    `${ruta} redirige al login`,
-    r.status === 302 && (r.headers.location || '').startsWith('/auth/login'),
-    `${r.status} → ${r.headers.location}`,
-  )
-}
-
-// El caso que antes fallaba: una URL de asset ESCRITA A MANO en la barra de direcciones es una
-// navegación, no un subrecurso, y debe acabar en Microsoft igual que cualquier otra.
-{
-  const r = await pedir('/img/hero-aerogeneradores.webp', { headers: NAVEGA })
-  check('un asset escrito en la barra también redirige', r.status === 302, `${r.status} → ${r.headers.location}`)
+  const csp = r.headers['content-security-policy'] || ''
+  check(`${ruta} se sirve (200, HTML)`, r.status === 200 && (r.headers['content-type'] || '').includes('text/html'), String(r.status))
+  check(`${ruta} lleva la CSP`, csp.includes("default-src 'none'"), csp ? csp.slice(0, 40) : '(ausente)')
+  check(`${ruta} no se cachea`, (r.headers['cache-control'] || '').includes('no-store'))
+  // Minimización: navegar anónimo NO crea sesión (saveUninitialized: false, y sin gate que
+  // escriba `destino`). Una cookie aquí sería un session store llenándose con visitas.
+  check(`${ruta} no fija cookies`, r.headers['set-cookie'] === undefined, String(r.headers['set-cookie'] || ''))
 }
 
 {
   const r = await pedir('/', { method: 'HEAD', headers: NAVEGA })
-  check('HEAD / redirige (no 401)', r.status === 302, String(r.status))
+  check('HEAD / responde 200', r.status === 200, String(r.status))
 }
 
 {
   // Clientes viejos sin Sec-Fetch: se decide por Accept, para no dejar fuera a nadie.
   const r = await pedir('/', { headers: { accept: 'text/html' } })
-  check('un cliente sin Sec-Fetch también redirige', r.status === 302, String(r.status))
+  check('un cliente sin Sec-Fetch también recibe el sitio', r.status === 200, String(r.status))
+}
+
+// ─────────────────────────────────────────────── subrecursos: públicos, cacheables
+console.log('\nSubrecursos → 200, cacheables en cachés compartidas')
+
+for (const [ruta, dest, cache] of [
+  ['/img/hero-matriz-energetica.webp', 'image', 'public'],
+  ['/img/fichas-conversacion.webp', 'image', 'public'],
+  ['/fonts/urbanist-latin.woff2', 'font', 'public'],
+  ['/favicon.svg', 'image', 'public'],
+]) {
+  const r = await pedir(ruta, { headers: SUBRECURSO(dest) })
+  check(`${ruta} es público`, r.status === 200, String(r.status))
+  check(`${ruta} se puede cachear`, (r.headers['cache-control'] || '').includes(cache), r.headers['cache-control'] || '')
 }
 
 {
-  const r = await pedir('/auth/login?silent=1', { headers: NAVEGA })
-  const destino = r.headers.location || ''
-  check(
-    'el login apunta a login.microsoftonline.com',
-    r.status === 302 && destino.startsWith('https://login.microsoftonline.com/'),
-    destino.slice(0, 56),
-  )
-  check('y pide prompt=none (SSO silencioso)', destino.includes('prompt=none'))
-  check('y lleva PKCE S256', destino.includes('code_challenge_method=S256'))
+  // El fallback SPA es solo para navegaciones: un asset roto pedido por un <img> recibe el 404
+  // JSON, no HTML con 200 (que envenenaría cachés y confundiría al navegador).
+  const roto = await pedir('/no-existe.png', { headers: SUBRECURSO('image') })
+  check('un subrecurso inexistente recibe 404 JSON', roto.status === 404 && (roto.headers['content-type'] || '').includes('json'), String(roto.status))
+  const navegado = await pedir('/no-existe.png', { headers: NAVEGA })
+  check('esa misma URL navegada recibe la SPA (200)', navegado.status === 200 && (navegado.headers['content-type'] || '').includes('text/html'), String(navegado.status))
 }
 
-// ────────────────────────────────────────────── subrecursos y API: 401, no 302
-console.log('\nSubrecursos, API y mutadores → 401 / 403, nunca redirect')
-
-for (const [ruta, dest] of [
-  ['/img/hero-aerogeneradores.webp', 'image'],
-  ['/fonts/urbanist-latin-ext.woff2', 'font'],
-]) {
-  const r = await pedir(ruta, { headers: SUBRECURSO(dest) })
-  check(`${ruta} (${dest}) responde 401`, r.status === 401, String(r.status))
-}
+// ─────────────────────────────── identidad y mutadores: lo único que sigue cerrado
+console.log('\nIdentidad y mutadores → 401 / 403')
 
 {
   const r = await pedir('/api/me')
-  check('/api/me responde 401', r.status === 401, String(r.status))
+  check('/api/me responde 401 sin sesión', r.status === 401, String(r.status))
   check('y no se cachea', (r.headers['cache-control'] || '').includes('no-store'))
+  check('y dice authenticated: false', r.cuerpo.includes('"authenticated":false'), r.cuerpo.slice(0, 40))
 }
 
 {
-  const r = await pedir('/api/logout', { method: 'POST' })
+  const r = await pedir('/api/me', { method: 'POST' })
   check('POST sin Origin ni Sec-Fetch-Site responde 403', r.status === 403, String(r.status))
 }
 
@@ -125,39 +130,111 @@ for (const [ruta, dest] of [
 }
 
 {
-  const r = await pedir('/api/logout', {
+  const r = await pedir('/api/me', {
     method: 'POST',
     headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' },
   })
   check('POST desde otro origen responde 403', r.status === 403, String(r.status))
 }
 
-// ──────────────────────────────────────────────────── lo único público
-console.log('\nSuperficie pública')
+{
+  // El correo de inscripción NO añadió superficie. No hay ruta para dispararlo, reenviarlo ni
+  // consultarlo: un botón de «reenviar» sería un generador de correo a discreción del cliente.
+  // Lo único que cambió es un campo DENTRO de /api/me, que sigue cerrado sin sesión.
+  for (const ruta of ['/api/inscripcion', '/api/inscripciones', '/api/correo', '/api/me/inscripcion']) {
+    const post = await pedir(ruta, { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } })
+    check(`POST ${ruta} no existe`, post.status === 404, String(post.status))
+    const get = await pedir(ruta, { headers: SUBRECURSO('empty') })
+    check(`GET ${ruta} tampoco`, get.status === 404, String(get.status))
+  }
+}
 
-for (const ruta of [
-  '/favicon.svg',
-  '/img/logo-gecelca.svg',
-  '/img/icono-burbujas.svg',
-  '/img/wordmark-g-talks.svg',
-  '/fonts/urbanist-latin.woff2',
-]) {
-  const r = await pedir(ruta)
-  check(`${ruta} es público (lo usa la pantalla de login)`, r.status === 200, String(r.status))
+// ─────────────────────── la encuesta de satisfacción: la URL la entrega el reloj
+console.log('\nEncuesta de satisfacción → la URL solo existe tras el cierre del evento')
+
+{
+  // La hora de cierre sale del MISMO archivo que lee el servidor: si esta prueba
+  // y server/encuestas.js leyeran fuentes distintas, la coherencia de abajo no
+  // probaría nada.
+  const evento = JSON.parse(fs.readFileSync(path.join(RAIZ, 'src', 'data', 'evento.json'), 'utf8'))
+  const cierreMs = Date.parse(evento.fecha.cierreIso)
+  check('evento.json declara el cierre con desfase explícito', Number.isFinite(cierreMs), String(evento.fecha.cierreIso))
+
+  // La frontera exacta, sin esperar al 5 de agosto: `estadoEncuestas` es pura y
+  // acepta el reloj inyectado. Un milisegundo antes NO viaja la URL ni ningún
+  // rastro de ella; en el instante del cierre, viaja.
+  const antes = estadoEncuestas(cierreMs - 1)
+  check(
+    'un milisegundo antes: cerrada y sin URL (ni el campo existe)',
+    antes.satisfaccion.habilitada === false && !('url' in antes.satisfaccion),
+  )
+  check(
+    'y la respuesta cerrada no filtra el destino por ningún campo',
+    !JSON.stringify(antes).includes('forms.cloud.microsoft'),
+  )
+  const justo = estadoEncuestas(cierreMs)
+  check(
+    'en el instante del cierre: abierta y con URL https',
+    justo.satisfaccion.habilitada === true && /^https:\/\//.test(justo.satisfaccion.url ?? ''),
+  )
+
+  // El endpoint público, contra el server de verdad. La coherencia se comprueba
+  // con el reloj de esta máquina, que es la misma del server local; solo sería
+  // ambigua corriendo la prueba en el minuto exacto del cierre.
+  const r = await pedir('/api/encuestas', { headers: SUBRECURSO('empty') })
+  check('/api/encuestas responde 200 JSON', r.status === 200 && (r.headers['content-type'] || '').includes('json'), String(r.status))
+  check('y no se cachea', (r.headers['cache-control'] || '').includes('no-store'), r.headers['cache-control'] || '')
+  check('y no fija cookies', r.headers['set-cookie'] === undefined, String(r.headers['set-cookie'] || ''))
+
+  const cuerpo = JSON.parse(r.cuerpo)
+  const abierta = Date.now() >= cierreMs
+  check(
+    `el estado coincide con el reloj (${abierta ? 'ya cerró el evento' : 'aún no cierra'})`,
+    cuerpo.satisfaccion?.habilitada === abierta,
+    r.cuerpo.slice(0, 80),
+  )
+  if (abierta) {
+    check('abierta: la URL viaja y es https', /^https:\/\//.test(cuerpo.satisfaccion.url ?? ''), String(cuerpo.satisfaccion.url))
+  } else {
+    check('cerrada: la URL NO viaja en la respuesta', !r.cuerpo.includes('forms.cloud.microsoft') && cuerpo.satisfaccion.url === undefined, r.cuerpo.slice(0, 80))
+  }
+
+  // Solo lectura: no hay mutador que abrir la encuesta antes de hora ni nada que
+  // un POST pueda hacerle. El CSRF lo intercepta cross-site; same-origin, no existe.
+  const post = await pedir('/api/encuestas', { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } })
+  check('POST /api/encuestas no existe', post.status === 404, String(post.status))
+}
+
+// ──────────────────────────────────────────── el login sigue vivo, y es explícito
+console.log('\nLogin OIDC → solo por clic, siempre interactivo')
+
+{
+  const r = await pedir('/auth/login', { headers: NAVEGA })
+  const destino = r.headers.location || ''
+  check(
+    'el login apunta a login.microsoftonline.com',
+    r.status === 302 && destino.startsWith('https://login.microsoftonline.com/'),
+    destino.slice(0, 56),
+  )
+  check('y lleva PKCE S256', destino.includes('code_challenge_method=S256'))
+  check('y lleva state', destino.includes('state='))
+  check('y lleva nonce', destino.includes('nonce='))
+  // El SSO silencioso murió con el gate: un `prompt=none` aquí sería el fantasma del modelo
+  // viejo, capaz de resucitar el bucle de redirecciones que el rompebucles existía para cortar.
+  check('y NO pide prompt=none', !destino.includes('prompt=none'), destino.includes('prompt=none') ? 'prompt=none presente' : '')
 }
 
 {
-  const r = await pedir('/img/fichas-conversacion.webp', { headers: SUBRECURSO('image') })
-  check('el contenido del foro NO es público', r.status === 401, String(r.status))
+  const r = await pedir('/auth/login?select=1', { headers: NAVEGA })
+  const destino = r.headers.location || ''
+  check('«entrar con otra cuenta» pide select_account', destino.includes('prompt=select_account'), destino.slice(0, 56))
 }
 
 {
-  const r = await pedir('/?auth=no_acceso', { headers: NAVEGA })
-  check('con marcador se sirve la pantalla de login', r.status === 200, String(r.status))
-  const csp = r.headers['content-security-policy'] || ''
-  check('esa pantalla lleva CSP con hashes derivados', csp.includes("script-src 'sha256-"), csp.slice(0, 38))
-  check('y no se cachea', (r.headers['cache-control'] || '').includes('no-store'))
-  check('el aviso de registro de acceso está a la vista', r.cuerpo.includes('queda registrado'))
+  // El destino del retorno pasa por la allowlist RUTAS_SPA: uno inválido no impide el login
+  // (cae al default /escarapela), y jamás puede salir del sitio.
+  const r = await pedir('/auth/login?destino=//evil.example', { headers: NAVEGA })
+  check('un destino inválido no rompe el login', r.status === 302 && (r.headers.location || '').startsWith('https://login.microsoftonline.com/'), String(r.status))
 }
 
 // ────────────────────────────────────────────────────────── cabeceras
@@ -168,6 +245,8 @@ console.log('\nCabeceras de seguridad')
   const esperadas = {
     'x-content-type-options': 'nosniff',
     'x-frame-options': 'DENY',
+    // Público ≠ indexable: es el evento interno de una empresa, no una página que deba salir
+    // en un buscador. La cabecera cubre también los assets, donde el <meta> no llega.
     'x-robots-tag': 'noindex, nofollow',
     'cross-origin-opener-policy': 'same-origin',
     'cross-origin-resource-policy': 'same-origin',
@@ -179,34 +258,5 @@ console.log('\nCabeceras de seguridad')
   check('no expone x-powered-by', !r.headers['x-powered-by'])
 }
 
-// ─────────────────────────────────────────────────────── rompebucles
-console.log('\nRompebucles de cookie')
-
-{
-  // Tres vueltas AUTOMÁTICAS sin conseguir sesión significan que la cookie no se puede fijar. A la
-  // cuarta hay que dejar de reintentar y NOMBRAR la causa, o el navegador rebota para siempre.
-  const r = await pedir('/auth/login?silent=1', { headers: { ...NAVEGA, cookie: 'gt_lt=3' } })
-  check(
-    'tras 3 intentos automáticos se corta hacia la pantalla',
-    r.status === 302 && (r.headers.location || '').includes('cookies_bloqueadas'),
-    `${r.status} → ${r.headers.location}`,
-  )
-
-  // REGRESIÓN: el contador llegó a incluir también los clics de la persona. Como cada carga de
-  // página dispara un intento silencioso, a la tercera recarga el botón «Iniciar sesión» dejaba
-  // de hacer absolutamente nada durante cinco minutos.
-  const clic = await pedir('/auth/login', { headers: { ...NAVEGA, cookie: 'gt_lt=9' } })
-  check(
-    'un clic explícito SIEMPRE arranca el login, aunque el contador esté al tope',
-    clic.status === 302 && (clic.headers.location || '').startsWith('https://login.microsoftonline.com/'),
-    `${clic.status} → ${(clic.headers.location || '').slice(0, 46)}`,
-  )
-  check(
-    'y reinicia el contador',
-    String(clic.headers['set-cookie'] || '').includes('gt_lt=;'),
-    String(clic.headers['set-cookie'] || '').slice(0, 40),
-  )
-}
-
-console.log(fallos === 0 ? '\nGate: todo en orden.\n' : `\n${fallos} verificación(es) fallaron.\n`)
+console.log(fallos === 0 ? '\nServer público + identidad: todo en orden.\n' : `\n${fallos} verificación(es) fallaron.\n`)
 process.exit(fallos === 0 ? 0 : 1)

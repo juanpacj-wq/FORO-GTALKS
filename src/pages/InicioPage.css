@@ -12,9 +12,16 @@
 .gt-hero {
   position: relative;
   background: var(--gt-noche);
-  /* El header es transparente y flota encima: el contenido arranca por
-     debajo de la barra y del riel de anclas.                                 */
-  padding-top: clamp(7rem, 15vh, 10.5rem);
+  /* Solo el aire que separa el riel de anclas del canto de la foto, y nada
+     más.
+
+     Aquí había un `clamp(7rem, 15vh, 10.5rem)` heredado de cuando el header
+     era fijo y el contenido tenía que arrancar por debajo de él. Hoy es
+     `sticky`: ocupa sus 115 px en el flujo y el hero empieza justo debajo, así
+     que esa reserva era aire puro sobre aire: 162 px de banda muerta a 1080,
+     entre el riel y el titular. Si el header vuelve a salirse del flujo, esto
+     se compensa ahí y no aquí, o la banda vuelve.                            */
+  padding-top: clamp(1.75rem, 3.5vh, 3rem);
 }
 
 .gt-hero__grid {
@@ -36,7 +43,7 @@
 /* A partir de aquí la foto deja de tener margen derecho: sangra hasta el
    borde de la ventana y es lo que rompe la simetría de dos columnas.
 
-   La primera columna replica exactamente el margen del contenedor —de ahí el
+   La primera columna replica exactamente el margen del contenedorde ahí el
    `max()` con el mismo cálculo— para que el titular arranque en la misma
    vertical que la marca del header. Sin eso, el hero queda a la deriva.      */
 @media (min-width: 64rem) {
@@ -44,58 +51,160 @@
     width: auto;
     margin-inline: 0;
     align-items: end;
-    /* El padding —y no una primera columna— replica el margen del contenedor:
+    /* En variable porque de este ancho cuelgan tres cosas: la columna de
+       texto, el cuerpo del lockup y, por resta, la foto. Va en el grid y no en
+       `.gt-hero__texto` justo por lo último.                                 */
+    --gt-hero-columna: clamp(30rem, 46vw, 40rem);
+    /* El paddingy no una primera columna— replica el margen del contenedor:
        una columna extra sumaría además el `column-gap` y desalinearía.       */
     padding-left: max(var(--gt-margen), calc((100% - var(--gt-ancho-contenido)) / 2));
-    grid-template-columns: minmax(0, 1fr) minmax(0, clamp(26rem, 27vw, 33rem));
+    /* La foto no mide un ancho propio: se lleva TODO lo que sobra después del
+       texto. Con dos anchos fijos (`1fr` para el texto y un `clamp` para la
+       foto) la primera columna crecía más que su `max-width` y ese sobrante
+       quedaba como una franja vacía entre las dos, que a 1920 pasaba de
+       340 px. Aquí la primera columna mide exactamente lo que va a usar y la
+       banda muerta desaparece por construcción, no por tanteo.               */
+    grid-template-columns: var(--gt-hero-columna) minmax(0, 1fr);
     column-gap: clamp(2rem, 4vw, 4rem);
   }
+  /* Las dos columnas empiezan y terminan a la vez, que es lo mismo que ya hace
+     la ficha de ponente. Ninguna de las dos se alinea contra la otra por la
+     base: las dos se estiran al alto de la fila, y el sobrante de la más corta
+     cae DENTRO de ella y no como una banda vacía en un canto.                */
   .gt-hero__texto {
     grid-column: 1;
     justify-self: start;
-    max-width: clamp(30rem, 46vw, 40rem);
+    align-self: stretch;
+    max-width: var(--gt-hero-columna);
+    display: flex;
+    flex-direction: column;
   }
-  /* En dos columnas el titular ya no dispone del ancho de la ventana: la
-     escala se ata al ancho real de su columna para que «en Acción» no parta.  */
-  .gt-hero__titulo {
-    font-size: clamp(3.2rem, calc(1.7rem + 4.1vw), 6rem);
+  /* El sobrante del texto se va aquí, entre la entradilla y la ficha: el
+     titular arranca a la altura del canto de la foto y la ficha cierra a la de
+     su base. La ficha conserva su propio `margin-top`, así que el hueco mínimo
+     sigue existiendo cuando no sobra nada.                                   */
+  .gt-hero__intro {
+    margin-bottom: auto;
   }
   .gt-hero__media {
     grid-column: 2;
+    /* Pegada al canto derecho de la ventana, que es de donde sangra. El tope
+       es para pantallas muy anchas: sin él, en un monitor de 2560 la foto se
+       llevaría 1180 px de lado y el hero no cabría en la primera pantalla.   */
+    justify-self: end;
+    width: 100%;
+    max-width: 56rem;
+    /* La foto se estira a la fila en vez de medir un alto suyo: así su canto
+       superior cae siempre en la misma línea que el titular. Con un alto
+       propio se descolgaba en cuanto el texto era más largo que ellaa 1280
+       arrancaba 52 px por debajo—, que es la misma banda muerta de antes en
+       pequeño. El alto de abajo pasa a ser un mínimo, no una medida.         */
+    align-self: stretch;
+    min-height: var(--gt-hero-foto-alto);
     /* La foto se pasa del borde inferior del hero y monta sobre la banda
-       celeste: es lo que engancha las dos bandas en una sola composición.   */
+       celeste: es lo que engancha las dos bandas en una sola composición.
+       Como el item va estirado, este margen negativo es además lo que la hace
+       sobresalir por abajo sin mover su canto superior.                      */
     margin-bottom: calc(-1 * clamp(2rem, 7vw, 5rem));
+  }
+  .gt-hero__foto,
+  .gt-hero__foto .gt-marco__lienzo {
+    height: 100%;
+  }
+  /* Y la imagen sale del flujo dentro del marco. Sin esto, lo que mide la fila
+     no es nada de lo de arriba sino el alto natural de la fotoel ancho de la
+     columna por la proporción del archivo—, porque un `height: 100%` contra un
+     padre de alto indefinido se resuelve como `auto` al medir. A 1920 eso daba
+     798 px (864 × 1152/1246) y tanto el `min-height` como el alto del texto
+     dejaban de contar: la fila la fijaba el archivo. Las otras tres capas del
+     marco ya iban absolutas; a esta le faltaba.                              */
+  .gt-hero__foto .gt-marco__img {
+    position: absolute;
+    inset: 0;
   }
 }
 
-/* --- Titular --------------------------------------------------------------- */
+/* --- Titular ----------------------------------------------------------------
+   El lockup del foroel numeral «1», las tres líneas, la regla blanca y la
+   bajada— es UNA pieza, no cuatro elementos apilados: la regla mide lo que mide
+   el conjunto y la base del «1» (Bely Display trae ese serif inferior en el
+   propio glifo) cae dentro de ella, fundida. Por eso van en un contenedor
+   propio y por eso cada cota está en múltiplos del cuerpo del titular, tal como
+   está compuesto en `invitacion gtalk 2026.pdf`.
 
-.gt-hero__titulo {
-  display: flex;
-  align-items: flex-start;
-  gap: clamp(0.75rem, 2vw, 1.75rem);
-  font-size: var(--gt-fs-display);
-  font-weight: var(--gt-fw-black);
-  line-height: var(--gt-lh-tight);
-  letter-spacing: var(--gt-tracking-display);
+   Medido con PyMuPDF sobre la página, cuerpo del titular = 39.1 pt = 1:
+
+     paso entre líneas   35.53 → 0.909      cuerpo de la bajada  24.15 → 0.618
+     tinta del «1»       alto 111.86 → 2.861 · ancho 65.17 → 1.667
+     regla               grosor 2.40 → 0.061 · 2.078 bajo la 1ª línea de base
+     origen del texto    67.98 a la derecha del canto de la regla → 1.738
+     vértice del «1»      3.60 a la izquierda de ese canto → 0.092 (vuela)
+     ancho del conjunto  241.55 → 6.178
+
+   Tres cosas se apartan del resto del sitio porque en la pieza se apartan: el
+   peso es Boldel PDF compone Urbanist-Bold, no el black del sistema—, el
+   tracking es el natural de la fuentelos avances del PDF solo llevan kerning,
+   ningún letter-spacing— y el numeral va blanco pleno y no tono sobre tono: es
+   el arranque de la regla y las dos tienen que ser el mismo trazo.            */
+
+.gt-hero__lockup {
+  /* Cuerpo del titular y unidad de medida de todo el bloque. El conjunto mide
+     6.18 de ancho y no puede partirse, así que en pantalla estrecha manda el
+     ancho disponible antes que la escala tipográfica.                         */
+  --gt-lockup-cuerpo: min(
+    var(--gt-fs-display),
+    calc((100vw - 2 * var(--gt-margen)) / 6.2)
+  );
+  position: relative;
+  width: fit-content;
 }
 
-/* El numeral es el «1» de Bely Display sacado del PDF como contorno. Va
-   tono sobre tono —celeste apagado contra el campo— para que el único acento
-   brillante del hero sea «en Acción».                                        */
-.gt-hero__numeral {
-  flex: none;
-  color: color-mix(in oklab, var(--gt-celeste) 34%, var(--gt-noche));
-  translate: 0 -0.04em;
+/* A partir de dos columnas el conjunto ya no dispone del ancho de la ventana
+   sino del de su columna, y es ese el que manda. Va después de la declaración
+   de arriba a propósito: las dos reglas tienen la misma especificidad, así que
+   aquí gana el orden.                                                         */
+@media (min-width: 64rem) {
+  .gt-hero__lockup {
+    --gt-lockup-cuerpo: min(
+      clamp(3.2rem, calc(1.7rem + 4.1vw), 6rem),
+      calc(var(--gt-hero-columna) / 6.2)
+    );
+  }
+}
+
+.gt-hero__titulo {
+  font-size: var(--gt-lockup-cuerpo);
+  font-weight: var(--gt-fw-bold);
+  line-height: 0.909;
+  letter-spacing: normal;
 }
 
 .gt-hero__palabras {
   display: grid;
-  min-width: 0;
+  /* El hueco del numeral: donde arranca la tinta de «Foro:». */
+  padding-left: 1.738em;
 }
 
 .gt-hero__linea {
   display: block;
+  /* Con 0.909 de paso la tinta se sale de su caja y las líneas se solapan, que
+     es como está compuesta la pieza. Partir una línea rompería el conjunto. */
+  white-space: nowrap;
+}
+
+/* El «1» de Bely Display extraído del PDF. Sale del flujo para que su alto no
+   empuje la regla, y el hueco lo reserva el padding de las palabras.
+
+   El viewBox del asset es la caja em del glifo (219.82 de alto para 111.86 de
+   tinta), no su tinta: de ahí el `alto` de 5.622 en el marcadola tinta cae en
+   el 50.9% central— y de ahí los dos desplazamientos, que llevan ese 50.9% a su
+   sitio: arriba, al borde de la versal de «Foro:»; a la izquierda, al vértice de
+   la bandera, que es lo único del bloque que vuela sobre el margen.           */
+.gt-hero__numeral {
+  position: absolute;
+  top: -1.582em;
+  left: -0.165em;
+  color: var(--gt-blanco);
 }
 
 /* --gt-celeste sobre el campo oscuro: 10.4:1. */
@@ -103,12 +212,35 @@
   color: var(--gt-celeste);
 }
 
+/* La regla la trae la propia bajada, no un elemento aparte: así mide sola lo que
+   mide el conjuntoen la pieza «Retos y oportunidades» y «en Acción» acaban en
+   la misma vertical, con 0.4 pt de diferencia— y no hay un ancho escrito a mano
+   que pueda quedarse mintiendo.
+
+   Y va como caja, no como `border-top`: el grosor es 0.061 del cuerpo y un borde
+   fraccionario lo redondea el navegador a un entero de px, que deja un escalón
+   justo donde la regla se junta con la base del «1». Un alto sí conserva el
+   subpíxel.                                                                    */
 .gt-hero__bajada {
-  margin-top: clamp(1rem, 2vw, 1.5rem);
-  font-size: var(--gt-fs-lead);
-  font-weight: var(--gt-fw-light);
+  margin-top: calc(0.149 * var(--gt-lockup-cuerpo));
   color: var(--gt-blanco);
-  letter-spacing: 0.01em;
+  font-size: calc(0.618 * var(--gt-lockup-cuerpo));
+  font-weight: var(--gt-fw-regular);
+  line-height: 1.2;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+
+.gt-hero__bajada::before {
+  content: '';
+  display: block;
+  height: calc(0.0614 * var(--gt-lockup-cuerpo));
+  margin-bottom: calc(0.043 * var(--gt-lockup-cuerpo));
+  /* El canto derecho de la regla cae en el filo de la tinta de «en Acción», no
+     en su avance: la «n» final deja 0.043 de prosa lateral y el conjunto mide
+     por el avance. Es el único valor del bloque que dependería de la copia. */
+  width: calc(100% - 0.043 * var(--gt-lockup-cuerpo));
+  background: var(--gt-blanco);
 }
 
 .gt-hero__intro {
@@ -179,16 +311,57 @@
   }
 }
 
-/* --- Foto ------------------------------------------------------------------- */
+/* --- Foto -------------------------------------------------------------------
+   `hero-matriz-energetica` es 1246×1152, o sea 1.08 apaisada: es la única foto
+   del sitio que no sale de los PDF (ver scripts/build-foto-hero.py). Es lo que
+   fija los dos encuadres de abajoni uno ni otro se aparta mucho de esa
+   proporción— porque cualquier recorte más alto que 1.08 empieza a comerse por
+   los lados el parque eólico o la chimenea, que son los dos extremos del
+   plano.                                                                      */
 
 .gt-hero__media {
   position: relative;
 }
 
+/* En una columna la foto ya ocupa todo el ancho disponible, así que aquí sí
+   manda una proporción. El cuadrado deja la escena casi entera; el 4:5 de
+   antesque era el de una foto vertical— se llevaba por delante un cuarto del
+   ancho.                                                                      */
+.gt-hero__foto {
+  --gt-marco-ratio: 1 / 1;
+}
+
 @media (min-width: 64rem) {
-  /* Sangrada a la derecha, la esquina redonda solo tiene sentido arriba a la
-     izquierda: las otras tres tocan borde de ventana o el arco de abajo.     */
+  /* A dos columnas la foto deja de medirse por proporción: el ancho lo pone la
+     columna (todo lo que sobra tras el texto) y el alto es el mayor de dos
+     cosasde ahí que sea un `min-height` y no un `height`—: lo que mide la
+     columna de texto, o lo que cabe en la primera pantalla sin empujar el arco
+     fuera de ella. Con una proporción fija sobre un ancho variable pasaba lo
+     contrario: el alto salía de un ancho que no lo sabía.
+
+     El `clamp` acota ese 68vh por los dos lados: 28rem para que en un portátil
+     apaisado la foto no se quede en una franja, y 46rem para que en un monitor
+     alto no se convierta en una columna. Ni el 68 ni el 46 son un gusto, y
+     salen de la misma resta por los dos extremos:
+
+     - Por arriba, lo que queda de la ventana tras el header, el aire de encima
+       y el arco. De ahí que entre 900 y 1080 px de alto el arco cierre justo
+       en el pliegue.
+     - Por abajo, el alto de la columna de texto. Cuanto más se pasa la foto de
+       ese alto, más sobrante hay que repartir dentro del textoy con 72vh y
+       50rem, a 1080 eran 109 px, un hueco perfectamente visible entre la
+       entradilla y la ficha—. Con estos dos valores el sobrante no llega a
+       50 px en ninguna ventana, y por debajo de 1000 px de alto manda el
+       texto y no sobra nada.                                                 */
+  .gt-hero__media {
+    --gt-hero-foto-alto: clamp(28rem, 68vh, 46rem);
+  }
+  .gt-hero__foto {
+    --gt-marco-ratio: auto;
+  }
   .gt-hero__foto .gt-marco__lienzo {
+    /* Sangrada a la derecha, la esquina redonda solo tiene sentido arriba a la
+       izquierda: las otras tres tocan borde de ventana o el arco de abajo.   */
     border-radius: var(--gt-marco-radio) 0 0 0;
   }
 }
@@ -224,12 +397,18 @@
 @media (prefers-reduced-motion: no-preference) {
   @keyframes gt-linea-entra {
     from {
-      clip-path: inset(0 0 112% 0);
+      clip-path: inset(-20% 0 112% 0);
       transform: translateY(0.28em);
     }
   }
 
   .gt-hero__linea {
+    /* La caja de la línea es más corta que la tinta: el recorte tiene que
+       abrirse por arriba y por abajo o se come los acentos y la cola de la «g».
+       Y va también en reposono solo en el fotograma inicial— porque un
+       `inset()` no interpola contra `none`: sin él la revelación daría un salto
+       en seco a mitad de la animación.                                        */
+    clip-path: inset(-20% 0);
     animation: gt-linea-entra 560ms var(--gt-ease) both;
   }
   .gt-hero__linea:nth-child(2) {
@@ -238,11 +417,12 @@
   .gt-hero__linea:nth-child(3) {
     animation-delay: 140ms;
   }
-  .gt-hero__numeral {
-    animation: gt-aparecer 620ms var(--gt-ease-suave) both;
-  }
+  /* El numeral y la bajada entran con la misma curva y la misma duración: la
+     base del «1» y la regla son un solo trazo, y cualquier desfase de opacidad
+     o de posición entre los dos abre una costura a mitad de la entrada.        */
+  .gt-hero__numeral,
   .gt-hero__bajada {
-    animation: gt-subir 520ms var(--gt-ease) 200ms both;
+    animation: gt-aparecer 620ms var(--gt-ease-suave) both;
   }
   .gt-hero__intro {
     animation: gt-subir 520ms var(--gt-ease) 260ms both;
@@ -405,7 +585,7 @@
 }
 
 /* ====================================================================== cita
-   La tercera foto de las piezas —fichas de madera sobre una mesa— es la más
+   La tercera foto de las piezasfichas de madera sobre una mesa— es la más
    floja de las tres y en gris se veía turbia. Con el mismo duotono que el
    resto y con el texto anclado a la izquierda deja de ser un fondo de stock y
    pasa a ser una banda de la marca.                                          */

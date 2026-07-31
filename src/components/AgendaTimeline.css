@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Agenda — el programa impreso, puesto sobre el campo oscuro.
+   Agenda el programa impreso, puesto sobre el campo oscuro.
 
    De la pieza se conservan las cuatro cosas que la hacen reconocible: la
    lámina clara, las horas apiladas a la izquierda, la franja a ancho completo
@@ -132,23 +132,12 @@
   border-radius: var(--gt-radio-chico);
 }
 
-/* Iniciales: el mismo recurso que el monograma de los perfiles, en pequeño.
-   Sustituyen a la foto que ninguna pieza trae (pendiente #2).                */
-.gt-agenda__inicial {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 12px 0 12px 0;
-  background: var(--gt-carta);
-  border: var(--gt-borde) solid var(--gt-linea-tinta);
+/* La caja pequeña la pone `Monogram`, que se adapta sola a la lámina: su fondo
+   es `currentColor` al 9% y su borde, `--gt-linea`, que aquí ya vale
+   `--gt-linea-tinta` por la cascada de .gt-lamina. Lo único que hay que
+   declarar es el color, para que las iniciales salgan en navy y no en tinta. */
+.gt-agenda__nombre .gt-monograma {
   color: var(--gt-navy);
-  font-size: var(--gt-fs-micro);
-  font-weight: var(--gt-fw-bold);
-  letter-spacing: 0.02em;
-  transition: background var(--gt-transicion), color var(--gt-transicion),
-    border-color var(--gt-transicion);
 }
 
 .gt-agenda__persona {
@@ -171,7 +160,11 @@
   text-decoration: underline;
 }
 
-.gt-agenda__nombre:hover .gt-agenda__inicial {
+/* Con retrato el relleno taparía la cara: ahí el gesto es el tinte que baja,
+   declarado en Monogram.css. El `:focus-visible` faltaba y se añade: quien
+   navega con teclado veía el subrayado del nombre pero no esta reacción.     */
+.gt-agenda__nombre:hover .gt-monograma:not(.gt-monograma--foto),
+.gt-agenda__nombre:focus-visible .gt-monograma:not(.gt-monograma--foto) {
   background: var(--gt-navy);
   border-color: var(--gt-navy);
   color: var(--gt-blanco);

@@ -1,0 +1,18 @@
+{
+  "edicion": 1,
+  "nombre": "Foro: Energía en Acción",
+  "bajada": "Retos y oportunidades",
+  "marca": "G-TALKS",
+  "fecha": {
+    "texto": "Miércoles 5 de agosto de 2026",
+    "iso": "2026-08-05",
+    "cierreIso": "2026-08-05T16:00:00-05:00"
+  },
+  "lugar": "G Working",
+  "organiza": "Vicepresidencia de Asuntos Corporativos",
+  "contacto": {
+    "nombre": "María Cristina Giraldo",
+    "telefono": "312 866 0424"
+  },
+  "tagline": "Juntos construimos conversaciones que impulsan la evolución del sector energético."
+}

@@ -17,10 +17,47 @@ dist/
 # Registros: pueden contener el correo corporativo de los asistentes.
 *.log
 
+# Estado local del correo de inscripción (libro de inscripciones, JSONL por `oid`). En producción
+# vive en /var/lib/gtalks/, fuera del repo. NO es un log y NO se rota: si se trunca, el servidor
+# vuelve a escribirle a todo el mundo. Ver server/correo/libro-inscripciones.js.
+.datos/
+
 # Fase 0 del rediseno: venv y salida del extractor de PDFs.
 # Se regenera con:  .venv-design/Scripts/python scripts/extract-pdf-design.py
 .venv-design/
 design-extract/
+scripts/__pycache__/
 
 # Capturas de verificación visual (scripts/screenshot.mjs)
 shots/
+
+# Fotos de los ponentes tal como las manda Comunicaciones: originales a plena
+# resolución de personas identificables, y este repo tiene remoto en GitHub. Lo
+# que sí se versiona es el derivado recortado de public/img/ponentes/.
+# Se procesan con:  .venv-design/Scripts/python scripts/build-retratos.py
+retratos-origen/
+
+# Lo mismo, pero tal como llega el envío de Comunicaciones: la carpeta sin
+# renombrar, con las fotos originales y el .docx de perfiles. De aquí se copia
+# cada foto a retratos-origen/<slug>.jpg y se procesa; el envío en crudo no
+# viaja a GitHub.
+IMagenes ponentes/
+
+# Coordenadas del servidor de despliegue (host, usuario, puerto SSH, rutas). No son
+# secretos, pero este repo tiene remoto en GitHub y el inventario de máquinas internas
+# no tiene por qué viajar ahí. La plantilla sí se versiona.
+deploy/deploy.env
+
+# ─── Entregas superadas y borradores sueltos de la raíz ───
+# Material de trabajo que no viaja a GitHub. La pieza VIGENTE del carné
+# («Carnet-foro-1.jpg (1).jpeg») sí se versiona, igual que los PDF: es fuente de
+# verdad y los arneses de la escarapela miden contra ella. `Escarapela.png` es la
+# entrega anterior (ya no manda en nada) y el .docx de perfiles ya está adoptado
+# en scripts/perfiles-fuente.txt.
+/Escarapela.png
+/NICOLAS RINCÓN.png
+/Diseño de Código QR.png
+/PERFIL DE LOS PONENTES.docx
+/9e1cf9d5-bad0-444b-b1fa-7ec681005d9f.jfif
+/cap-tmp.mjs
+/prompt_recreacion_escarapela.md

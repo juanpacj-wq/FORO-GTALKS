@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Gancho `post-commit` el eslabón «al commitear» del despliegue.
+#
+# Instalación (es opt-in, no se instala solo):
+#   cp deploy/hooks/post-commit .git/hooks/post-commit
+#   chmod +x .git/hooks/post-commit
+#
+# Por defecto NO despliega: solo avisa cuando el commit tocó algo que vive en el
+# servidor. Desplegar en automático en cada commit es cómodo hasta el día en que
+# commiteas a mitad de una idea y el evento está en curso; por eso el disparo real
+# exige poner GTALKS_AUTODEPLOY=1 en deploy/deploy.env, a conciencia.
+#
+# Aun con autodeploy, el gancho respeta lo mismo que el script: solo publica commits,
+# solo desde `main`, y nunca dos despliegues a la vez (el `flock` del servidor).
+set -euo pipefail
+
+# git exporta GIT_DIR/GIT_INDEX_FILE al gancho; heredarlos confundiría a los `git`
+# que corre deploy.sh con su propio -C.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+
+RAIZ="$(git rev-parse --show-toplevel)"
+cd "$RAIZ"
+
+RAMA="$(git rev-parse --abbrev-ref HEAD)"
+[ "$RAMA" = "main" ] || exit 0
+
+[ -f deploy/deploy.env ] || exit 0
+# shellcheck disable=SC1091
+. deploy/deploy.env
+
+# ¿El commit tocó algo que viaja al servidor? La documentación y los PDF no.
+if git diff-tree --no-commit-id --name-only -r HEAD |
+   grep -qE '^(src/|server/|public/|deploy/|index\.html|vite\.config\.ts|tsconfig\.json|package(-lock)?\.json)'; then
+	:
+else
+	exit 0
+fi
+
+if [ "${GTALKS_AUTODEPLOY:-0}" != "1" ]; then
+	echo "──────────────────────────────────────────────────────────────────────"
+	echo " Este commit toca el sitio desplegado y aún NO está en el servidor."
+	echo "   bash deploy/deploy.sh            # publicarlo"
+	echo "   bash deploy/deploy.sh --estado   # ver qué hay desplegado ahora"
+	echo "──────────────────────────────────────────────────────────────────────"
+	exit 0
+fi
+
+echo "==> GTALKS_AUTODEPLOY=1 desplegando $(git rev-parse --short HEAD)…"
+# Sin `exec`: si el deploy falla, queremos que el código de salida se vea, pero que el
+# commit ya hecho NO se deshaga. Un post-commit que falla no revierte el commit; el
+# aviso es suficiente.
+if ! bash deploy/deploy.sh; then
+	echo "!! El despliegue falló. El commit quedó hecho; el servidor no cambió (o revirtió solo)." >&2
+	echo "   Revisa arriba y reintenta con: bash deploy/deploy.sh" >&2
+fi

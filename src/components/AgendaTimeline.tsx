@@ -3,23 +3,33 @@ import {
   AGENDA,
   anclaDe,
   formatoHora,
-  iniciales,
   ponentePorSlug,
   type Bloque,
   type PonenteSlug,
 } from '../data/foro'
+import { retratoDe } from '../design/retratos'
+import Monogram from './Monogram'
 import './AgendaTimeline.css'
 
-/** Nombre enlazado al perfil, con iniciales y cargo. */
+/**
+ * Nombre enlazado al perfil, con su retrato y su cargo.
+ *
+ * La caja pequeña es `Monogram` y no un cuadro propio: antes el programa
+ * reimplementaba la forma en «hoja» por su cuenta, así que las fotos habrían
+ * llegado al listado y al perfil y aquídonde el visitante pasa más tiempo—
+ * se habrían quedado las iniciales.
+ *
+ * No lleva `transicion`: la misma persona puede salir dos veces en la agenda
+ * (ponencia y panel), y dos `view-transition-name` iguales hacen que el
+ * navegador descarte la transición entera. Ver `transicionRetrato()`.
+ */
 function Persona({ slug }: { slug: PonenteSlug }) {
   const p = ponentePorSlug(slug)
   if (!p) return null
   return (
     <li>
       <Link className="gt-agenda__nombre" to={`/ponentes/${p.slug}`} viewTransition>
-        <span className="gt-agenda__inicial" aria-hidden="true">
-          {iniciales(p.nombre)}
-        </span>
+        <Monogram nombre={p.nombre} foto={retratoDe(p.slug)?.cuadrado} tamano="xs" />
         <span className="gt-agenda__persona">
           <span className="gt-agenda__persona-nombre">{p.nombre}</span>
           <span className="gt-agenda__cargo">{p.cargo}</span>

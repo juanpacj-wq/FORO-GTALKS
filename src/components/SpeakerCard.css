@@ -14,11 +14,16 @@
   transition: translate var(--gt-dur-media) var(--gt-ease);
 }
 
-.gt-ponente__enlace:hover {
+.gt-ponente__enlace:hover,
+.gt-ponente__enlace:focus-visible {
   translate: var(--gt-space-3) 0;
 }
 
-.gt-ponente__enlace:hover .gt-monograma {
+/* Sin retrato el monograma se rellena de celeste, que es el gesto de siempre.
+   Con retrato ese relleno taparía la cara: el `:not()` lo excluye y el gesto
+   pasa a ser el tinte que baja, declarado una sola vez en Monogram.css.      */
+.gt-ponente__enlace:hover .gt-monograma:not(.gt-monograma--foto),
+.gt-ponente__enlace:focus-visible .gt-monograma:not(.gt-monograma--foto) {
   background: var(--gt-celeste);
   border-color: var(--gt-celeste);
   color: var(--gt-navy);
@@ -39,7 +44,8 @@
   letter-spacing: var(--gt-tracking-tight);
 }
 
-.gt-ponente__enlace:hover .gt-ponente__nombre {
+.gt-ponente__enlace:hover .gt-ponente__nombre,
+.gt-ponente__enlace:focus-visible .gt-ponente__nombre {
   text-decoration: underline;
   text-underline-offset: 0.22em;
 }
@@ -48,6 +54,22 @@
   font-size: var(--gt-fs-xs);
   line-height: 1.35;
   color: var(--gt-texto-suave);
+  text-wrap: pretty;
+}
+
+/* Cuándo habla y con qué papel. Va en el color de acento y no en el gris del
+   cargo porque es dato del programa, no descripción de la persona: son las dos
+   cosas distintas que la fila tiene que decir.
+
+   Sin `.gt-dato` a propósito: esa clase pone `text-transform: uppercase` y
+   convertiría «9:20 a.m.» en «9:20 A. M.».                                   */
+.gt-ponente__resumen {
+  margin-top: 0.2rem;
+  color: var(--gt-acento);
+  font-size: var(--gt-fs-xs);
+  font-weight: var(--gt-fw-medium);
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
   text-wrap: pretty;
 }
 

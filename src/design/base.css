@@ -50,7 +50,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   /* `clip`, no `hidden`: hidden convierte al elemento en contenedor de scroll
-     —rompe `position: sticky` y deja inactivas las líneas de tiempo por
+    rompe `position: sticky` y deja inactivas las líneas de tiempo por
      scroll—. `clip` recorta igual sin crear scrollport. La red de seguridad
      real es el check de reflow de a11y-test.                                 */
   overflow-x: clip;
@@ -165,6 +165,17 @@ b {
   .gt-marco__grano {
     display: none;
   }
+
+  /* Con contraste alto el retrato va literal: si alguien pide más contraste,
+     una cara teñida es exactamente lo contrario de lo que pidió. Hoy esto es
+     redundante —el defecto de tokens.css ya es 0— y se conserva a propósito:
+     si algún día vuelve el tinte, no puede volver también aquí sin que nadie
+     se dé cuenta.                                                            */
+  :root {
+    --gt-retrato-desat: 0;
+    --gt-retrato-tinte: 0;
+    --gt-retrato-realce: 0;
+  }
 }
 
 /* Menos transparencia: el desenfoque del header pasa a plano sólido. */
@@ -180,15 +191,14 @@ b {
 }
 
 /* Modo de alto contraste de Windows. El sistema descarta los fondos, así que
-   todo lo que se dibuja con `background-color` —los tramos de la línea del
+   todo lo que se dibuja con `background-color`los tramos de la línea del
    día, el monograma, los chips— se volvería invisible: se les pone borde. Los
    símbolos van como máscara CSS y también hay que rescatarlos.               */
 @media (forced-colors: active) {
   .gt-linea__enlace,
   .gt-monograma,
   .gt-chip,
-  .gt-boton,
-  .gt-agenda__inicial {
+  .gt-boton {
     border: var(--gt-borde) solid CanvasText;
   }
 
@@ -227,7 +237,10 @@ b {
 
   .gt-grano::after,
   .gt-marco__tinte,
+  .gt-marco__realce,
   .gt-marco__grano,
+  .gt-monograma--foto::before,
+  .gt-monograma--foto::after,
   .gt-cita::before,
   .gt-cita::after {
     display: none;
@@ -252,6 +265,7 @@ b {
   background: var(--gt-blanco);
   color: var(--gt-tinta);
   --gt-foco: var(--gt-azul-medio);
+  --gt-acento: var(--gt-azul-medio);
   --gt-linea: var(--gt-linea-tinta);
   --gt-texto-suave: color-mix(in oklab, var(--gt-tinta) 74%, var(--gt-carta));
 }
@@ -317,7 +331,9 @@ b {
   padding: 0.32rem 0.85rem;
   border: var(--gt-borde) solid var(--gt-linea-fuerte);
   border-radius: var(--gt-radio-pildora);
-  color: var(--gt-celeste);
+  /* --gt-acento y no --gt-celeste: el chip también vive sobre lámina, y ahí el
+     celeste da 1.72:1 sobre blanco. Ver el token en tokens.css.              */
+  color: var(--gt-acento);
   font-size: var(--gt-fs-micro);
   font-weight: var(--gt-fw-semibold);
   letter-spacing: var(--gt-tracking-micro);
@@ -327,9 +343,17 @@ b {
 }
 
 /* --- Botón -----------------------------------------------------------------
-   Un solo botón en todo el sitio, y siempre es navegación: no hay inscripción
-   ni descarga que ofrecer todavía (pendiente #8). Hairline en reposo, plano
-   celeste al pasar por encima.                                               */
+   Un solo botón, con dos variantes que no son estilos alternativos sino dos
+   papeles distintos:
+
+   - El base es un remate de sección«ver los perfiles»— y por eso va en
+     hairline: propone, no empuja. Plano celeste al pasar por encima.
+   - `--solido` es para cuando el enlace ES el contenido de la página y no su
+     remate. Hoy solo lo usan las dos encuestas: esa página no tiene nada más
+     que hacer que entregar los dos formularios.
+   - `--externo` marca que el destino está fuera del sitio.
+
+   No hay inscripción ni descarga que ofrecer todavía (pendiente #8).         */
 
 .gt-boton {
   display: inline-flex;
@@ -359,6 +383,38 @@ b {
 
 .gt-boton:hover::after {
   translate: 0.25rem 0;
+}
+
+/* Plano celeste desde el reposo. El hover no puede «apagarlo»perdería
+   énfasis justo al tocarlo—, así que sube a --gt-celeste-alto, que existe
+   precisamente para estados sobre el campo oscuro. Navy sobre celeste: 7.22:1;
+   sobre el aclarado, más.                                                    */
+.gt-boton--solido {
+  background: var(--gt-celeste);
+  border-color: var(--gt-celeste);
+  color: var(--gt-navy);
+}
+
+.gt-boton--solido:hover {
+  background: var(--gt-celeste-alto);
+  border-color: var(--gt-celeste-alto);
+  color: var(--gt-navy);
+}
+
+/* Sale del sitio: la misma flecha, girada 45°.
+
+   Se gira el glifo que el sistema ya usa en vez de escribir «↗» (U+2197). Ojo
+   al motivo, que no es capricho: NINGUNA de las dos flechas está en el
+   `unicode-range` declarado de Urbanistni siquiera «→», que ya pintan la
+   fuente del sistema el botón y la fila de ponente—, y de las dos, la que
+   cualquier fuente de sistema tiene con seguridad es la horizontal.          */
+.gt-boton--externo::after {
+  rotate: -45deg;
+}
+
+/* El desplazamiento acompaña a la punta: en diagonal, no a la derecha. */
+.gt-boton--externo:hover::after {
+  translate: 0.2rem -0.2rem;
 }
 
 /* --- Accesibilidad --------------------------------------------------------- */
@@ -398,7 +454,7 @@ b {
 /* --- Entrada del hero ------------------------------------------------------
    Una sola secuencia orquestada al cargar.
 
-   Sobre los revelados por scroll, la regla exacta —y no la burda que me había
+   Sobre los revelados por scroll, la regla exactay no la burda que me había
    impuesto— es esta: **el estado oculto solo puede vivir en los keyframes,
    nunca en el CSS base, y solo puede ser un `transform`**. Comprobado al
    depurar el paralaje: cuando la línea de tiempo no se activa, la animación
@@ -432,6 +488,25 @@ b {
 
   ::view-transition-new(root) {
     animation: gt-subir 420ms var(--gt-ease) both;
+  }
+}
+
+/* El retrato es el único elemento que atraviesa el cambio de página en vez de
+   disolverse con ella: la caja pequeña del listado crece hasta el retrato del
+   perfil. El nombre se pasa como custom property (`transicionRetrato()` en
+   data/foro.ts) en vez de escribir `view-transition-name` en línea, porque así
+   la regla de abajo puede apagarlo entero.
+
+   Los elementos nombrados llevan la animación por defecto del navegador aunque
+   ::view-transition-*(root) esté bajo `no-preference`: con movimiento reducido
+   hay que quitarles el nombre, no solo la animación de la raíz.              */
+.gt-retrato-vt {
+  view-transition-name: var(--gt-vt);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-retrato-vt {
+    view-transition-name: none;
   }
 }
 

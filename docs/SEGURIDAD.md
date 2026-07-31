@@ -8,57 +8,51 @@ archivo de plan del rediseño; aquí queda lo operativo.
 
 ---
 
-## Qué protege el gate, y qué no
+## Qué es público y qué no
 
-**Quién entra lo decide Entra**, no el código: la Enterprise App tiene «Asignación requerida = Sí»
-y solo pasan los usuarios y grupos asignados. No hay allowlist local ni roles de negocio.
+**El contenido del foro es público por decisión del negocio** (fecha de la decisión: 2026-07-28).
+Cualquiera con el enlace navega la agenda, los ponentes y las encuestas sin autenticarse; nada
+redirige solo a Microsoft. Público no es indexable: `X-Robots-Tag: noindex, nofollow` se queda
+es el evento interno de una empresa, no una página para buscadores.
 
-El servidor comprueba, en este orden: sesión válida → activo público del login → tipo de petición.
+**La única superficie con sesión es la identidad**: `GET /api/me`, que alimenta la escarapela de
+`/escarapela`. El login nace únicamente del botón de esa página («Iniciar sesión con Microsoft» →
+`/auth/login`), y **quién puede iniciar sesión lo sigue decidiendo Entra**, no el código: la
+Enterprise App tiene «Asignación requerida = Sí» y solo pasan los usuarios y grupos asignados.
+No hay allowlist local ni roles de negocio.
 
-### La política de acceso sin sesión
-
-Redirigir literalmente **todo** a Microsoft rompería el sitio: un 302 a `login.microsoftonline.com`
-sobre un `<script>` devuelve HTML que no parsea, sobre un `fetch` da un error de CORS opaco, y
-sobre un `POST` pierde el cuerpo. Lo que sí se garantiza es lo que el requisito quiere decir:
-
-> **Ninguna navegación de una persona termina en un callejón sin salida que no sea Microsoft.**
-
-| Petición sin sesión | Respuesta |
+| Petición | Respuesta |
 |---|---|
-| Navegación (`Sec-Fetch-Dest: document`), incluidas `HEAD` y una URL de asset escrita a mano | **302 → Entra** |
-| Subrecurso (script, hoja, imagen, fuente) | 401 |
-| `fetch`/XHR y todo `/api/*` | 401 JSON |
-| Métodos que no son de lectura | 401 (nunca 302: perdería el cuerpo) |
-| Con marcador `?auth=<motivo>` | pantalla de login con el mensaje |
+| Navegación y subrecursos, con o sin sesión | **200** todo HTML sale con la `Content-Security-Policy` (el fallback SPA es la única puerta del HTML; `express.static` va con `index: false` justo para eso) |
+| `GET /api/me` sin sesión | 401 JSON, `no-store` |
+| Métodos que no son de lectura, cross-site | 403 (`csrfMiddleware`: `Sec-Fetch-Site` u `Origin` contra `PUBLIC_ORIGIN`) |
+| Subrecurso inexistente | 404 JSON (el fallback SPA es solo para navegaciones) |
+| Errores del callback OIDC | 302 → `/escarapela?auth=<motivo>`, que la SPA explica junto al botón |
 
-La clasificación usa `Sec-Fetch-*`, con `Accept` como respaldo para clientes que no lo mandan.
-Por eso `https://sitio/img/hero.webp` pegado en la barra de direcciones **sí** va a Microsoft,
-mientras que ese mismo archivo pedido por un `<img>` de una pestaña vieja recibe 401.
+Los errores que la SPA sabe nombrar (`src/data/escarapela.ts`): `no_acceso` (AADSTS50105, cuenta
+sin asignación), `error`, `state_invalido`, `cookies_bloqueadas`, `sesion_revocada`,
+`revalidacion_fallida`.
 
-### El servidor de desarrollo también está gateado
+La escarapela guarda la **foto** que elige cada persona en `localStorage` de su navegador, con
+clave por `oid` y re-codificada en canvas (sin EXIF): **nunca viaja al servidor** no hay
+endpoint de subida. El QR del dorso apunta a la Power App de registro de asistencia con el correo
+de la sesión; el sitio solo lo pinta, no guarda ni envía nada.
 
-`npm run dev` servía la SPA completa en `:5173` sin login, porque el gate solo existía en Express.
-Un entorno de trabajo que se comporta distinto del que se publica es una trampa, y además invita a
-sacar capturas o compartir el puerto sin darse cuenta de que no hay puerta.
+**El correo de inscripción** sale en el **primer** inicio de sesión de cada persona y nunca más
+(`server/correo/`, ver §Correo de inscripción). No añade superficie HTTP: no hay ruta para
+dispararlo, reenviarlo ni consultarlo lo comprueba `gate-test.mjs`—; lo único que cambió es un
+campo dentro de `/api/me`, que sigue cerrado sin sesión.
 
-Ahora un plugin de Vite (`vite.config.ts`) aplica la misma política en dev: intercepta las
-navegaciones, consulta la sesión contra el Express y, si no hay, **delega la petición en el gate**.
-Los módulos de Vite y el HMR pasan intactos. **Falla cerrado**: si el gate no está levantado,
-muestra una página que dice qué comando falta en vez de servir el sitio. Un gate que se cae abierto
-no es un gate.
+### El servidor de desarrollo
 
-Dos detalles que costaron un bucle infinito y merecen no repetirse:
+`npm run dev` sirve el sitio público, igual que producción; el proxy de Vite lleva `/auth`, `/api`
+y `/health` al Express (`npm run dev:auth`), que solo hace falta levantado para probar el login
+real de `/escarapela`. `strictPort: true` evita que Vite caiga a `:5174` y el redirect URI deje de
+coincidir (AADSTS50011 sin ninguna pista).
 
-- **Delegar, no reimplementar.** La primera versión redirigía siempre a `/auth/login?silent=1` e
-  ignoraba el marcador `?auth=` con el que vuelve el callback, así que la pantalla de login nunca
-  llegaba a servirse y el navegador rebotaba sin fin. Con la delegación hay UNA sola política.
-- **El reenvío va con `node:http`, no con `fetch`.** undici trata `Sec-Fetch-*` como cabeceras
-  prohibidas y las sobrescribe: el gate veía la petición reenviada como un subrecurso y respondía
-  401 en vez de mandar al login. La misma trampa aparece al escribir pruebas: por eso
-  `gate-test.mjs` tampoco usa `fetch`.
-
-Para trabajar el diseño sin autenticación está `npm run preview`, que sirve `dist/` tal cual y es
-lo que usan los scripts de verificación.
+Para trabajar el diseño sin identidad está `npm run preview`, que sirve `dist/` tal cual y es lo
+que usan los scripts de verificación (ahí `/api/me` no existe y la escarapela muestra la
+invitación a entrar el mismo estado de un visitante anónimo).
 
 ### Quién entró, y cómo salir
 
@@ -69,27 +63,24 @@ de quien está viendo el sitio, y ofrece **cambiar de cuenta** y **cerrar sesió
   falla o el invitado no tiene cargo en el directorio, se muestra el correo. El login nunca depende
   de ello.
 - **Cerrar sesión es una navegación a `/auth/logout`, no un `fetch`.** Tiene que llevar al
-  front-channel logout de Microsoft para que la sesión muera también en Entra: si solo se destruyera
-  la cookie local, el siguiente visitante del mismo navegador entraría solo por SSO silencioso.
+  front-channel logout de Microsoft para que la sesión muera también en Entra: si solo se
+  destruyera la cookie local, el siguiente clic en «Iniciar sesión» del mismo navegador entraría
+  sin pedir credenciales, con la cuenta anterior.
 - **Cambiar de cuenta** (`/auth/login?select=1`) es la salida para el ponente externo que llegó
   autenticado con su propio Microsoft y chocó con «no tienes acceso».
 
-### El rompebucles, y qué NO debe contar
+### Cookies bloqueadas: la detección vive en el callback
 
-Si la cookie de sesión no se puede fijar (proxy sin `X-Forwarded-Proto`, navegador bloqueando
-cookies), el gate redigiría eternamente sin decir nada. Una cookie contador propia (`gt_lt`, 5
-minutos) corta al tercer intento y manda a la pantalla con `?auth=cookies_bloqueadas`, que nombra
-la causa.
+El rompebucles de cookie (`gt_lt`) murió con el SSO silencioso: sin `prompt=none` no existe ningún
+intento automático que pueda encadenarse solo, así que ya no hay bucle que romper todo login
+nace de un clic.
 
-⚠ **Solo se cuentan los intentos automáticos (`silent=1`).** La primera versión contaba todos los
-arranques de login, y como cada carga de página dispara un intento silencioso, a la tercera
-recarga el botón «Iniciar sesión» **dejaba de hacer absolutamente nada** durante cinco minutos.
-Un clic de una persona es intención, no un bucle: siempre arranca un login real y pone el contador
-a cero. `gate-test.mjs` cubre este caso explícitamente como regresión.
-
-Y cuando el cortacircuitos salta, **redirige** con el marcador en vez de servir el HTML en la URL
-`/auth/login`: si no, el diccionario de mensajes no encuentra ningún `?auth=` y la tarjeta sale en
-blanco, que es la misma sensación de «no hace nada» que se quería evitar.
+El caso que ese mecanismo cubría de verdad«autenticó, pero la cookie no se pudo fijar»— sigue
+existiendo y ahora se detecta donde ocurre: en `/auth/redirect`. Si Microsoft devolvió `code` y
+`state` pero la sesión no trae `authState` (la sesión pre-login no sobrevivió el viaje), la causa
+es la cookie → `?auth=cookies_bloqueadas`. Si `authState` existe y **no coincide**, eso sí es
+manipulación → `?auth=state_invalido`. Sin la distinción, un navegador con cookies bloqueadas
+vería el mensaje que acusa a la persona equivocada.
 
 ---
 
@@ -97,13 +88,25 @@ blanco, que es la misma sensación de «no hace nada» que se quería evitar.
 
 ```bash
 npm run build
+node scripts/inscripcion-test.mjs   # el correo de inscripción, sin red ni credenciales
 npm run start:local          # o `npm start` con el entorno puesto
-node scripts/gate-test.mjs   # 37 comprobaciones: matriz del gate, CSP, cabeceras, rompebucles
+node scripts/gate-test.mjs   # matriz pública: 200+CSP en navegaciones, 401 /api/me, CSRF,
+                             # login OIDC sin prompt=none, cabeceras, sin Set-Cookie anónimo
 ```
 
+`inscripcion-test.mjs` no necesita servidor: levanta un **Graph falso** en loopback y se lo inyecta
+al mailer (`baseUrl`/`fetchImpl` se inyectan y jamás salen del entorno una variable capaz de
+reapuntar a dónde va el correo sería un SSRF con credenciales corporativas dentro). Es la prueba
+que contesta «¿cómo sé que nadie recibió dos correos?».
+
 `gate-test.mjs` usa `node:http` y **no** `fetch`: undici fuerza `Sec-Fetch-Mode: cors` y no permite
-emular una navegación de navegador, que es justo lo que hay que distinguir. Con `fetch` el script
-reportaría 401 en las navegaciones y el fallo estaría en la prueba, no en el servidor.
+emular una navegación de navegador, que sigue haciendo falta distinguir (fallback SPA vs 404 JSON).
+
+Con `npm run preview` corren `sesion-test.mjs` (menú y escarapela con identidad simulada),
+`interactions-test.mjs` (incluye volteo y ciclo de la foto), `a11y-test.mjs` (incluye el carné
+por sus dos caras) y `qr-test.mjs` (los píxeles reales del QR estilizado decodificados con
+ZXing que el carné sea bonito jamás puede costar que no se lea). Con los dos servidores de
+dev, `login-test.mjs` recorre el login real hasta Microsoft desde `/escarapela`.
 
 En producción, además: `curl -I` contra el dominio, contraste con securityheaders.com, `testssl.sh`
 para el TLS y la consola del navegador sin violaciones de CSP en las cinco rutas.
@@ -112,22 +115,27 @@ para el TLS y la consola del navegador sin violaciones de CSP en las cinco rutas
 
 ## Respuesta a incidentes
 
-**El botón de pánico es Entra, no el servidor.** En la Enterprise App, «Habilitado para que los
-usuarios inicien sesión = No» corta todos los accesos al instante; la revalidación silenciosa mata
-las sesiones ya abiertas en ≤20 minutos sin tocar la máquina. Es más rápido y más fiable que apagar
-el servicio.
+**El botón de pánico es Entra, no el servidor y su alcance es la identidad.** En la Enterprise
+App, «Habilitado para que los usuarios inicien sesión = No» corta los inicios de sesión al
+instante; la revalidación mata las sesiones ya abiertas en ≤20 minutos (la escarapela consulta
+`/api/me` al montar). **El contenido del foro sigue en línea**: es público por diseño, y apagarlo
+sí exige tocar la máquina (`systemctl stop gtalks`, o el vhost de nginx).
 
 | Situación | Acción | Efecto |
 |---|---|---|
-| Acceso indebido de una persona | Quitar su asignación (o sacarla del grupo) | Su sesión muere en ≤20 min |
-| Incidente general | Deshabilitar el inicio de sesión en la Enterprise App | Todos fuera, inmediato |
+| Acceso indebido de una persona | Quitar su asignación (o sacarla del grupo) | Su sesión muere en ≤20 min; deja de ver su escarapela |
+| Incidente con la identidad | Deshabilitar el inicio de sesión en la Enterprise App | Nadie más inicia sesión; el sitio sigue arriba |
+| Hay que BAJAR el contenido | `systemctl stop gtalks` (o deshabilitar el vhost) | Sitio fuera Entra no puede hacer esto |
 | Sospecha sobre el secreto | Rotar en el App Registration → actualizar `/etc/gtalks/env` → `systemctl restart gtalks` | Las sesiones vivas **sobreviven** (sus tokens ya están en memoria): si el incidente es robo de sesión, el reinicio es obligatorio |
-| Sitio caído | `systemctl status gtalks`, `journalctl -u gtalks -n 100` | — |
+| Hay que **parar los correos**, ya | `INSCRIPCION_MODO=off` en `/etc/gtalks/env` → `systemctl restart gtalks` | Deja de salir cualquier correo. El sitio y el login siguen intactos |
+| Se mandó un correo que no debía | Revisar `/var/lib/gtalks/inscripciones.jsonl` y casar el `peticion` con el `message trace` de Exchange | El `client-request-id` identifica el mensaje sin ambigüedad |
+| Sitio caído | `systemctl status gtalks`, `journalctl -u gtalks -n 100` | |
 
 **Qué vigilar en los logs:** ráfagas de `AADSTS50105` (alguien probando cuentas) y de
-`state_invalido` (manipulación del callback). Ambas salen por `journalctl -u gtalks`.
+`state_invalido` (manipulación del callback). Ambas salen por `journalctl -u gtalks`. Y no
+olvidar lo que ya no es señal: el tráfico anónimo al contenido es normal el sitio es público.
 
-**Contactos** — rellenar antes de publicar; sin nombres escritos, este manual no sirve el día que
+**Contactos** rellenar antes de publicar; sin nombres escritos, este manual no sirve el día que
 hace falta:
 
 - Entra ID / Enterprise App: _(nombre y contacto)_
@@ -138,7 +146,8 @@ hace falta:
 
 ## Registro de acceso
 
-Es un **dato personal** y por eso va en dos flujos separados:
+Con el sitio público, lo que se registra ya no es «todo acceso»: es **cada inicio de sesión**
+es decir, quién abrió su escarapela. Es un **dato personal** y por eso va en dos flujos separados:
 
 | Flujo | Destino | Contenido | Para qué |
 |---|---|---|---|
@@ -147,11 +156,104 @@ Es un **dato personal** y por eso va en dos flujos separados:
 
 - Ruta recomendada: `/var/log/gtalks/acceso.log`, propietario `gtalks:gtalks`, modo `0640`.
 - Rotación y borrado: `deploy/logrotate/gtalks` → **12 rotaciones semanales ≈ 90 días**.
-- El aviso de privacidad está a la vista en la pantalla de login: *«Tu acceso queda registrado para
-  el control de asistencia del foro.»*
+- El aviso de privacidad vive junto al botón de `/escarapela` (heredado literal de la pantalla de
+  login que se eliminó): *«Tu acceso queda registrado para el control de asistencia del foro.»*
 - **Nunca** se registran tokens, ni el `code`, ni el `state`, ni el verifier PKCE.
 - Si `AUDIT_LOG_PATH` se deja vacío, solo se emite el flujo seudónimo: el registro con nombre es
   una decisión explícita de despliegue, no algo que aparece por defecto.
+- El **registro de asistencia del día del foro** es aparte: el QR del dorso de la escarapela lleva
+  a la Power App de capacitaciones con el usuario de la sesión (sin dominio) y el ID de la jornada
+  en curso (mañana/tarde, en hora de Bogotá el cálculo es `Intl`/`America/Bogota` en el
+  navegador, nunca el reloj del servidor; lo prueba `qr-test.mjs` bajo una zona horaria ajena).
+  Ese dato lo captura Power Apps al escanear, no este servidor.
+
+---
+
+## Correo de inscripción
+
+En el **primer** inicio de sesión de cada persona sale un correo de confirmación; los siguientes no
+vuelven a escribirle. Vive en `server/correo/` (cuatro módulos con una responsabilidad cada uno) y
+el plan completo está en [`PLAN-CORREO-INSCRIPCION.md`](./PLAN-CORREO-INSCRIPCION.md).
+
+**Permiso:** `Mail.Send` de **aplicación** (client credentials), no delegado el delegado
+enviaría «como» el asistente, desde su propia bandeja—. El remitente es un buzón del tenant
+(`INSCRIPCION_REMITENTE`). Sale de Exchange Online, así que SPF, DKIM y DMARC de `gecelca.com.co`
+ya están alineados: no hay DNS que tocar ni relay externo.
+
+**Credenciales: hoy es la MISMA App Registration del login.** El bloque `MAIL_*` se deja vacío y el
+módulo cae a `M365_*`. La razón es operativa: con el secreto duplicado en el entorno, rotarlo en un
+sitio y olvidarlo en el otro rompería el correo en silencio, con el login intacto y nadie mirando.
+El respaldo es **todo o nada** —un `MAIL_*` suelto es un error de configuración, no una mezcla— y
+el arranque **declara en el log de qué app salen las credenciales**, porque que la app por la que
+todo el mundo inicia sesión sea además la que manda correo es una decisión que tiene que quedar
+dicha, no deducirse leyendo un `.env`. La consecuencia a tener presente: esa app pasa a ser
+*privilegiada* en Entra, y deshabilitarla como botón de pánico corta también los envíos.
+
+**Dos llaves para abrir el envío masivo, no una.** `INSCRIPCION_MODO` es `off` · `simulacro` ·
+`lista` · `todos`, y `lista`/`simulacro` exigen `INSCRIPCION_DESTINATARIOS`. Pasar de unos pocos a
+todo el tenant obliga a cambiar **las dos** variables —`todos` con la lista puesta es un **error de
+configuración**, no una lista que se ignora—: ninguna errata de una sola puede escribirle a la
+empresa entera. Una configuración a medias **no** enciende el envío a medias: en producción aborta
+el arranque (`server/index.js`) y en desarrollo el módulo avisa y se apaga.
+
+### Por qué el correo no puede llegarle a nadie más
+
+La lista se comprueba en **dos** sitios y la dirección de destino sale de un **tercero**:
+
+| Guardia | Dónde | Qué impide |
+|---|---|---|
+| Lista al reservar | `reservarInscripcion` | Que alguien fuera de la lista llegue siquiera a quedar anotado |
+| Lista al enviar, otra vez | `enviarInscripcion` | Que un cambio futuro en `server/app.js` desvíe el destino. Sin ella, la garantía sería una **convención** entre dos funciones, no una propiedad del código |
+| Reserva viva | `enviarInscripcion` | Que dos llamadas al envío se conviertan en dos correos |
+| **El destino sale de la configuración** | `destinoAutorizado()` | Que la dirección se construya a partir de un dato de la sesión. En modo `lista` devuelve **la entrada de `INSCRIPCION_DESTINATARIOS`** con la que coincidió: ninguna normalización, codificación ni homógrafo puede producir una dirección distinta |
+| Una sola dirección | `graph-mailer.js` | Que un `para` con coma, punto y coma, espacio o salto de línea signifique «y también a estos otros». Es guardia del **transporte**, independiente de la política |
+| Formato de la lista | `leerConfiguracion` | Que separar con `;` en vez de `,` produzca una lista que no coincide con nadie y parezca configurada |
+
+`scripts/inscripcion-test.mjs` lo ejerce contra una **población de 32 identidades hostiles**
+(mayúsculas, espacios, subdominios, `+etiqueta`, invitados `#EXT#`, homógrafos cirílicos, coma y
+punto y coma inyectados, `%00`, `null`) y exige que el conjunto de direcciones que recibieron algo
+sea **exactamente** el de la lista. El mensaje lleva un solo destinatario y no existe `cc` ni `bcc`
+en todo el código.
+
+**Lo que el código no puede impedir**, y hay que saberlo: si uno de los buzones autorizados tiene
+una regla de **reenvío automático** en Outlook, el mensaje llegará también a donde apunte esa regla.
+Eso se cierra en Exchange, no aquí.
+
+### El ensayo no contamina el envío real
+
+En modo `simulacro` el libro lleva sufijo **`.simulacro`**, siempre, se haya fijado la ruta o no.
+Sin eso, ensayar con tu propia cuenta te dejaría anotado en el libro real y, al pasar a `lista`,
+**no recibirías el correo de verdad**: ya constarías como atendido. El sufijo lo hace imposible por
+construcción, en vez de confiar en que alguien se acuerde de borrar un archivo.
+
+En `simulacro` no se construye ni el cliente de MSAL: el proceso **no hace una sola petición de
+red** relacionada con el correo, ni siquiera para pedir el token.
+
+### El libro de inscripciones — es ESTADO, no un log
+
+| Qué | Dónde | Contenido |
+|---|---|---|
+| Libro (idempotencia) | `INSCRIPCION_LIBRO` → `/var/lib/gtalks/inscripciones.jsonl` | `ts`, `oid`, estado, `peticion` (el `client-request-id` de Graph). **Sin la dirección de correo** |
+| Operación | stdout → journald | `oid` seudónimo y el `peticion`, nunca el correo |
+
+- **`logrotate` no lo toca jamás.** Usa `copytruncate`; si truncara el libro, tras el siguiente
+  reinicio el servidor volvería a escribirle a todo el mundo. Por eso vive en `/var/lib/` y no en
+  `/var/log/`, y el unit lo crea con `StateDirectory=gtalks`. Lo demuestra `inscripcion-test.mjs`.
+- **No guarda la dirección** por minimización: para no repetir un envío basta el `oid`, y quién
+  recibió qué ya lo responden el `message trace` de Exchange (autoritativo) y `acceso.log`, que
+  correlaciona `oid` ↔ UPN con su plazo de borrado. Se archiva y se borra con el §Ciclo anual.
+- **Quien queda fuera de la lista no deja línea.** Es deliberado: al ampliar la lista, esas
+  personas siguen contando como no inscritas y reciben su correo en su siguiente entrada.
+- **El libro arranca vacío**: quien haya iniciado sesión *antes* de desplegar esto cuenta como no
+  inscrito y recibirá el correo en su siguiente entrada. Es la primera pregunta que surge al ver
+  que a alguien le llegó «tarde».
+- **Huérfanos**: un reinicio entre la reserva y el envío deja una línea en `reservado` que no se
+  reintenta sola. Se revisan con `grep '"reservado"' /var/lib/gtalks/inscripciones.jsonl` y se
+  comparan con los desenlaces.
+
+El **aviso de privacidad** vive junto al botón de entrar, **antes** del login: *«Tu acceso queda
+registrado para el control de asistencia del foro. La primera vez que entres, te escribimos a tu
+correo corporativo para confirmar tu inscripción.»*
 
 ---
 
@@ -172,10 +274,16 @@ el `.env` del repo.
   `/etc/gtalks/env` → `systemctl restart gtalks` → verificar un login → borrar el viejo en Entra.
 - **`SESSION_SECRET`: rotar en cada edición.** Invalida todas las sesiones, que es exactamente lo
   que se quiere entre un foro y el siguiente.
+- **El correo de inscripción NO añade un secreto que rotar**: usa el del login (`M365_CLIENT_SECRET`),
+  porque hoy es la misma App Registration y el bloque `MAIL_*` se deja vacío. Rotar el secreto del
+  login rota también el del correo, en un solo `systemctl restart`. Si algún día se separa la app,
+  aparece una **segunda** fecha de expiración que vigilar, y esa es la razón real para no separarlas
+  a la ligera: el fallo típico de un sitio anual es un secreto que vence sin que nadie se entere.
 - El fallo realista de un sitio anual no es que roben el secreto: es que **expire y nadie se entere**.
   Anotar aquí la fecha de expiración y poner recordatorio de calendario.
 
 > Secreto vigente creado el: ______  ·  Expira el: ______  ·  Responsable: ______
+> _(es también el del correo de inscripción: app `ec13cb64-3a24-4bdf-80d3-0a3cc008cc23`)_
 
 ---
 
@@ -195,8 +303,9 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
   arreglo rápido.
 - Si algún invitado usa cuenta personal (Gmail/Outlook), hay que **habilitar el código de un solo
   uso por correo** en External Identities; si no está, el login falla con un error opaco.
-- Los invitados llegan con UPN de la forma `usuario_dominio.com#EXT#@gecelca…`. Cuando se construya
-  la escarapela hay que mostrar `name` y nunca esa forma mutilada.
+- Los invitados llegan con UPN de la forma `usuario_dominio.com#EXT#@gecelca…`. La escarapela y el
+  menú de sesión muestran `nombre_completo` (Graph `displayName` → claim `name` → UPN limpio de
+  `#EXT#`), nunca esa forma mutilada resuelto en el callback (`server/app.js`).
 
 ---
 
@@ -206,7 +315,7 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 
 1. Vaciar el grupo de acceso y quitar la asignación en la Enterprise App.
 2. Borrar los objetos de usuario invitado creados solo para el evento.
-3. `systemctl disable --now gtalks` — entre ediciones el servicio no corre. Es el control honesto,
+3. `systemctl disable --now gtalks` entre ediciones el servicio no corre. Es el control honesto,
    más que cualquier duración de sesión.
 4. Rotar `SESSION_SECRET`.
 5. Exportar la membresía del grupo y archivarla: es el registro auditable de quién pudo entrar.
@@ -225,10 +334,15 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 
 | Riesgo | Por qué se acepta | Revisión |
 |---|---|---|
-| **Aviso `GHSA-qwww-vcr4-c8h2` en react-router 7.12–8.2** (alta) | Afecta al **modo RSC con actions**. Este sitio usa el modo declarativo puro: `BrowserRouter` + `<Routes>`, sin `createBrowserRouter`, sin `loader`/`action`, sin RSC y sin servidor de React — verificado por búsqueda en `src/`. La ruta vulnerable no existe aquí. **No hay versión corregida publicada en la rama 7.x.** | Cada edición: comprobar si salió un 7.x parcheado |
-| **Sesiones en memoria**: un reinicio las cierra | El SSO silencioso las recupera con cero clics. Persistirlas significaría escribir **refresh tokens de Entra en disco** en una máquina expuesta a internet | Si algún día hay más de un proceso |
-| **`img-src data:`** en la CSP | Lo exige el grano SVG del sistema de diseño. Las imágenes no ejecutan | — |
-| **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde | Ajustar con los rangos de egress cuando IT los entregue |
+| **El contenido del foro es público** | Decisión del negocio (2026-07-28): la carta de presentación del evento debe poder abrirse sin fricción. Lo sensiblela identidad y el registro de asistencia— sigue detrás de la sesión (`/api/me`) y de Entra. `noindex` se mantiene | Cada edición: confirmar que sigue siendo la intención |
+| **Aviso `GHSA-qwww-vcr4-c8h2` en react-router 7.12–8.2** (alta) | Afecta al **modo RSC con actions**. Este sitio usa el modo declarativo puro: `BrowserRouter` + `<Routes>`, sin `createBrowserRouter`, sin `loader`/`action`, sin RSC y sin servidor de React verificado por búsqueda en `src/`. La ruta vulnerable no existe aquí. **No hay versión corregida publicada en la rama 7.x.** | Cada edición: comprobar si salió un 7.x parcheado |
+| **Sesiones en memoria**: un reinicio las cierra | El costo es un clic: el sitio sigue arriba y, como Entra conserva la sesión del navegador, el botón de `/escarapela` reentra sin pedir credenciales. Persistirlas significaría escribir **refresh tokens de Entra en disco** en una máquina expuesta a internet | Si algún día hay más de un proceso |
+| **`img-src data:`** en la CSP | Lo exigen el grano SVG del sistema de diseño y la foto local de la escarapela (dataURL de localStorage). Las imágenes no ejecutan | |
+| **La foto del carné queda en localStorage** tras cerrar sesión | La eligió la propia persona, nunca viaja al servidor, y la clave por `oid` garantiza que otra cuenta del mismo equipo jamás la ve pintada. Borrarla en el logout exigiría interceptar una navegación que debe seguir siendo navegación (front-channel) | Si aparece un caso real de equipo compartido |
+| **El remitente NO está acotado en Exchange** | `Mail.Send` de aplicación permite, por defecto, enviar como **cualquier** buzón del tenant; el control que lo cierra es una `ApplicationAccessPolicy` (o RBAC for Applications) de Exchange Online, y **no se aplicó**: exige rol de *Organization Management*, que la cuenta del proyecto no tiene, y el sitio vive un solo día. Lo que sí queda es la lista blanca de **destinatarios** en el código (`INSCRIPCION_DESTINATARIOS`, fallo cerrado) y el secreto en `/etc/gtalks/env`. Decisión del usuario, 2026-07-30 | Si el correo se abre a todo el tenant, o si el sitio pasa a vivir más de una edición, aplicarla |
+| **Un reinicio entre la reserva y el envío deja un `reservado` huérfano**: esa persona no recibe correo y no se reintenta sola | La alternativa —reintentar al arrancar— puede **duplicar** envíos, que es justo el fallo que el módulo existe para evitar. El huérfano es visible con un `grep` sobre el libro | Revisar el libro una vez al día en la semana del foro |
+| **El aviso de privacidad promete el correo a todo el que entra**, y durante el piloto solo lo reciben los de la lista | Es una divulgación previa a un tratamiento de datos: sobre-informar es la dirección segura, informar de menos es la arriesgada. La interfaz, en cambio, **solo anuncia lo que el servidor confirma** | Deja de ser discrepancia en cuanto el modo pase a `todos` |
+| **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde. (Con el sitio público el pico del login ya no es «todo el auditorio a la misma hora»: solo pasa por `/auth/*` quien abre su escarapela) | Ajustar con los rangos de egress cuando IT los entregue |
 
 ---
 

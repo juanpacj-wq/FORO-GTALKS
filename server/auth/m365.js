@@ -1,5 +1,5 @@
 /**
- * Login con Microsoft 365 / Entra ID — flujo OIDC Authorization Code + PKCE
+ * Login con Microsoft 365 / Entra ID flujo OIDC Authorization Code + PKCE
  * (cliente confidencial, server-side con @azure/msal-node).
  *
  * Réplica 1:1 del módulo de Bit-cora-g3 (server/auth/m365.js). Por qué este flujo y no ROPC:
@@ -87,7 +87,7 @@ function buildClient(session) {
  * Paso 1: genera la URL de autorización y los secretos PKCE/state/nonce que el llamador debe
  * guardar en la sesión hasta el callback.
  * @param {object} session  req.session (para la caché de tokens)
- * @param {object} opts     { silent?, select?, fresh? }
+ * @param {object} opts     { select?, fresh? }
  */
 export async function getAuthCodeUrl(session, opts = {}) {
   const { verifier, challenge } = await cryptoProvider.generatePkceCodes();
@@ -103,8 +103,9 @@ export async function getAuthCodeUrl(session, opts = {}) {
     state,
     nonce,
   };
-  if (opts.silent) request.prompt = 'none';
-  else if (opts.fresh) request.prompt = 'login';
+  // No hay `prompt=none`: el SSO silencioso murió con el gate. Todo login nace de un clic, y un
+  // clic siempre puede ser interactivo.
+  if (opts.fresh) request.prompt = 'login';
   else if (opts.select) request.prompt = 'select_account';
   const url = await client.getAuthCodeUrl(request);
 
@@ -159,7 +160,7 @@ export async function refreshSilently(session) {
  * Perfil de Graph: nombre para mostrar, CARGO y área.
  *
  * Va aparte del id_token a propósito: `jobTitle` no es un claim OIDC, solo existe en el perfil de
- * directorio. Falla SUAVE — si Graph no responde, si el scope no está consentido o si es un
+ * directorio. Falla SUAVE si Graph no responde, si el scope no está consentido o si es un
  * invitado B2B sin cargo en este tenant, se devuelve `null` y el sitio muestra el correo en su
  * lugar. Un login no se cae por no poder pintar un cargo.
  *

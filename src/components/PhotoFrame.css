@@ -22,6 +22,7 @@
 }
 
 .gt-marco__tinte,
+.gt-marco__realce,
 .gt-marco__grano {
   position: absolute;
   inset: 0;
@@ -55,6 +56,50 @@
 .gt-marco--natural .gt-marco__tinte,
 .gt-marco--natural .gt-marco__grano {
   display: none;
+}
+
+/* --- Retrato ---------------------------------------------------------------
+   El duotono de arriba compone la foto en `screen` sobre el navy, y eso sobre
+   una cara la vacía. Aquí la imagen se pinta normalsolo desaturada en parte,
+   no del todo— y el navy va en `mix-blend-mode: color`, que toma tono y
+   saturación del plano y deja la luminancia de la foto intacta: la cara sigue
+   teniendo volumen. El realce celeste solo levanta las luces, para que el
+   retrato pertenezca a la misma paleta que el resto del sitio.
+
+   Los tres valores son tokens (`--gt-retrato-*`) y no literales: se calibran
+   una vez con las once fotos reales delante, en un solo sitio. Esa
+   calibración se hizo y HOY LOS TRES VAN EN 0: el retrato se sirve a color
+   original y estas reglas quedan inertes a propósito, listas para volver a
+   unificar la paleta desde tokens.css sin tocar aquí.                        */
+
+.gt-marco--retrato .gt-marco__lienzo {
+  background: var(--gt-navy);
+}
+
+.gt-marco--retrato .gt-marco__img {
+  filter: grayscale(var(--gt-retrato-desat)) contrast(1.04);
+}
+
+.gt-marco--retrato .gt-marco__tinte {
+  background: var(--gt-navy);
+  mix-blend-mode: color;
+  opacity: var(--gt-retrato-tinte);
+  transition: opacity var(--gt-dur-media) var(--gt-ease);
+}
+
+.gt-marco--retrato .gt-marco__realce {
+  background: var(--gt-celeste);
+  mix-blend-mode: screen;
+  opacity: var(--gt-retrato-realce);
+}
+
+/* Menos grano que en el duotono: ahí tapaba una foto de 456 px estirada; aquí
+   los retratos llegan a resolución suficiente y el ruido solo ensuciaría.    */
+.gt-marco--retrato .gt-marco__grano {
+  background-image: var(--gt-grano);
+  background-size: 160px 160px;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
 }
 
 /* --- Paralaje ----------------------------------------------------------------

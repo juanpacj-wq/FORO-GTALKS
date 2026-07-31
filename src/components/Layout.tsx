@@ -3,20 +3,20 @@ import { Outlet, useLocation } from 'react-router-dom'
 import SiteHeader from './SiteHeader'
 import SiteFooter from './SiteFooter'
 
-const TITULO_BASE = '1° Foro GECELCA — Energía en Acción'
+const TITULO_BASE = '1° Foro GECELCA Energía en Acción'
 
 /** Títulos por ruta. Las rutas dinámicas ponen el suyo con `useTituloPagina`. */
 const TITULOS: Record<string, string> = {
   '/': TITULO_BASE,
-  '/ponentes': `Ponentes — ${TITULO_BASE}`,
-  '/escarapela': `Escarapela — ${TITULO_BASE}`,
-  '/encuestas': `Encuestas — ${TITULO_BASE}`,
+  '/ponentes': `Ponentes ${TITULO_BASE}`,
+  '/escarapela': `Escarapela ${TITULO_BASE}`,
+  '/encuestas': `Encuestas ${TITULO_BASE}`,
 }
 
 /** Deja que una página fije su propio `<title>`, para las rutas dinámicas. */
 export function useTituloPagina(titulo: string | undefined) {
   useEffect(() => {
-    if (titulo) document.title = `${titulo} — ${TITULO_BASE}`
+    if (titulo) document.title = `${titulo} ${TITULO_BASE}`
   }, [titulo])
 }
 

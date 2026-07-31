@@ -9,11 +9,25 @@
 import { chromium } from 'playwright'
 
 const base = process.argv[2] ?? 'http://localhost:4173'
-const RUTAS = ['/', '/ponentes', '/ponentes/erick-wehdeking-arcieri', '/escarapela', '/encuestas']
+// Los dos perfiles son a propósito. Lo fueron primero porque
+// `erick-wehdeking-arcieri` no tenía biografía y `jose-fernando-prada` sí; con
+// la última entrega ese caso ya no existe (las once fichas están completas) y
+// se quedan los dos por el motivo de fondo: con uno solo, la mitad de la
+// página se quedaba sin auditar, y era justo la mitad con mil pulsaciones de
+// prosa sobre campo oscuro, que es donde se juega el contraste. El camino sin
+// retrato y sin bio sigue en el código, pero ya no hay datos que lo recorran.
+const RUTAS = [
+  '/',
+  '/ponentes',
+  '/ponentes/erick-wehdeking-arcieri',
+  '/ponentes/jose-fernando-prada',
+  '/escarapela',
+  '/encuestas',
+]
 
 let fallos = 0
 function check(nombre, ok, detalle = '') {
-  console.log(`${ok ? '  ok  ' : ' FALLA'} ${nombre}${detalle ? ` — ${detalle}` : ''}`)
+  console.log(`${ok ? '  ok  ' : ' FALLA'} ${nombre}${detalle ? ` ${detalle}` : ''}`)
   if (!ok) fallos++
 }
 
@@ -173,6 +187,63 @@ for (const ruta of RUTAS) {
       .map((p) => `«${p.texto}» ${p.ratio}:1 < ${p.umbral}:1 (${p.px}px/${p.peso})`)
       .join(' | '),
   )
+}
+
+// --- /escarapela con sesión: el carné lleno, por sus dos caras --------------
+// El bucle de RUTAS audita el estado anónimo (preview no tiene /api/me). El carné solo existe
+// con sesión, así que se simula la identidad igual que en sesion-test.mjs y se auditan las dos
+// caras del volteo. La cara no activa va `visibility: hidden` y el auditor la salta solo:
+// lo que se mide es siempre lo que de verdad está a la vista.
+console.log('\n/escarapela con sesión')
+{
+  const IDENTIDAD = {
+    authenticated: true,
+    user: {
+      nombre_completo: 'María Cristina Giraldo',
+      cargo: 'Profesional de Comunicaciones',
+      area: 'Vicepresidencia de Asuntos Corporativos',
+      upn: 'mcgiraldo@gecelca.com.co',
+      email: 'mcgiraldo@gecelca.com.co',
+      oid: '00000000-1111-2222-3333-444444444444',
+      roles: [],
+    },
+  }
+  const conSesion = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await conSesion.route('**/api/me', (ruta) => ruta.fulfill({ json: IDENTIDAD }))
+  await conSesion.goto(base + '/escarapela', { waitUntil: 'networkidle' })
+  await conSesion.evaluate(() => document.fonts.ready)
+
+  for (const cara of ['frente', 'dorso']) {
+    if (cara === 'dorso') {
+      await conSesion.click('.gt-escarapela-voltear')
+      await conSesion.waitForTimeout(1100) // la vuelta + el retardo de visibility
+    }
+    const { problemas, h1 } = await conSesion.evaluate(AUDITORIA)
+    check(`(${cara}) exactamente un h1`, h1 === 1, `hay ${h1}`)
+    check(
+      `(${cara}) sin saltos de nivel en encabezados`,
+      problemas.encabezados.length === 0,
+      problemas.encabezados.join(', '),
+    )
+    check(
+      `(${cara}) todas las imágenes tienen alt`,
+      problemas.sinAlt.length === 0,
+      problemas.sinAlt.join(', '),
+    )
+    check(
+      `(${cara}) enlaces y botones con nombre accesible`,
+      problemas.sinNombre.length === 0,
+      problemas.sinNombre.join(' | '),
+    )
+    check(
+      `(${cara}) contraste AA en todo el texto`,
+      problemas.contraste.length === 0,
+      problemas.contraste
+        .map((p) => `«${p.texto}» ${p.ratio}:1 < ${p.umbral}:1 (${p.px}px/${p.peso})`)
+        .join(' | '),
+    )
+  }
+  await conSesion.close()
 }
 
 // --- reflow: sin scroll horizontal en pantalla estrecha (WCAG 1.4.10) ------

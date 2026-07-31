@@ -12,13 +12,13 @@ export default function PonentesPage() {
         </SectionTitle>
 
         <p className="gt-pagina__intro">
-          Quienes intervienen en el foro, en el orden en que aparecen en la agenda. Entra a cada
-          perfil para ver en qué bloques participa y con qué papel.
+          Quienes intervienen en el foro, en el orden del programa. Cada perfil reúne su trayectoria
+          y los bloques en los que participa.
         </p>
 
         <ul className="gt-ponentes__lista">
           {PONENTES.map((p) => (
-            <SpeakerCard key={p.slug} ponente={p} />
+            <SpeakerCard key={p.slug} ponente={p} resumen />
           ))}
         </ul>
       </div>

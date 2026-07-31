@@ -756,16 +756,16 @@ def write_report(tokens: dict) -> None:
     L: list[str] = []
     a = L.append
 
-    a("# Fase 0 — Sistema de diseño medido sobre los PDFs\n")
+    a("# Fase 0 Sistema de diseño medido sobre los PDFs\n")
     a(f"> Generado por `{tokens['generado_por']}` con {tokens['pymupdf']}  ")
     a(f"> Render de referencia a {tokens['render_dpi']} DPI · vectores recortados a {tokens['vector_dpi']} DPI\n")
     a("**Ningún valor de este informe está inventado ni citado de memoria: todos salen medidos del PDF.**")
     a("Lo único que no es medición es la sección 7 (propuesta de tokens), que es una *derivación* "
       "de las mediciones y está marcada como tal.\n")
     a("Para aprobar de un vistazo:\n")
-    a("- `design-extract/palette.png` — la paleta consolidada con su hex")
-    a("- `design-extract/contact-sheet.png` — las 22 piezas extraídas, identificables")
-    a("- `design-extract/render/*.png` — las 3 piezas completas a 200 DPI\n")
+    a("- `design-extract/palette.png` la paleta consolidada con su hex")
+    a("- `design-extract/contact-sheet.png` las 22 piezas extraídas, identificables")
+    a("- `design-extract/render/*.png` las 3 piezas completas a 200 DPI\n")
 
     # 1 --------------------------------------------------------------------
     a("## 1. Piezas analizadas\n")
@@ -887,7 +887,7 @@ def write_report(tokens: dict) -> None:
     a("Medidos por el bbox de los segmentos Bézier de cada path cerrado.\n")
     asim = [r for r in tokens["formas"]["radios"] if not r["simetrico"]]
     sim = [r for r in tokens["formas"]["radios"] if r["simetrico"]]
-    a("**Radio asimétrico — confirmado.** Los marcos de foto y los arcos usan radios distintos por "
+    a("**Radio asimétrico confirmado.** Los marcos de foto y los arcos usan radios distintos por "
       "esquina:\n")
     a("| Tamaño (pt) | Relleno | sup-izq | sup-der | inf-izq | inf-der | Dónde |")
     a("|---|---|---|---|---|---|---|")
@@ -898,7 +898,7 @@ def write_report(tokens: dict) -> None:
             f"{rr['sup-der']} | {rr['inf-izq']} | {rr['inf-der']} | {r['donde']} |"
         )
     a("")
-    a("**Radio uniforme** — tarjetas, cajas y píldoras:\n")
+    a("**Radio uniforme** tarjetas, cajas y píldoras:\n")
     a("| Tamaño (pt) | Relleno | Radio | Qué es | Dónde |")
     a("|---|---|---|---|---|")
     for r in sim[:14]:
@@ -945,7 +945,7 @@ def write_report(tokens: dict) -> None:
       "abierto.\n")
     a("Los logos y los íconos vienen con la banda de color de la pieza horneada detrás, porque el "
       "recorte es rectangular. Como ese fondo es un plano medido, se quita por clave de color y se "
-      "deja también un `*-recortado.png` sobre transparencia — ese es el asset utilizable.\n")
+      "deja también un `*-recortado.png` sobre transparencia ese es el asset utilizable.\n")
     a("| Archivo | En página (pt) | Render (px) | DPI | Recortado | SVG | Página |")
     a("|---|---|---|---|---|---|---|")
     for v in tokens["assets"]["vectores"]:
@@ -956,7 +956,7 @@ def write_report(tokens: dict) -> None:
     a(f"\n**{len(tokens['assets']['vectores'])}** clusters.\n")
 
     # 7 --------------------------------------------------------------------
-    a("## 7. Propuesta de tokens — ⚠ esto sí es derivación, no medición\n")
+    a("## 7. Propuesta de tokens ⚠ esto sí es derivación, no medición\n")
     a("Todo lo anterior es medición cruda. Esta sección **decide**: qué medición se convierte en "
       "token, con qué nombre y con qué rol. Es lo que hay que aprobar antes de la Fase 1.\n")
 
@@ -985,7 +985,7 @@ def write_report(tokens: dict) -> None:
     a("### 7.2 Tipografía\n")
     a("| Familia | Dónde se usa | Licencia | Decisión |")
     a("|---|---|---|---|")
-    a("| **Urbanist** | todo el texto: cuerpo, títulos, agenda, footer | SIL OFL — libre, está en "
+    a("| **Urbanist** | todo el texto: cuerpo, títulos, agenda, footer | SIL OFL libre, está en "
       "Google Fonts | **Se usa tal cual**, autohospedada en `public/fonts/` (Regular 400, Bold 700, "
       "Italic 400). Coincide con la del proyecto hermano PORTALES GECELCA: el *cross-check* pasa. |")
     a("| **Bely Display** | únicamente el numeral «1» a 150–157 pt | licenciada (TypeTogether), no "
@@ -1050,7 +1050,7 @@ def write_report(tokens: dict) -> None:
     a("El **radio asimétrico** del marco de foto queda confirmado por medición: esquinas superior-"
       "izquierda e inferior-derecha a 101.9 pt, las otras dos a 0. No es un radio uniforme grande.\n")
 
-    a("### 7.4 Accesibilidad — lo que hay que corregir\n")
+    a("### 7.4 Accesibilidad lo que hay que corregir\n")
     fallos = [c for c in tokens["contraste_medido"] if not c["cumple_aa"]]
     if fallos:
         for c in fallos:
@@ -1066,7 +1066,7 @@ def write_report(tokens: dict) -> None:
           "donde el texto será más pequeño que en el PDF:\n")
         for c in filo:
             fix, factor = darken_to_meet(c["texto"], c["fondo"], 4.5)
-            a(f"- `{c['texto']}` sobre `{c['fondo']}` = **{c['ratio']:.2f}:1** — pasa como texto "
+            a(f"- `{c['texto']}` sobre `{c['fondo']}` = **{c['ratio']:.2f}:1** pasa como texto "
               f"grande (≥18 pt), **falla como texto normal** (necesita 4.5:1). "
               f"Ejemplo: «{c['ejemplos'][0]}».  \n"
               f"  Corrección mínima: `{fix}` (el mismo tono al {factor:.0%} de luminosidad) da "

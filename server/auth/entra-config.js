@@ -5,13 +5,13 @@
  * usuarios/grupos asignados); aquí no hay roles de negocio ni allowlist local.
  *
  * Variables de entorno (ver .env.example):
- *   M365_TENANT_ID, M365_CLIENT_ID, M365_CLIENT_SECRET  — App Registration (cliente confidencial).
- *   M365_REDIRECT_URI, M365_POST_LOGOUT_REDIRECT_URI    — callbacks OIDC.
- *   M365_SCOPES                                         — scopes solicitados (incluye offline_access).
- *   PUBLIC_ORIGIN                                       — origen público, p. ej. https://gtalks.gecelca.com.co
- *   SESSION_*                                           — cookie y duraciones de sesión.
- *   AUTH_RATE_LIMIT                                     — dial del cortacircuitos de /auth/*.
- *   AUDIT_LOG_PATH                                      — registro de acceso (ver auth/auditoria.js).
+ *   M365_TENANT_ID, M365_CLIENT_ID, M365_CLIENT_SECRET  App Registration (cliente confidencial).
+ *   M365_REDIRECT_URI, M365_POST_LOGOUT_REDIRECT_URI    callbacks OIDC.
+ *   M365_SCOPES                                         scopes solicitados (incluye offline_access).
+ *   PUBLIC_ORIGIN                                       origen público, p. ej. https://gtalks.gecelca.com.co
+ *   SESSION_*                                           cookie y duraciones de sesión.
+ *   AUTH_RATE_LIMIT                                     dial del cortacircuitos de /auth/*.
+ *   AUDIT_LOG_PATH                                      registro de acceso (ver auth/auditoria.js).
  */
 
 /** Origen público del sitio. Es la referencia del chequeo CSRF: una cabecera del propio request
@@ -19,7 +19,7 @@
 export const PUBLIC_ORIGIN = process.env.PUBLIC_ORIGIN || '';
 
 // En producción la cookie lleva el prefijo __Host-, que el navegador solo acepta con Secure, sin
-// Domain y con Path=/ — las tres se cumplen. Sobre HTTP en dev el prefijo rompería, así que se
+// Domain y con Path=/ las tres se cumplen. Sobre HTTP en dev el prefijo rompería, así que se
 // deriva del entorno en vez de fijarse.
 const NOMBRE_BASE = process.env.SESSION_COOKIE_NAME || 'puertadeoro.sid';
 export const SESSION_COOKIE_NAME =

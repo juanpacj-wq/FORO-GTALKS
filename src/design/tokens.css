@@ -6,7 +6,7 @@
    docs/SISTEMA-DE-DISENO.md y la medición cruda en design-extract/report.md.
 
    Lo que se añadió después para llevar el sistema de la hoja impresa a una
-   pantalla —el campo oscuro, los hairlines, el humo— NO son colores nuevos:
+   pantallael campo oscuro, los hairlines, el humo— NO son colores nuevos:
    son mezclas declaradas de los medidos, con `color-mix`. Así la regla del
    proyecto («ningún color se inventa ni se cita de memoria») se mantiene: cada
    valor o está medido o es una mezcla trazable de dos valores medidos.
@@ -62,11 +62,18 @@
 
   /* --- Alias semánticos ---------------------------------------------------
      El campo es oscuro por defecto; las láminas claras lo revierten con la
-     clase .gt-lamina (ver base.css), que redefine estos tres.                */
+     clase .gt-lamina (ver base.css), que los redefine.                       */
   --gt-fondo: var(--gt-noche);
   --gt-texto: var(--gt-blanco);
   --gt-texto-suave: var(--gt-humo);
   --gt-foco: var(--gt-celeste);
+
+  /* El color de lo que es enlace, dato u hora. Existe por la misma razón que
+     --gt-foco: el celeste sobre blanco da 1.72:1 y no es utilizable, así que
+     sobre lámina tiene que cambiar. Escribir --gt-celeste a mano en un chip o
+     en un enlace es la forma de que el día que ese chip acabe sobre papel el
+     texto se vuelva ilegible sin que nadie lo note.                          */
+  --gt-acento: var(--gt-celeste);
 
   /* --- Tipografía --------------------------------------------------------
      Urbanist es la única familia del sistema. Una sola familia bien usada
@@ -121,7 +128,7 @@
   --gt-radio-chico: 10px;    /* convención: chips y controles pequeños        */
   --gt-borde: 1px;           /* 1 pt en 84 de los 87 trazos del documento     */
 
-  /* La forma en «hoja» —radio grande en dos esquinas opuestas y recto en las
+  /* La forma en «hoja»radio grande en dos esquinas opuestas y recto en las
      otras dos— no cabe en un token: cada uso acota el radio al tamaño real de
      su caja. La construyen PhotoFrame.css y Monogram.css a partir de
      --gt-radio-foto.                                                         */
@@ -136,6 +143,37 @@
   /* Una sola sombra en todo el sitio: la que separa la lámina del programa
      del campo oscuro. El resto del sistema separa con hairlines.             */
   --gt-sombra-lamina: 0 2px 4px rgb(0 0 0 / 0.18), 0 24px 60px rgb(0 0 0 / 0.36);
+
+  /* --- Retrato ------------------------------------------------------------
+     CONVENCIÓN, como las opacidades del grano y del duotono.
+
+     Los retratos de los ponentes llegan de fuentes distintasfondo de
+     estudio, fondo de oficina, recortes de una foto de grupo— y ese desorden
+     es lo que hace que una página de ponentes se vea improvisada. El sistema
+     ya resolvió el mismo problema con el duotono navy→celeste de PhotoFrame,
+     pero un duotono completo sobre la cara de una persona identificable es
+     otra cosa: aquí va bajado de intensidad.
+
+     La clave es `mix-blend-mode: color`, no `multiply`: toma el tono y la
+     saturación del navy y deja intacta la luminancia de la foto, así que la
+     cara sigue leyéndose como cara. El realce celeste solo levanta las luces.
+
+     Los tres valores son un punto de partida razonado, no medido. Se calibran
+     una vez con las once fotos reales delante (ver scripts/build-retratos.py).
+     Están aquí, y no repartidos por los componentes, para que calibrar sea
+     tocar tres líneas.
+
+     HOY VAN EN 0: los retratos se sirven a COLOR ORIGINAL. Con las fotos
+     reales delante, el tinte se leía como una decisión gráfica impuesta sobre
+     caras identificables, y la cara de un ponente es un dato de la persona,
+     no una superficie de la marca. La maquinaria queda intacta en
+     PhotoFrame.css y Monogram.css: volver a unificar la paleta es devolverle
+     valor a estas tres líneas (el tratamiento anterior era 0.82 / 0.44 / 0.07)
+     y nada más. Con los tres en 0, las dos capas de fusión no pintan nada y el
+     filtro se reduce a su contraste.                                         */
+  --gt-retrato-desat: 0;  /* grayscale()                                      */
+  --gt-retrato-tinte: 0;  /* --gt-navy en `color`                             */
+  --gt-retrato-realce: 0; /* --gt-celeste en `screen`                         */
 
   /* --- Espaciado ---------------------------------------------------------
      CONVENCIÓN: escala de 4 px. Las piezas se maquetaron a mano y no tienen

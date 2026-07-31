@@ -2,7 +2,7 @@
  * Bootstrap del servidor con gate Entra ID.
  *
  * Escucha SOLO en loopback: quien llegue a la máquina no puede hablar con el proceso sin pasar
- * por nginx. Va emparejado con `trust proxy: 'loopback'` en app.js — sin ese par, cualquiera que
+ * por nginx. Va emparejado con `trust proxy: 'loopback'` en app.js sin ese par, cualquiera que
  * alcanzara el puerto podría falsificar `X-Forwarded-Proto` (y conseguir que Express fije la
  * cookie `Secure` sobre HTTP en claro) o `X-Forwarded-For` (evadir límites, envenenar logs).
  *
@@ -10,6 +10,7 @@
  * `npm run dev:auth` lo carga con `node --env-file=.env`.
  */
 import { buildAuthApp } from './app.js';
+import { leerConfiguracion } from './correo/inscripcion.js';
 
 const PORT = Number(process.env.SERVER_PORT || 3000);
 const HOST = process.env.SERVER_HOST || '127.0.0.1';
@@ -46,6 +47,19 @@ function exigirEntorno() {
       'Entra exige coincidencia exacta con lo registrado en el App Registration.'
     );
   }
+
+  // El correo de inscripción. En producción, una configuración a medias ABORTA en vez de
+  // degradarse a `off` en silencio: `deploy/deploy.sh` revierte solo si el servicio no levanta,
+  // así que el error se ve en el despliegue y no la mañana del foro. En desarrollo el módulo
+  // avisa y se apaga (ver correo/inscripcion.js).
+  const correo = leerConfiguracion();
+  if (correo.problemas.length) {
+    throw new Error(
+      'Configuración del correo de inscripción incompleta:\n' +
+      correo.problemas.map((p) => `    · ${p}`).join('\n') +
+      '\n  Con INSCRIPCION_MODO=off el resto del bloque no hace falta.'
+    );
+  }
 }
 
 if (esProduccion) exigirEntorno();
@@ -58,7 +72,7 @@ const server = app.listen(PORT, HOST, () => {
 // Apagado ordenado: systemd manda SIGTERM en cada `restart`. Sin esto, las peticiones en vuelo se
 // cortan a media respuesta.
 function apagar(senal) {
-  console.log(`\n  ▸ ${senal} recibido — cerrando conexiones…`);
+  console.log(`\n  ▸ ${senal} recibido cerrando conexiones…`);
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref(); // si algo se cuelga, no bloquear el reinicio
 }

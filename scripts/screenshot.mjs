@@ -13,7 +13,11 @@ const prefix = process.argv[4] ?? 'gtalks'
 const routes = [
   ['inicio', '/'],
   ['ponentes', '/ponentes'],
-  ['perfil', '/ponentes/erick-wehdeking-arcieri'],
+  // Dos perfiles: quien abre y cierra la jornada, y un ponente de bloque.
+  // Fueron «sin biografía» y «con ella» hasta la última entrega, que completó
+  // las once fichas: ya no hay perfil sin bio que capturar.
+  ['perfil-apertura', '/ponentes/erick-wehdeking-arcieri'],
+  ['perfil-ponencia', '/ponentes/jose-fernando-prada'],
   ['escarapela', '/escarapela'],
   ['encuestas', '/encuestas'],
 ]
@@ -49,5 +53,41 @@ for (const viewport of [
     console.log(`${prefix}-${name}-${viewport.name}.png`)
   }
   await page.close()
+
+  // La escarapela con sesión: el carné solo existe autenticado, así que se simula /api/me
+  // (misma técnica de sesion-test.mjs). Es la captura que se coteja contra Escarapela.png.
+  const conSesion = await browser.newPage({ viewport })
+  await conSesion.route('**/api/me', (ruta) =>
+    ruta.fulfill({
+      json: {
+        authenticated: true,
+        user: {
+          nombre_completo: 'María Cristina Giraldo',
+          cargo: 'Profesional de Comunicaciones',
+          area: 'Vicepresidencia de Asuntos Corporativos',
+          upn: 'mcgiraldo@gecelca.com.co',
+          email: 'mcgiraldo@gecelca.com.co',
+          oid: '00000000-1111-2222-3333-444444444444',
+          roles: [],
+        },
+      },
+    }),
+  )
+  await conSesion.goto(base + '/escarapela', { waitUntil: 'networkidle' })
+  await conSesion.evaluate(() => document.fonts.ready)
+  await conSesion.waitForTimeout(300)
+  await conSesion.screenshot({
+    path: `${outDir}/${prefix}-escarapela-sesion-${viewport.name}.png`,
+    fullPage: true,
+  })
+  console.log(`${prefix}-escarapela-sesion-${viewport.name}.png`)
+  await conSesion.click('.gt-escarapela-voltear')
+  await conSesion.waitForTimeout(1100)
+  await conSesion.screenshot({
+    path: `${outDir}/${prefix}-escarapela-dorso-${viewport.name}.png`,
+    fullPage: true,
+  })
+  console.log(`${prefix}-escarapela-dorso-${viewport.name}.png`)
+  await conSesion.close()
 }
 await browser.close()

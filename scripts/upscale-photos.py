@@ -1,13 +1,13 @@
 """Genera las variantes @2x de las fotos para pantallas HiDPI.
 
 Las tres fotos vienen incrustadas en los PDF a baja resolución: la mayor es de
-456x652. En una pantalla de densidad 2 —cualquier portátil corporativo
+456x652. En una pantalla de densidad 2cualquier portátil corporativo
 reciente— el navegador las amplía con interpolación bilineal y el resultado se
 ve blando, que es lo primero que abarata un sitio.
 
 Una ampliación Lanczos con máscara de enfoque hecha aquí, una sola vez, se ve
 bastante mejor que la que hace el navegador en cada pintado. No inventa
-detalle —eso no existe— pero conserva los bordes en vez de difuminarlos.
+detalleeso no existe— pero conserva los bordes en vez de difuminarlos.
 
 El HTML sirve la original a 1x y esta a 2x con `srcset`, así que en pantallas
 normales no se descarga ni un byte de más.

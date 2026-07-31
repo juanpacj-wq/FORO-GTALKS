@@ -1,7 +1,7 @@
 /* ==========================================================================
    Línea del día
    --------------------------------------------------------------------------
-   Una sola pista. El ancho de cada tramo es su duración real —columnas `fr`
+   Una sola pista. El ancho de cada tramo es su duración realcolumnas `fr`
    proporcionales a los minutos— y el alto es constante para todos: en la
    agenda de un día no hay una segunda magnitud que medir, y fingirla obliga a
    leer el gráfico dos veces.
@@ -35,7 +35,7 @@
 /* --- Tramo -------------------------------------------------------------------
    Cada uno es su propio contenedor de consulta: la etiqueta de dentro aparece
    solo si el tramo es lo bastante ancho para que quepa sin recortarse. Es la
-   forma correcta de resolverlo —depende del ancho del tramo, no del de la
+   forma correcta de resolverlodepende del ancho del tramo, no del de la
    ventana— y evita el clásico texto cortado a la mitad.                       */
 
 .gt-linea__tramo {

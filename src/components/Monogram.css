@@ -18,16 +18,21 @@
     border-color var(--gt-transicion);
 }
 
-.gt-monograma--sm {
-  width: 2.75rem;
+/* Los radios van a mano y no derivados de --gt-radio-foto: la forma en «hoja»
+   solo se lee si el radio guarda proporción con la caja, y estas tres cajas
+   son demasiado pequeñas para que un mismo valor sirva. Escalan 12 → 12 → 34
+   siguiendo la misma progresión que el resto del sistema.                    */
+
+.gt-monograma--xs {
+  width: 2.25rem;
   border-radius: 12px 0 12px 0;
-  font-size: 0.8125rem;
+  font-size: var(--gt-fs-micro);
 }
 
-.gt-monograma--md {
-  width: 3.5rem;
-  border-radius: 16px 0 16px 0;
-  font-size: 1rem;
+.gt-monograma--sm {
+  width: clamp(3.25rem, 8vw, 4.25rem);
+  border-radius: 14px 0 14px 0;
+  font-size: var(--gt-fs-sm);
 }
 
 .gt-monograma--lg {
@@ -36,7 +41,64 @@
   font-size: clamp(1.7rem, 4vw, 2.4rem);
 }
 
+/* --- Con retrato -----------------------------------------------------------
+   Mismo tratamiento que `PhotoFrame --retrato` y con los mismos tokens, en un
+   markup más barato: aquí no hacen falta ni lienzo ni contorno ni paralaje,
+   así que las dos capas de fusión son los pseudoelementos del propio span.
+
+   `--gt-monograma-tinte` se declara aparte para que el contenedor pueda
+   bajarlo en hover sin saber nada de cómo está construido el tratamiento.
+
+   Los tokens van hoy en 0 —el retrato se sirve a color original— así que
+   estas dos capas y el hover que las baja quedan inertes. Están escritos como
+   fracción del token, no como literales, para que reactivar el tinte desde
+   tokens.css los devuelva enteros.                                           */
+
 .gt-monograma--foto {
+  --gt-monograma-tinte: var(--gt-retrato-tinte);
+  position: relative;
+  display: block;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--gt-navy);
+}
+
+.gt-monograma__img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  background: none;
+  filter: grayscale(var(--gt-retrato-desat)) contrast(1.04);
+}
+
+.gt-monograma--foto::before,
+.gt-monograma--foto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* `color` toma tono y saturación del navy y deja la luminancia de la foto: la
+   cara conserva su volumen. `multiply` la apagaría.                          */
+.gt-monograma--foto::before {
+  background: var(--gt-navy);
+  mix-blend-mode: color;
+  opacity: var(--gt-monograma-tinte);
+  transition: opacity var(--gt-dur-media) var(--gt-ease);
+}
+
+.gt-monograma--foto::after {
+  background: var(--gt-celeste);
+  mix-blend-mode: screen;
+  opacity: var(--gt-retrato-realce);
+}
+
+/* Al pasar o enfocar el enlace que lo contiene, el tinte baja y la cara se
+   aclara. Sin retrato el gesto equivalente es rellenar el monograma de color,
+   y eso lo declara cada listado porque el color depende de su superficie; el
+   tinte, en cambio, es siempre el mismo, así que vive aquí y no repetido en
+   los tres sitios donde aparece esta caja.                                   */
+a:hover .gt-monograma--foto,
+a:focus-visible .gt-monograma--foto {
+  --gt-monograma-tinte: calc(var(--gt-retrato-tinte) * 0.32);
 }

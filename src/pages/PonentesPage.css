@@ -17,11 +17,27 @@
   line-height: 1.5;
 }
 
+/* El humo está calculado contra el campo oscuro; sobre papel se queda casi
+   invisible. base.css pasa la página a blanco y negro pero no puede alcanzar
+   a los hijos que traen su propio color, así que la entradilla se recupera
+   aquí. Vale para las tres páginas que usan este chasis.                     */
+@media print {
+  .gt-pagina__intro {
+    color: #000 !important;
+  }
+}
+
+/* Pista más ancha que la del roster de la home (21rem): aquí cada fila lleva
+   además la línea de participación, y en tres columnas el cargo y las horas se
+   partían en dos líneas cada uno. Con 25rem el auto-fit resuelve dos columnas
+   en escritorio y todo cabe en una línea. Sigue sin hacer falta ningún media
+   query: la misma regla da una sola columna en móvil.                        */
+
 .gt-ponentes__lista {
   display: grid;
-  /* `min()` con 100%: sin él, a 320 px la pista mínima de 21rem es más ancha
-     que la ventana y la fila se sale.                                        */
-  grid-template-columns: repeat(auto-fit, minmax(min(21rem, 100%), 1fr));
+  /* `min()` con 100%: sin él, a 320 px la pista mínima es más ancha que la
+     ventana y la fila se sale.                                               */
+  grid-template-columns: repeat(auto-fit, minmax(min(25rem, 100%), 1fr));
   column-gap: clamp(2rem, 5vw, 4rem);
   margin-top: clamp(2.5rem, 5vw, 4rem);
   border-bottom: var(--gt-borde) solid var(--gt-linea);

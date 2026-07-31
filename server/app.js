@@ -1,24 +1,27 @@
 /**
- * Compositor de la app Express — gate de Microsoft Entra ID sobre un sitio ESTÁTICO.
- * Aquí no hay BD ni API de datos: lo que se protege es la SPA completa (dist/).
+ * Compositor de la app Express sitio PÚBLICO con identidad opcional de Microsoft Entra ID.
+ * Aquí no hay BD ni API de datos: dist/ se sirve a cualquiera, y la única superficie con
+ * sesión es la identidad (`/api/me`) que alimenta la escarapela de `/escarapela`.
  *
  * Pipeline, en orden:
  *   helmet → cabeceras propias → session → csrf → /health → auth (login/redirect/me/logout) →
- *   revalidate → gate (requireEntra) → estáticos de dist/ → fallback SPA → 404 → errorHandler.
+ *   estáticos de dist/ → fallback SPA → 404 → errorHandler.
  *
- * ── Política de acceso sin sesión ──────────────────────────────────────────────
- * El requisito es «todo acceso sin autenticación acaba en Microsoft». Aplicado al pie de la
- * letra rompería el sitio: un 302 a login.microsoftonline.com sobre un <script> devuelve HTML
- * que no parsea, sobre un fetch() da un error de CORS opaco, y sobre un POST pierde el cuerpo.
- * Lo que sí se garantiza —y es lo que el requisito quiere decir— es que **ninguna navegación de
- * una persona termina en un callejón sin salida que no sea Microsoft**:
+ * ── Política de acceso ─────────────────────────────────────────────────────────
+ * El contenido del foro es público por decisión del negocio; nada redirige solo a Microsoft.
+ * El login nace únicamente del botón de `/escarapela` (→ /auth/login) y lo que protege no es
+ * el sitio sino la IDENTIDAD:
  *
- *   navegación (Sec-Fetch-Dest: document)  → 302 a Entra, incluso para /img/foto.webp escrito
- *                                            a mano en la barra de direcciones
- *   subrecurso, fetch/XHR, /api/*, no-GET  → 401 JSON
+ *   navegación y subrecursos              → 200, con la CSP en todo HTML
+ *   GET /api/me sin sesión                → 401 JSON (no-store)
+ *   GET /api/encuestas                    → 200 JSON público; la URL de la encuesta de
+ *                                           satisfacción solo viaja tras el cierre del evento
+ *   métodos no-lectura cross-site         → 403 (csrfMiddleware)
  *
- * El gate de QUIÉN entra vive en Entra: Enterprise App con "Asignación requerida = Sí".
- * Un usuario del tenant NO asignado autentica pero Entra responde AADSTS50105 → /?auth=no_acceso.
+ * El gate de QUIÉN puede iniciar sesión sigue viviendo en Entra: Enterprise App con
+ * "Asignación requerida = Sí". Un usuario del tenant NO asignado autentica pero Entra responde
+ * AADSTS50105 → /escarapela?auth=no_acceso. Los errores del callback llevan siempre a
+ * /escarapela?auth=<motivo>, donde la SPA los explica junto al botón de entrar.
  */
 import express from 'express';
 import session from 'express-session';
@@ -33,6 +36,10 @@ import { detectRoles } from './auth/roles.js';
 import { revalidate, REVALIDATE_INTERVAL_MS } from './auth/revalidate.js';
 import { registrarAcceso } from './auth/auditoria.js';
 import {
+  iniciarInscripcion, reservarInscripcion, enviarInscripcion, estadoInscripcion,
+} from './correo/inscripcion.js';
+import { estadoEncuestas } from './encuestas.js';
+import {
   isConfigured as m365Configured, m365Config,
   getAuthCodeUrl, acquireTokenByCode, getLogoutUrl, obtenerPerfil,
 } from './auth/m365.js';
@@ -43,22 +50,11 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, '..', 'dist');
-const LOGIN_PAGE = path.join(__dirname, 'login.html');
-
-// Únicos archivos de dist/ visibles SIN sesión: los que usa la pantalla de login. Mantener MÍNIMA.
-// Son la marca del evento y la tipografía; nada de contenido del foro (ni agenda, ni ponentes, ni
-// las fotos). Si cambian los assets del login, esta lista se actualiza a la vez.
-const LOGIN_PUBLIC_ASSETS = new Set([
-  '/favicon.svg',
-  '/img/logo-gecelca.svg',
-  '/img/icono-burbujas.svg',
-  '/img/wordmark-g-talks.svg',
-  '/fonts/urbanist-latin.woff2',
-]);
 
 // Destino de los redirects de error del callback OIDC. El éxito NO lleva marcador: redirige
-// limpio al destino guardado, y por eso hace falta el rompebucles de más abajo.
-const home = (auth) => `/?auth=${auth}`;
+// limpio al destino guardado. Los errores caen en /escarapela, que es donde vive el botón de
+// entrar y donde la SPA sabe explicar cada motivo.
+const aEscarapela = (auth) => `/escarapela?auth=${auth}`;
 
 /**
  * Rutas que la SPA sabe resolver. Es la lista blanca contra la que se valida el destino de un
@@ -79,10 +75,10 @@ const destinoSeguro = (p) => (RUTAS_SPA.some((r) => r.test(p)) ? p : '/');
  * ¿Es una persona navegando, o un subrecurso que pide el navegador?
  *
  * `Sec-Fetch-*` viaja en todo contexto seguro (HTTPS y localhost), así que distingue lo que la
- * heurística por extensión no puede: `/img/hero.webp` escrito en la barra de direcciones llega
- * con `Sec-Fetch-Dest: document` y debe ir a Microsoft, mientras que ese mismo archivo pedido
- * por un <img> de una pestaña vieja llega con `dest: image` y debe recibir 401.
- * Se exige `document` a propósito: un <iframe> recibe 401, no una cadena de redirects.
+ * heurística por extensión no puede. Hoy su único trabajo es decidir el fallback de la SPA:
+ * una navegación a `/ponentes` recibe index.html; un `/no-existe.png` pedido por un <img>
+ * recibe el 404 JSON en vez de HTML con 200. Se exige `document` a propósito: un <iframe>
+ * tampoco merece el fallback.
  */
 function esNavegacion(req) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return false;
@@ -109,32 +105,11 @@ export function estaAutenticado(sess) {
 }
 
 function clearAuthTransients(s) {
-  delete s.pkceVerifier; delete s.authState; delete s.authNonce; delete s.silent;
+  delete s.pkceVerifier; delete s.authState; delete s.authNonce;
 }
 
 // Envuelve un handler async y enruta el throw al error-handler de Express.
 const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-
-// ── Rompebucles ───────────────────────────────────────────────────────────────
-// Si la cookie de sesión no se puede fijar (proxy sin X-Forwarded-Proto, navegador bloqueando
-// cookies), el callback vuelve, el gate no ve sesión y redirige otra vez: bucle infinito y MUDO.
-// El contador no puede vivir en la sesión —la sesión es justo lo que está roto—, así que va en
-// una cookie propia de vida corta.
-//
-// OJO con QUÉ se cuenta. La primera versión contaba «veces que se arrancó un login», y como cada
-// carga de página dispara un intento silencioso, a la tercera recarga el botón «Iniciar sesión»
-// dejaba de hacer nada durante cinco minutos. Contar mal aquí rompe el login entero.
-//
-// Solo se cuentan los intentos AUTOMÁTICOS (`silent=1`), que son los únicos que pueden encadenarse
-// solos. Un clic de una persona es intención, no un bucle: siempre arranca un login real y pone el
-// contador a cero.
-const COOKIE_BUCLE = 'gt_lt';
-const MAX_INTENTOS = 3;
-
-function intentos(req) {
-  const m = /(?:^|;\s*)gt_lt=(\d+)/.exec(req.headers.cookie || '');
-  return m ? Number(m[1]) : 0;
-}
 
 /** CSRF de mutadores. Tres correcciones sobre la versión anterior:
  *  - cubre CUALQUIER método que no sea de lectura (antes PATCH quedaba fuera),
@@ -157,80 +132,35 @@ function csrfMiddleware(req, res, next) {
   return res.status(403).json({ error: 'Origen no permitido', codigo: 'origen_no_permitido' });
 }
 
-// ── CSP derivada, no declarada ────────────────────────────────────────────────
-// Los hashes de los bloques inline se calculan leyendo los HTML al arrancar. Una CSP con hashes
-// pegados a mano en un sitio que se reconstruye cada año está garantizada a pudrirse: así es
-// correcta por construcción después de cada `vite build`.
-function hashesInline(html, etiqueta) {
-  const re = new RegExp(`<${etiqueta}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${etiqueta}>`, 'g');
-  return [...html.matchAll(re)]
-    .map((m) => `'sha256-${crypto.createHash('sha256').update(m[1], 'utf8').digest('base64')}'`);
-}
-
-// El hash del login se recalcula si el archivo cambió, en vez de fijarse al arrancar. Sin esto,
-// editar `login.html` y no reiniciar deja la CSP con el hash viejo: el navegador bloquea el script
-// EN SILENCIO y la pantalla se queda sin mensajes ni botones, sin ningún error visible. Pasó
-// exactamente eso durante el desarrollo. Un `stat` por visita a la pantalla de login no se nota.
-let cacheLogin = { mtime: 0, csp: '' };
-
-function construirCSP() {
-  // La SPA no tiene inline: el <script> que limpiaba `?auth=` se eliminó al dejar de emitir ese
-  // marcador, así que `script-src 'self'` queda sin excepciones que mantener.
-  const spa = [
-    "default-src 'none'",
-    "script-src 'self'",
-    "style-src 'self'",
-    "img-src 'self' data:",   // data: lo exige el grano SVG de tokens.css
-    "font-src 'self'",
-    "connect-src 'self'",     // 'none' sería una trampa para quien implemente /escarapela
-    "base-uri 'none'",
-    "form-action 'none'",     // el sitio no tiene ni un <form>; el salto a Entra es un 302
-    "frame-ancestors 'none'",
-    "object-src 'none'",
-    "worker-src 'none'",
-    "manifest-src 'none'",
-    'upgrade-insecure-requests',
-  ].join('; ');
-
-  return { spa, login: () => cspLogin(spa) };
-}
-
-function cspLogin(porDefecto) {
-  try {
-    const mtime = fs.statSync(LOGIN_PAGE).mtimeMs;
-    if (mtime === cacheLogin.mtime) return cacheLogin.csp;
-
-    const html = fs.readFileSync(LOGIN_PAGE, 'utf8');
-    const js = hashesInline(html, 'script').join(' ');
-    const css = hashesInline(html, 'style').join(' ');
-    const csp = [
-      "default-src 'none'",
-      `script-src ${js || "'none'"}`,
-      `style-src ${css || "'none'"}`,
-      "img-src 'self'",
-      "font-src 'self'",
-      "base-uri 'none'",
-      "form-action 'none'",
-      "frame-ancestors 'none'",
-      "object-src 'none'",
-      'upgrade-insecure-requests',
-    ].join('; ');
-    cacheLogin = { mtime, csp };
-    return csp;
-  } catch (err) {
-    console.error('[csp] no se pudo leer login.html para derivar hashes:', err.message);
-    return porDefecto;
-  }
-}
+// ── CSP ───────────────────────────────────────────────────────────────────────
+// Una sola política: la de la SPA, emitida en TODO HTML que sale de aquí (el fallback es la única
+// puerta, ver `index: false` abajo). La SPA no tiene inline, así que `script-src 'self'` queda sin
+// excepciones que mantener. El QR de la escarapela se pinta como <svg> en el DOM (nodos, no
+// imagen) y la foto del asistente viaja como data: URI, que `img-src` ya permite por el grano SVG.
+const CSP_SPA = [
+  "default-src 'none'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' data:",   // data: lo exigen el grano SVG de tokens.css y la foto local del badge
+  "font-src 'self'",
+  "connect-src 'self'",     // /api/me, la identidad de la escarapela
+  "base-uri 'none'",
+  "form-action 'none'",     // el sitio no tiene ni un <form>; el salto a Entra es un 302
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "worker-src 'none'",
+  "manifest-src 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
 
 // ── Cache-Control ─────────────────────────────────────────────────────────────
-// Lo decisivo es `private`, no el max-age: el riesgo real es que un proxy corporativo vea el
-// `public` que pone serve-static por defecto, cachee /img y /assets y se los sirva a un colega
-// SIN sesión. Contenido con gate detrás de una caché compartida es una fuga que no pasa por Entra.
+// Con el sitio público, los assets pueden vivir en cachés compartidas sin fugar nada: el único
+// contenido por persona es /api/me, que va `no-store` en su propia ruta. El HTML sigue `no-store`
+// para que un despliegue no conviva con index.html viejos apuntando a hashes que ya no existen.
 function cacheDe(ruta) {
-  if (ruta.startsWith('/assets/')) return 'private, max-age=31536000, immutable'; // llevan hash
-  if (ruta.startsWith('/fonts/')) return 'private, max-age=86400, must-revalidate';
-  if (/\.(webp|png|svg|jpg|jpeg|ico)$/.test(ruta)) return 'private, max-age=3600, must-revalidate';
+  if (ruta.startsWith('/assets/')) return 'public, max-age=31536000, immutable'; // llevan hash
+  if (ruta.startsWith('/fonts/')) return 'public, max-age=86400, must-revalidate';
+  if (/\.(webp|png|svg|jpg|jpeg|ico)$/.test(ruta)) return 'public, max-age=3600, must-revalidate';
   return 'no-store';
 }
 
@@ -243,7 +173,6 @@ export function buildAuthApp() {
   app.disable('x-powered-by');
 
   const isProduction = process.env.NODE_ENV === 'production';
-  const CSP = construirCSP();
 
   if (isProduction && !process.env.SESSION_SECRET) {
     throw new Error(
@@ -253,7 +182,7 @@ export function buildAuthApp() {
   }
   const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
   if (!process.env.SESSION_SECRET) {
-    console.warn('  ⚠  SESSION_SECRET no está en .env — se generó uno efímero (las sesiones mueren al reiniciar).');
+    console.warn('  ⚠  SESSION_SECRET no está en .env se generó uno efímero (las sesiones mueren al reiniciar).');
   }
 
   // helmet sin CSP (ponemos la nuestra, que depende del contenido) y sin HSTS (dueño: nginx, que
@@ -274,9 +203,9 @@ export function buildAuthApp() {
   });
 
   // Store en MEMORIA a propósito: persistirla significaría escribir el refresh token de Entra a
-  // disco en una máquina expuesta a internet. Tras un reinicio, la siguiente navegación va sin
-  // marcador → /auth/login?silent=1 → Entra aún tiene la sesión del navegador → el usuario vuelve
-  // a entrar con cero clics. El costo de un reinicio es un round-trip invisible.
+  // disco en una máquina expuesta a internet. Tras un reinicio, el sitio sigue en pie (es público)
+  // y quien tenía sesión ve otra vez el botón en /escarapela; como Entra aún tiene la sesión del
+  // navegador, ese clic no vuelve a pedir credenciales. El costo de un reinicio es un clic.
   app.use(session({
     name: SESSION_COOKIE_NAME,
     secret: sessionSecret,
@@ -322,31 +251,16 @@ export function buildAuthApp() {
         detail: 'Faltan M365_TENANT_ID / M365_CLIENT_ID / M365_CLIENT_SECRET en el entorno.' });
     }
 
-    const silent = req.query.silent === '1' || req.query.silent === 'true';
-
-    if (silent) {
-      // Tres intentos automáticos seguidos sin conseguir sesión significan que la cookie no se
-      // puede fijar. Se corta y se manda a la pantalla CON marcador, para que diga la causa: si se
-      // sirviera el HTML aquí mismo, la URL no llevaría `?auth=` y la tarjeta saldría en blanco.
-      if (intentos(req) >= MAX_INTENTOS) {
-        return res.redirect(home('cookies_bloqueadas'));
-      }
-      res.cookie(COOKIE_BUCLE, String(intentos(req) + 1), {
-        httpOnly: true, sameSite: 'lax', secure: isProduction, path: '/', maxAge: 300_000,
-      });
-    } else {
-      // Clic explícito: el contador se reinicia y el login arranca siempre.
-      res.clearCookie(COOKIE_BUCLE, { path: '/' });
-    }
-
     try {
       const select = req.query.switch === '1' || req.query.select === '1';
       const fresh = req.query.fresh === '1';
-      const { url, pkceVerifier, state, nonce } = await getAuthCodeUrl(req.session, { silent, select, fresh });
+      // Todo login nace de un clic en /escarapela, así que el retorno por defecto es esa página.
+      // `destinoSeguro` (allowlist RUTAS_SPA) sigue cerrando la clase entera de open redirect.
+      req.session.destino = destinoSeguro(String(req.query.destino ?? '/escarapela'));
+      const { url, pkceVerifier, state, nonce } = await getAuthCodeUrl(req.session, { select, fresh });
       req.session.pkceVerifier = pkceVerifier;
       req.session.authState = state;
       req.session.authNonce = nonce;
-      req.session.silent = silent;
       // La sesión PRE-LOGIN vive 10 minutos, no 8 horas. Es la medida antiabuso más efectiva del
       // plan: un escáner que golpee /auth/login no llena el store con sesiones de larga vida.
       req.session.cookie.maxAge = SESSION_PRELOGIN_MS;
@@ -360,28 +274,28 @@ export function buildAuthApp() {
 
   // ── Paso 2: callback de Microsoft con el código de autorización ─────────────
   app.get('/auth/redirect', limitador('auth/redirect'), async (req, res) => {
-    const wasSilent = Boolean(req.session.silent);
-
     if (req.query.error) {
       const e = String(req.query.error);
       clearAuthTransients(req.session);
-      if (e === 'login_required' || e === 'interaction_required' || e === 'consent_required') {
-        return req.session.save(() => res.redirect(home('interactive_required')));
-      }
       const desc = String(req.query.error_description || '');
       if (desc.includes('AADSTS50105')) {
         // Autenticó (y pasó MFA) pero NO está asignado a la Enterprise App. Este es el gate.
         registrarAcceso({ resultado: 'no_asignado' });
-        return req.session.destroy(() => res.redirect(home('no_acceso')));
+        return req.session.destroy(() => res.redirect(aEscarapela('no_acceso')));
       }
-      console.warn(`[auth/redirect] error de Entra: ${e} — ${desc}`);
-      return req.session.save(() => res.redirect(home('error')));
+      console.warn(`[auth/redirect] error de Entra: ${e} ${desc}`);
+      return req.session.save(() => res.redirect(aEscarapela('error')));
     }
 
     const { code, state } = req.query;
     if (!code || !state || state !== req.session.authState) {
+      // Si Microsoft SÍ devolvió código y estado pero aquí no hay rastro del intento, la sesión
+      // pre-login no sobrevivió el viaje: la causa es la cookie (bloqueada o sin fijar), no una
+      // manipulación. Sin esta distinción, un navegador con cookies bloqueadas vería el mensaje
+      // de `state_invalido`, que acusa a la persona equivocada.
+      const motivo = code && state && !req.session.authState ? 'cookies_bloqueadas' : 'state_invalido';
       clearAuthTransients(req.session);
-      return req.session.save(() => res.redirect(home(wasSilent ? 'interactive_required' : 'state_invalido')));
+      return req.session.save(() => res.redirect(aEscarapela(motivo)));
     }
 
     try {
@@ -402,15 +316,20 @@ export function buildAuthApp() {
       // Sin `oid` no hay identidad utilizable: el login FALLA, en vez de crear una sesión que
       // /api/me aceptaría y el gate rechazaría.
       if (!oid) {
-        console.warn('[auth/redirect] id_token sin oid — sesión no creada');
+        console.warn('[auth/redirect] id_token sin oid sesión no creada');
         clearAuthTransients(req.session);
-        return req.session.save(() => res.redirect(home('error')));
+        return req.session.save(() => res.redirect(aEscarapela('error')));
       }
 
       registrarAcceso({ resultado: 'ok', oid, upn, roles });
 
+      // ¿Es su primer inicio de sesión? La reserva es SÍNCRONA y va aquí, con la identidad ya
+      // validada: es el punto donde se cierra la carrera de dos pestañas entrando a la vez. El
+      // envío en sí se dispara más abajo, DESPUÉS de responder (ver correo/inscripcion.js).
+      const inscribir = reservarInscripcion({ oid, correo: upn });
+
       // El cargo no es un claim OIDC: se pide a Graph. Si no llega, el menú de sesión muestra el
-      // correo en su lugar — el login nunca depende de esto.
+      // correo en su lugar el login nunca depende de esto.
       const perfil = await obtenerPerfil(result.accessToken);
 
       const user = {
@@ -425,45 +344,66 @@ export function buildAuthApp() {
       };
 
       // Sesión NUEVA (anti session-fixation), preservando la caché de tokens MSAL recién obtenida
-      // y el destino del deep link — si se olvida cualquiera de los dos, falla en silencio.
+      // y el destino del deep link si se olvida cualquiera de los dos, falla en silencio.
       const msalCache = req.session.msalCache;
-      const destino = destinoSeguro(req.session.destino || '/');
+      const destino = destinoSeguro(req.session.destino || '/escarapela');
       req.session.regenerate((err) => {
         if (err) {
           console.error('[auth/redirect] regenerate', err);
-          return res.redirect(home('error'));
+          return res.redirect(aEscarapela('error'));
         }
         req.session.user = user;
         req.session.msalCache = msalCache;
         req.session.lastRevalidatedAt = Date.now();
         req.session.cookie.maxAge = SESSION_MAX_AGE_MS; // sale del TTL corto de pre-login
-        res.clearCookie(COOKIE_BUCLE, { path: '/' });
-        req.session.save(() => res.redirect(destino));
+        req.session.save(() => {
+          res.redirect(destino);
+          // El correo de inscripción va DESPUÉS de responder: el redirect no espera a Graph, así
+          // que quien entra ya está viendo su carné mientras el mensaje sale. El `.catch` no es
+          // decorativo: `index.js` mata el proceso ante un rechazo sin manejar.
+          if (inscribir) {
+            enviarInscripcion({ oid, correo: upn, nombre: user.nombre_completo }).catch((e) =>
+              console.error('[inscripcion] rechazo no manejado:', e.message),
+            );
+          }
+        });
       });
     } catch (err) {
       console.error('[auth/redirect]', err);
       clearAuthTransients(req.session);
-      req.session.save(() => res.redirect(home('error')));
+      req.session.save(() => res.redirect(aEscarapela('error')));
     }
   });
 
-  // ── Identidad ────────────────────────────────────────────────────────────────
+  // ── Identidad la ÚNICA superficie con sesión del sitio ────────────────────
+  // `revalidate` vive solo aquí: con el contenido público, lo que la revocación en Entra debe
+  // cortar es esta respuesta (la escarapela consulta al montar), no las navegaciones.
+  // La respuesta es la MÍNIMA que la escarapela necesita: `tenantId`, `loginAt` y `via` se quedan
+  // en la sesión (loginAt lo usa `estaAutenticado`), pero no tienen por qué viajar al navegador.
   app.get('/api/me', asyncH(revalidate), (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     if (!estaAutenticado(req.session)) return res.status(401).json({ authenticated: false });
-    res.json({ authenticated: true, user: req.session.user });
-  });
-
-  // ── Logout: destruye la cookie + front-channel a Microsoft ──────────────────
-  app.post('/api/logout', (req, res) => {
-    const logoutUrl = getLogoutUrl();
-    req.session.destroy(() => {
-      res.clearCookie(SESSION_COOKIE_NAME, { path: '/' });
-      res.setHeader('Cache-Control', 'no-store');
-      res.json({ ok: true, logoutUrl });
+    const { nombre_completo, cargo, area, upn, email, oid, roles } = req.session.user;
+    // `inscripcion` es estado del servidor, no una promesa de la interfaz: se lee del libro (en
+    // memoria) y vale `no_aplica` siempre que el envío esté apagado o la persona quede fuera.
+    res.json({
+      authenticated: true,
+      user: { nombre_completo, cargo, area, upn, email, oid, roles },
+      inscripcion: estadoInscripcion(oid),
     });
   });
 
+  // ── Encuestas: estado público, de solo lectura ──────────────────────────────
+  // La ÚNICA pieza del sitio que abre por reloj. No hay sesión ni cookie de por medio: es un
+  // hecho público («¿ya cerró el evento?») más la URL del formulario, que se RETIENE hasta esa
+  // hora la decisión vive en server/encuestas.js, no aquí—. `no-store` no es manía: una caché
+  // compartida que guardara la respuesta «cerrada» seguiría negando la encuesta después de las 4.
+  app.get('/api/encuestas', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(estadoEncuestas());
+  });
+
+  // ── Logout: destruye la cookie + front-channel a Microsoft ──────────────────
   app.get('/auth/logout', (req, res) => {
     const logoutUrl = getLogoutUrl();
     req.session.destroy(() => {
@@ -472,54 +412,27 @@ export function buildAuthApp() {
     });
   });
 
-  // ── Revalidación silenciosa sobre la navegación (throttled por sesión) ──────
-  app.use(asyncH(revalidate));
-
-  // ── Gate ─────────────────────────────────────────────────────────────────────
-  app.use((req, res, next) => {
-    if (estaAutenticado(req.session)) return next();
-
-    // Sesión que existe pero superó la vida absoluta: se destruye antes de reautenticar.
-    if (req.session?.user) {
-      return req.session.destroy(() => res.redirect('/auth/login?silent=1'));
-    }
-
-    if ((req.method === 'GET' || req.method === 'HEAD') && LOGIN_PUBLIC_ASSETS.has(req.path)) {
-      return next();
-    }
-
-    if (esNavegacion(req)) {
-      res.setHeader('Cache-Control', 'no-store');
-      // Sin marcador → primer contacto: se guarda el destino y se intenta el SSO silencioso.
-      if (req.query.auth === undefined) {
-        req.session.destino = destinoSeguro(req.path);
-        return req.session.save(() => res.redirect('/auth/login?silent=1'));
-      }
-      // Con marcador → pantalla de login con el mensaje correspondiente.
-      res.setHeader('Content-Security-Policy', CSP.login());
-      return res.sendFile(LOGIN_PAGE);
-    }
-
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(401).json({ error: 'No autenticado', codigo: 'no_autenticado' });
-  });
-
-  // ── SPA estática (solo autenticados llegan aquí) ─────────────────────────────
+  // ── SPA estática, pública ────────────────────────────────────────────────────
   if (!fs.existsSync(path.join(DIST_DIR, 'index.html'))) {
-    console.warn(`  ⚠  No existe ${DIST_DIR}\\index.html — corre \`npm run build\` antes de servir en producción.`);
+    console.warn(`  ⚠  No existe ${DIST_DIR}\\index.html corre \`npm run build\` antes de servir en producción.`);
   }
+  // `index: false` no es cosmético: sin él, serve-static respondería `GET /` por su cuenta y ese
+  // HTML saldría SIN Content-Security-Policy (el setHeaders de aquí solo pone Cache-Control).
+  // Con él, TODA navegaciónincluida la raíz— cae al fallback de abajo, que es la única puerta
+  // por la que sale HTML y por tanto el único sitio donde la CSP tiene que estar bien.
   app.use(express.static(DIST_DIR, {
+    index: false,
     setHeaders: (res, ruta) => {
       res.setHeader('Cache-Control', cacheDe('/' + path.relative(DIST_DIR, ruta).replace(/\\/g, '/')));
     },
   }));
 
-  // Fallback SPA: solo para navegaciones. Antes servía index.html para CUALQUIER ruta, así que
-  // un /no-existe.png devolvía 200 con Content-Type text/html.
+  // Fallback SPA: solo para navegaciones. Un /no-existe.png pedido por un <img> cae al 404 JSON
+  // en vez de recibir HTML con 200.
   app.use((req, res, next) => {
     if (!esNavegacion(req)) return next();
     res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Content-Security-Policy', CSP.spa);
+    res.setHeader('Content-Security-Policy', CSP_SPA);
     res.sendFile(path.join(DIST_DIR, 'index.html'));
   });
 
@@ -540,6 +453,20 @@ export function buildAuthApp() {
 
   console.log(`  [auth] Entra ID ${m365Config().configured ? 'CONFIGURADO (tenant ' + m365Config().tenant + ')' : 'NO configurado (faltan M365_* en el entorno)'}`);
   console.log(`  [auth] sesión: ${Math.round(SESSION_MAX_AGE_MS / 3600000)} h inactividad · ${Math.round(SESSION_VIDA_ABSOLUTA_MS / 3600000)} h absoluta · revalidación cada ${Math.round(REVALIDATE_INTERVAL_MS / 60000)} min`);
+
+  // Correo de inscripción. La línea dice el modo y CUÁNTOS destinatarios hay, nunca cuáles: esto
+  // va a journald, que lee cualquiera con acceso al servidor.
+  const ins = iniciarInscripcion();
+  console.log(
+    ins.modo === 'off'
+      ? '  [inscripcion] envío DESACTIVADO (INSCRIPCION_MODO=off)'
+      : `  [inscripcion] modo ${ins.modo}` +
+        (ins.destinatarios === null ? ' · TODO el tenant' : ` · ${ins.destinatarios} destinatario(s)`) +
+        ` · remitente ${ins.remitente || '(sin envío)'}` +
+        ` · credenciales ${ins.credenciales}` +
+        ` · libro ${ins.libro}` +
+        ` · ya inscritos: ${JSON.stringify(ins.resumen)}`,
+  );
 
   return app;
 }

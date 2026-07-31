@@ -18,7 +18,7 @@
       cualquier peso y sintetizaría una negrita falsa. En las piezas la itálica
       solo aparece en Regular (etiquetas «Ponencia» / «Panel»), así que basta.
 
-   3. Los acentos del español (á é í ó ú ñ ü ¡ ¿ « » ° — ’) están todos en el
+   3. Los acentos del español (á é í ó ú ñ ü ¡ ¿ « » ° ’) están todos en el
       subconjunto `latin`, no en `latin-ext`. `latin-ext` se conserva para
       nombres propios que puedan llegar desde Entra en la escarapela.
    ========================================================================== */
@@ -47,7 +47,7 @@
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* latin — itálica estática 400 */
+/* latin itálica estática 400 */
 @font-face {
   font-family: "Urbanist";
   font-style: italic;
@@ -59,7 +59,7 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* latin-ext — itálica estática 400 */
+/* latin-ext itálica estática 400 */
 @font-face {
   font-family: "Urbanist";
   font-style: italic;

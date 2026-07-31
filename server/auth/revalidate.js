@@ -1,5 +1,5 @@
 /**
- * Revalidación silenciosa ("problema del egresado") — réplica de Bit-cora-g3 sin la parte de BD.
+ * Revalidación silenciosa ("problema del egresado") réplica de Bit-cora-g3 sin la parte de BD.
  *
  * La sesión de login (cookie Entra) puede durar días; si a alguien lo desasignan de la Enterprise
  * App o lo deshabilitan en Entra, su cookie seguiría válida hasta expirar. Este middleware, cada
@@ -12,9 +12,10 @@
  *     fail-closed: dejamos de preservar indefinidamente una sesión que no podemos validar.
  *
  * Throttle por sesión (lastRevalidatedAt) para no pegarle a Entra en cada request. Se monta
- * global (el sitio completo está detrás del gate), así la revocación corta también la navegación.
+ * SOLO en `/api/me`: con el sitio público, lo único que la revocación debe cortar es la
+ * identidad que alimenta la escarapela y la escarapela consulta `/api/me` al montar, así que
+ * el corte sigue siendo efectivo en una ventana de a lo sumo REVALIDATE_INTERVAL_MS.
  */
-import path from 'node:path';
 import { refreshSilently } from './m365.js';
 import { detectRoles } from './roles.js';
 import { registrarAcceso } from './auditoria.js';
@@ -55,26 +56,21 @@ export function contarFallo(map, sessionId) {
   return n;
 }
 
-// ¿El request es una navegación de página (y no un fetch de asset/API)? Decide el formato de la
-// respuesta al matar la sesión: redirect a la pantalla de login vs 401 JSON.
-function esNavegacionHtml(req) {
-  return req.method === 'GET' && !path.extname(req.path) && !req.path.startsWith('/api/');
-}
-
 /**
- * Mata la sesión de login: destruye la cookie y, según el tipo de request, redirige a la pantalla
- * de login (navegación) o responde 401 (API/asset). Sin BD que desactivar en este sitio.
+ * Mata la sesión de login: destruye la cookie y responde 401 JSON con el motivo. Como este
+ * middleware vive solo en `/api/me`, el único caller es el fetch de la SPA nunca una
+ * navegación—, así que ya no hay dos formatos de respuesta ni una segunda heurística de
+ * navegación que pueda divergir de la de app.js.
  */
 function matarSesion(req, res, reason) {
   fallosTransitorios.delete(req.sessionID);
   return req.session.destroy(() => {
-    if (esNavegacionHtml(req)) return res.redirect(`/?auth=${reason}`);
     res.status(401).json({ authenticated: false, reason });
   });
 }
 
 export async function revalidate(req, res, next) {
-  if (!req.session?.user) return next(); // sin sesión: lo resuelve el gate de la ruta
+  if (!req.session?.user) return next(); // sin sesión: /api/me responde su propio 401
 
   const last = req.session.lastRevalidatedAt || 0;
   if (Date.now() - last < REVALIDATE_INTERVAL_MS) return next(); // dentro de la ventana: no revalida

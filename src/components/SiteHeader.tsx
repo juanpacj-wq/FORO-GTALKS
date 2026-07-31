@@ -50,7 +50,7 @@ function useScrollspy(activo: boolean): AnclaId | null {
 /**
  * `true` en cuanto la página baja del hero.
  *
- * Sobre el hero el header va transparente —el campo oscuro ya es su fondo—,
+ * Sobre el hero el header va transparenteel campo oscuro ya es su fondo—,
  * pero más abajo pasa por encima de la lámina blanca del programa y necesita
  * su propio plano para que el texto blanco se siga leyendo.
  */
@@ -80,7 +80,7 @@ export default function SiteHeader() {
           el primer píxel en vez de esperar al scroll. */}
       <header className={`gt-header ${!enHome || desplazado ? 'gt-header--solido' : ''}`}>
         <div className="gt-header__barra gt-contenedor">
-          <Link className="gt-header__marca" to="/" aria-label={`${EVENTO.marca} — ir al inicio`}>
+          <Link className="gt-header__marca" to="/" aria-label={`${EVENTO.marca} ir al inicio`}>
             <Icono nombre="icono-burbujas" alto="1.6rem" />
             <Icono nombre="wordmark-g-talks" alto="0.85rem" />
           </Link>

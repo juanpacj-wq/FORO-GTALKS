@@ -1,0 +1,409 @@
+/* /escarapela lo propio de la página. El chasis (.gt-pagina, .gt-pagina__intro) vive en
+ * PonentesPage.css y el carné en components/Escarapela.css; aquí van el díptico de la página,
+ * la alerta del callback, el molde de los estados sin carné y la zona de entrada/controles. */
+
+/* El chasis abre con `clamp(7rem, 14vh, 9.5rem)`, reserva heredada de cuando el header era
+ * FIJO y el contenido tenía que arrancar por debajo de él. Hoy es `sticky` y ya ocupa sus
+ * ~96px en el flujo, así que esa reserva es aire sobre aire y aquí se nota más que en ninguna
+ * otra página del chasis: el carné mide ~670px de alto y esos 144px de banda muerta lo
+ * empujaban fuera de la primera pantalla. Es el mismo recorte, y por el mismo motivo, que ya
+ * se hizo en `.gt-hero` (ver InicioPage.css). Va acotado a esta página a propósito: /ponentes
+ * y /encuestas arrancan con una lista, no con una pieza que quiera caber entera. */
+.gt-pagina--escarapela {
+  padding-top: clamp(2.5rem, 6vh, 4.5rem);
+}
+
+/* ── El díptico ──────────────────────────────────────────────────────────────── */
+/* Cuatro áreas y no dos columnas sueltas: `titulo`, `discurso` y `acciones` se apilan a la
+ * izquierda y `pieza` las cruza enteras por la derecha. En móvil, la misma plantilla en una
+ * sola columna cambia el orden a título → discurso → pieza → acciones; el porqué de cada cosa,
+ * en EscarapelaPage.tsx. */
+
+.gt-escarapela__zona {
+  display: grid;
+  gap: clamp(2.5rem, 6vw, 3.5rem);
+  grid-template-areas:
+    'titulo'
+    'discurso'
+    'pieza'
+    'acciones';
+}
+
+.gt-escarapela__titulo {
+  grid-area: titulo;
+  /* El riel del título es `flex: 1`: sin esto se encogería al ancho del texto dentro de una
+     columna flex de items centrados, y el título dejaría de tener riel. */
+  align-self: stretch;
+}
+.gt-escarapela__discurso {
+  grid-area: discurso;
+}
+.gt-escarapela__pieza {
+  grid-area: pieza;
+}
+.gt-escarapela__acciones {
+  grid-area: acciones;
+}
+
+.gt-escarapela__discurso,
+.gt-escarapela__pieza,
+.gt-escarapela__acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gt-space-4);
+}
+
+.gt-escarapela__discurso {
+  gap: var(--gt-space-6);
+  max-width: 46ch;
+  margin-inline: auto;
+  text-align: center;
+}
+
+@media (min-width: 64rem) {
+  .gt-escarapela__zona {
+    /* La segunda pista es el ancho exacto del carné (`min(100%, 27.5rem)` en Escarapela.css):
+       la pieza no negocia su tamaño con el texto, y la columna de la izquierda se lleva por
+       resta lo que sobre. Con dos anchos flexibles el sobrante caía entre las dos como una
+       franja muerta, que es justo lo que este cambio venía a quitar. */
+    grid-template-columns: minmax(0, 1fr) 27.5rem;
+    /* `1fr` en la última fila, no `auto`: la pieza cruza las tres y, con todas automáticas, el
+       reparto de su sobrante empujaba las acciones hacia abajo hasta despegarlas del texto al
+       que pertenecen. Con `1fr`, ese sobrante cae entero en la fila de abajo y las acciones se
+       quedan pegadas al discurso, que es donde se leen. */
+    grid-template-rows: auto auto 1fr;
+    /* El título ENTRA en la rejilla, y esto es lo que cierra el hueco de arriba: la pieza cruza
+       también su fila, así que su canto superior asienta en el del título en vez de 106px más
+       abajo. Los dos huecos que quedaban banda muerta sobre el carné y bajo el texto— son el
+       mismo sobrante, y subir la pieza se los come a la vez. El precio es que el riel del
+       título muere en el canto del carné y no en el del contenedor, y es un precio a favor:
+       la línea conduce a la pieza en vez de pasarle por encima. */
+    grid-template-areas:
+      'titulo   pieza'
+      'discurso pieza'
+      'acciones pieza';
+    column-gap: clamp(3rem, 5vw, 5rem);
+    row-gap: var(--gt-space-8);
+    /* `start`, y esto sí se midió: centrar las columnas contra el alto del carné dejaba 340px
+       de hueco entre el título y el arranque del texto, o sea la misma banda muerta de antes
+       movida a la izquierda. Arrancando todo a la vez, el sobrante cae al FINAL de la página,
+       que es donde no estorba. */
+    align-items: start;
+  }
+
+  .gt-escarapela__discurso,
+  .gt-escarapela__acciones {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .gt-escarapela__discurso {
+    /* Medida de lectura, no ancho de pista: la columna es más ancha que esto en escritorio y
+       el texto se queda a la izquierda, en la misma vertical que el título. */
+    max-width: 34rem;
+    margin-inline: 0;
+  }
+}
+
+/* ── Discurso ────────────────────────────────────────────────────────────────── */
+
+/* Titular de la página, no un encabezado: el h1 es «Escarapela» y esto es el reclamo que va
+   debajo. Por eso es un <p> y no un h2 el sistema no tiene más encabezado que SectionTitle.
+   Sin `color` propio a propósito: hereda el blanco del campo oscuro y el negro que la regla de
+   impresión pone en `.gt-pagina`. */
+.gt-escarapela__lead {
+  margin: 0;
+  font-size: var(--gt-fs-h2);
+  font-weight: var(--gt-fw-bold);
+  line-height: var(--gt-lh-titulo);
+  letter-spacing: var(--gt-tracking-tight);
+  text-wrap: balance;
+}
+
+/* Compuesto sobre `.gt-pagina__intro`, que ya trae el cuerpo, el color y su regla de
+   impresión; aquí solo se ajusta a la columna. Selector compuesto y no una clase suelta: así
+   gana por especificidad y no por orden de importación de los CSS. */
+.gt-escarapela__discurso .gt-escarapela__texto {
+  max-width: none;
+  margin-top: 0;
+}
+
+/* ── El aviso del QR ─────────────────────────────────────────────────────────── */
+/* Esto era un párrafo con un filete de acento de 2px a la izquierda, y ese filete es EL tell
+ * más reconocible de una interfaz generada: un adorno que no codifica nada, pegado a un texto
+ * que tampoco hacía nada. Lo sustituye una fila con dos cosas que sí son ciertas:
+ *
+ *  - **Se separa con un hairline horizontal**, que es como separa este sistema entero (la regla
+ *    del SectionTitle, los cantos de la agenda), no con una pestaña de color a un costado.
+ *  - **Con sesión es un CONTROL, no una nota**: pulsarlo voltea el carné y enseña el QR del que
+ *    habla. El aviso deja de describir el dorso y pasa a abrirlo. Sin sesión no hay carné que
+ *    voltear, así que se pinta como párrafo y no finge ser pulsable.
+ *
+ * La rejilla es de dos columnas para que las líneas del texto y la acción arranquen todas en la
+ * misma vertical, por debajo de la marca. */
+
+.gt-aviso-qr {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  column-gap: var(--gt-space-3);
+  row-gap: var(--gt-space-2);
+  width: 100%;
+  margin: 0;
+  padding-top: var(--gt-space-4);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+  text-align: left;
+  font-size: var(--gt-fs-sm);
+  color: inherit;
+}
+
+.gt-marca-qr {
+  width: 1.9em;
+  height: 1.9em;
+  /* La marca asienta en la primera línea del texto, no en el canto de la caja. */
+  margin-top: 0.02em;
+  color: var(--gt-acento);
+  transition: color var(--gt-transicion);
+}
+
+.gt-aviso-qr__texto strong {
+  font-weight: var(--gt-fw-semibold);
+}
+
+/* La acción, bajo el texto y en su misma vertical: es el segundo renglón de la segunda
+   columna, no un botón suelto que flota al lado. */
+.gt-aviso-qr__accion {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  color: var(--gt-acento);
+  font-weight: var(--gt-fw-semibold);
+}
+
+/* La misma flecha del sistema, con el mismo desplazamiento al pasar por encima que `.gt-boton`:
+   el gesto se hereda, no se reinventa. */
+.gt-aviso-qr__accion::after {
+  content: '→';
+  transition: translate var(--gt-dur-media) var(--gt-ease);
+}
+
+/* ── El aviso del QR, cuando es control ──────────────────────────────────────── */
+
+.gt-aviso-qr--control {
+  /* Resetea el `button` sin heredar nada de `.gt-boton`: esto no es una píldora, es una fila. */
+  appearance: none;
+  background: none;
+  border: 0;
+  border-top: var(--gt-borde) solid var(--gt-linea);
+  font: inherit;
+  font-size: var(--gt-fs-sm);
+  cursor: pointer;
+  transition: border-color var(--gt-transicion);
+}
+
+/* Lo que responde es la LÍNEA DE CORTE, no un fondo ni una sombra: la misma hairline que
+   estructura la página se enciende al acento mientras el puntero está encima. */
+.gt-aviso-qr--control:hover {
+  border-top-color: var(--gt-acento);
+}
+
+.gt-aviso-qr--control:hover .gt-aviso-qr__accion::after {
+  translate: 0.25rem 0;
+}
+
+/* Pulsado = el carné está por el dorso. La marca se rellena en vez de quedarse en trazo: es el
+   mismo cambio que hace el dibujo del QR al pasar de anillo a bloque, y dice de un vistazo que
+   lo que se está viendo ahora es el respaldo. */
+.gt-aviso-qr--control[aria-pressed='true'] {
+  border-top-color: var(--gt-acento);
+}
+
+.gt-aviso-qr--control[aria-pressed='true'] .gt-aviso-qr__accion::after {
+  rotate: 180deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-aviso-qr__accion::after {
+    transition: none;
+  }
+}
+
+.gt-escarapela__alerta {
+  margin: 0;
+  max-width: 52ch;
+  padding: var(--gt-space-3) var(--gt-space-4);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-chico);
+  text-align: left;
+  font-size: var(--gt-fs-body);
+}
+
+/* ── Molde: silueta del carné para `cargando` y `sin-sesion` ─────────────────── */
+/* Mismas coordenadas cqw que el carné real (ver Escarapela.css): el molde es la promesa de la
+ * misma forma, no un dibujo aparte. */
+
+.gt-escarapela__molde {
+  width: min(100%, 27.5rem);
+  container-type: inline-size;
+  aspect-ratio: 1024 / 1571;
+  position: relative;
+  border: var(--gt-borde) solid var(--gt-linea);
+  border-radius: 1.11cqw;
+  background: color-mix(in srgb, var(--gt-blanco) 3%, transparent);
+}
+
+.gt-escarapela__molde-ranura,
+.gt-escarapela__molde-retrato,
+.gt-escarapela__molde-linea,
+.gt-escarapela__molde-pildora {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+}
+
+.gt-escarapela__molde-ranura {
+  top: 5.47cqw;
+  width: 23.44cqw;
+  height: 4.98cqw;
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-pildora);
+}
+
+.gt-escarapela__molde-retrato {
+  top: 45.97cqw;
+  width: 46.78cqw;
+  height: 48.42cqw;
+  border: var(--gt-borde) dashed var(--gt-linea-fuerte);
+  border-radius: 50%;
+}
+
+.gt-escarapela__molde-linea {
+  background: var(--gt-linea);
+  border-radius: var(--gt-radio-chico);
+}
+
+.gt-escarapela__molde-linea--nombre {
+  top: 98.7cqw;
+  width: 56cqw;
+  height: 6.6cqw;
+}
+
+.gt-escarapela__molde-linea--cargo {
+  top: 112.5cqw;
+  width: 40cqw;
+  height: 3.4cqw;
+}
+
+.gt-escarapela__molde-pildora {
+  top: 120.31cqw;
+  width: 83.98cqw;
+  height: 12.99cqw;
+  border: var(--gt-borde) solid var(--gt-linea);
+  border-radius: var(--gt-radio-pildora);
+}
+
+/* ── Acciones: botón Microsoft, o los controles de foto ──────────────────────── */
+
+.gt-escarapela__entrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* El logo de Microsoft es marca ajena de colores fijos (trasplantado literal de la pantalla de
+ * login eliminada): va sobre una teja blanca para no mezclarlo con el celeste del botón. */
+.gt-escarapela__entrar-logo {
+  width: 1.05em;
+  height: 1.05em;
+  padding: 0.2em;
+  background: var(--gt-blanco);
+  border-radius: 3px;
+  box-sizing: content-box;
+}
+
+.gt-escarapela__otra-cuenta {
+  color: var(--gt-acento);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-escarapela__registro {
+  margin: 0;
+  max-width: 44ch;
+  font-size: var(--gt-fs-xs);
+  color: var(--gt-texto-suave);
+}
+
+/* ── Controles de foto ───────────────────────────────────────────────────────── */
+
+.gt-escarapela__foto-controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-4);
+}
+
+/* El input de archivo está visualmente oculto dentro del label-botón: el anillo de foco tiene
+ * que aparecer en el label, o el teclado navega a ciegas. */
+.gt-escarapela__foto-controles label:focus-within {
+  outline: 2px solid var(--gt-foco);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Sin `text-align` propio: la heredan de la zona, que va centrada en móvil y a la izquierda en
+   escritorio. Fijarla a `center` dejaba un bloque alineado a la izquierda con el texto centrado
+   dentro, que es el descuadre clásico de una columna que cambió de sitio. */
+.gt-escarapela__aviso-foto {
+  margin: 0;
+  max-width: 48ch;
+  font-size: var(--gt-fs-sm);
+  color: var(--gt-texto);
+}
+
+.gt-escarapela__nota {
+  margin: 0;
+  max-width: 46ch;
+  font-size: var(--gt-fs-sm);
+  color: var(--gt-texto-suave);
+}
+
+/* ── Correo de inscripción ───────────────────────────────────────────────────── */
+/* Un RECIBO, no un aviso: el correo ya salió y esto lo constata. Llevaba el mismo filete de
+ * acento a la izquierda que el aviso del QR y por el mismo motivo se ha ido: no codificaba
+ * nada, solo pintaba. En su lugar, la marca de trazo que dice cuál de los dos desenlaces es
+ * —visto bueno o aviso— y la frase al lado, sin caja. Sigue distinguiéndose de `__nota` (la de
+ * la foto) por llevar marca y por el color del texto, que es el pleno y no el suave.
+ *
+ * El estado lo decide el servidor: cuando no hay nada confirmado, esta línea no existe. */
+
+.gt-escarapela__inscripcion {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--gt-space-3);
+  margin: 0;
+  max-width: 48ch;
+  text-align: left;
+  font-size: var(--gt-fs-sm);
+  color: var(--gt-texto);
+}
+
+.gt-marca-estado {
+  width: 1.1em;
+  height: 1.1em;
+  margin-top: 0.28em; /* a la altura de la x del texto, no del canto de su caja */
+  color: var(--gt-acento);
+}
+
+/* ── Remate ──────────────────────────────────────────────────────────────────── */
+
+/* `balance` y no el corte natural: son bloques de dos o tres líneas, y ahí la última se queda
+   con una palabra suelta que se lee como un descuido. Va en estos y NO en `__texto`: la
+   entradilla pasa de cuatro líneas, que es donde los navegadores dejan de equilibrar. */
+.gt-aviso-qr__texto,
+.gt-escarapela__nota,
+.gt-escarapela__aviso-foto,
+.gt-escarapela__inscripcion span {
+  text-wrap: balance;
+}

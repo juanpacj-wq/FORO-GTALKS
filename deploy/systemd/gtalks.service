@@ -1,5 +1,5 @@
 # ==============================================================================
-#  Foro G-TALKS — unit de systemd
+#  Foro G-TALKS unit de systemd
 #
 #  Instalación:
 #    sudo cp gtalks.service /etc/systemd/system/
@@ -9,7 +9,7 @@
 #  Entre ediciones el servicio se PARA (`systemctl disable --now gtalks`). Ver docs/SEGURIDAD.md.
 # ==============================================================================
 [Unit]
-Description=Foro GECELCA G-TALKS — gate Entra ID
+Description=Foro GECELCA G-TALKS gate Entra ID
 After=network-online.target
 Wants=network-online.target
 
@@ -21,7 +21,7 @@ WorkingDirectory=/opt/gtalks
 
 # Los secretos NO viven en el directorio de la app: así un `git pull` no puede pisarlos y el
 # usuario del servicio no necesita permiso para leerlos.
-# Permisos 0600 root:root — systemd parsea este archivo como PID 1, antes de bajar privilegios,
+# Permisos 0600 root:root systemd parsea este archivo como PID 1, antes de bajar privilegios,
 # así que el usuario del servicio nunca lo abre. Es más estrecho que el 0640 habitual y funciona.
 EnvironmentFile=/etc/gtalks/env
 Environment=NODE_ENV=production
@@ -35,7 +35,7 @@ TimeoutStopSec=15s
 
 # --- Endurecimiento --------------------------------------------------------
 # Más estricto que el modelo del proyecto hermano: allí hay BD y uploads, aquí NO hay nada que
-# escribir —el sitio es estático y las sesiones viven en memoria a propósito—, salvo el registro
+# escribirel sitio es estático y las sesiones viven en memoria a propósito—, salvo el registro
 # de acceso. De ahí que ReadWritePaths tenga una sola ruta.
 NoNewPrivileges=true
 PrivateTmp=true
@@ -60,12 +60,23 @@ SystemCallFilter=@system-service
 SystemCallErrorNumber=EPERM
 UMask=0077
 
-# Única ruta escribible: el registro de asistencia (AUDIT_LOG_PATH).
+# Dos rutas escribibles, y son cosas distintas:
+#   · /var/log/gtalks  el registro de asistencia (AUDIT_LOG_PATH). ROTA (logrotate, 90 días).
+#   · /var/lib/gtalks  el libro de inscripciones (INSCRIPCION_LIBRO). Es ESTADO, no un log:
+#     si se rotara, tras el siguiente reinicio el servidor volvería a mandarle el correo de
+#     inscripción a todo el mundo. Por eso vive aquí y no allí. StateDirectory lo crea con el
+#     dueño correcto (0700 gtalks:gtalks) e implica su ruta escribible.
 ReadWritePaths=/var/log/gtalks
+StateDirectory=gtalks
 
-# El proceso escucha en 127.0.0.1 (server/index.js); esto lo refuerza a nivel de kernel.
-IPAddressAllow=localhost
-IPAddressDeny=any
+# NOTA: aquí vivían `IPAddressAllow=localhost` + `IPAddressDeny=any`. Se quitaron porque ese
+# filtro aplica también a la SALIDA, y este proceso tiene que hablar con login.microsoftonline.com
+# (el canje del código de autorización) y con graph.microsoft.com (el cargo del asistente y el
+# correo de inscripción). Con ellos puestos, el login no puede completarse.
+# La restricción de ENTRADA ya la dan `listen('127.0.0.1')` (server/index.js), nginx como único
+# interlocutor y ufw en el borde. Si algún día se quiere control de egress de verdad, va en
+# nftables contra los rangos de Microsoft 365 y no aquí: esos rangos cambian, y un unit
+# desactualizado se convierte en una caída silenciosa a mitad de evento.
 
 [Install]
 WantedBy=multi-user.target

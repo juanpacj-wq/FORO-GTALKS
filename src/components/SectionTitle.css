@@ -22,7 +22,7 @@
 }
 
 /* El riel se traza al entrar. Arranca en 0.12 y no en 0: aunque una línea de
-   tiempo inactiva deja la animación sin aplicar —y entonces el riel se pinta
+   tiempo inactiva deja la animación sin aplicary entonces el riel se pinta
    entero—, un estado inicial de cero anchura sería un dato oculto esperando
    a fallar.                                                                  */
 @keyframes gt-riel-traza {

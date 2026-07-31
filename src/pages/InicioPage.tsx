@@ -44,21 +44,29 @@ export default function InicioPage() {
       <section id="bienvenida" className="gt-hero gt-grano">
         <div className="gt-hero__grid">
           <div className="gt-hero__texto">
-            <h1 className="gt-hero__titulo">
-              <Icono
-                nombre="numeral-uno"
-                className="gt-hero__numeral"
-                alto="2.85em"
-                titulo="1°"
-              />
-              <span className="gt-hero__palabras">
-                <span className="gt-hero__linea">Foro:</span>
-                <span className="gt-hero__linea">Energía</span>
-                <span className="gt-hero__linea gt-hero__acento">en Acción</span>
-              </span>
-            </h1>
+            {/* El lockup del foro es una sola pieza: numeral, tres líneas, regla y
+                bajada. Van juntos en un contenedor propio porque la regla mide lo
+                que mide el conjunto y la base del «1» tiene que caer dentro de
+                ella. Las cotas están en InicioPage.css, medidas sobre el PDF.
+                El `alto` del numeral lo fija Icono como estilo inlineninguna
+                regla CSS puede ganarle—, así que va aquí. */}
+            <div className="gt-hero__lockup">
+              <h1 className="gt-hero__titulo">
+                <Icono
+                  nombre="numeral-uno"
+                  className="gt-hero__numeral"
+                  alto="5.622em"
+                  titulo="1°"
+                />
+                <span className="gt-hero__palabras">
+                  <span className="gt-hero__linea">Foro:</span>
+                  <span className="gt-hero__linea">Energía</span>
+                  <span className="gt-hero__linea gt-hero__acento">en Acción</span>
+                </span>
+              </h1>
 
-            <p className="gt-hero__bajada">{EVENTO.bajada}</p>
+              <p className="gt-hero__bajada">{EVENTO.bajada}</p>
+            </div>
 
             <p className="gt-hero__intro">{BIENVENIDA[0][0] as string}</p>
 
@@ -73,13 +81,15 @@ export default function InicioPage() {
           </div>
 
           <div className="gt-hero__media">
+            {/* Sin `ratio`: el marco del hero no va por proporción sino por lo
+                que le deja el layoutancho— y por lo que cabe en la primera
+                pantalla —alto—. Las dos cotas están en InicioPage.css. */}
             <PhotoFrame
               className="gt-hero__foto gt-marco--paralaje"
-              src="/img/hero-aerogeneradores.webp"
-              srcSet="/img/hero-aerogeneradores.webp 1x, /img/hero-aerogeneradores@2x.webp 2x"
-              alt="Parque de aerogeneradores sobre una planta de paneles solares, con un operario revisando una tableta."
+              src="/img/hero-matriz-energetica.webp"
+              srcSet="/img/hero-matriz-energetica.webp 1x, /img/hero-matriz-energetica@2x.webp 2x"
+              alt="Paneles solares y aerogeneradores al atardecer, junto a una planta de generación térmica con sus torres de refrigeración encendidas."
               variante="izq"
-              ratio="4 / 5"
               prioridad
             />
             <span className="gt-hero__sello" aria-hidden="true">
@@ -154,7 +164,7 @@ export default function InicioPage() {
           <SectionTitle apunte={jornada()}>Agenda Académica</SectionTitle>
           <LineaDelDia activo={bloqueActivo} onActivo={setBloqueActivo} />
           <div className="gt-agenda__envoltorio gt-lamina">
-            {/* Cabecera de la lámina: la convierte en un documento —el programa
+            {/* Cabecera de la lámina: la convierte en un documentoel programa
                 impreso del día— y no en una lista suelta sobre un rectángulo. */}
             <div className="gt-agenda__cabecera">
               <p className="gt-dato">Programa</p>

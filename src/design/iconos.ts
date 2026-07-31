@@ -1,4 +1,4 @@
-// GENERADO por scripts/build-assets.py — no editar a mano.
+// GENERADO por scripts/build-assets.py no editar a mano.
 //
 // Proporción (ancho/alto) de cada símbolo monocromo, sacada de su viewBox.
 // `Icono.tsx` la necesita para deducir el ancho a partir del alto: los

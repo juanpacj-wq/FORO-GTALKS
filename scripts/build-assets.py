@@ -449,7 +449,7 @@ def escribir_catalogo() -> None:
 
     destino = ROOT / "src" / "design" / "iconos.ts"
     destino.write_text(
-        "// GENERADO por scripts/build-assets.py — no editar a mano.\n"
+        "// GENERADO por scripts/build-assets.py no editar a mano.\n"
         "//\n"
         "// Proporción (ancho/alto) de cada símbolo monocromo, sacada de su viewBox.\n"
         "// `Icono.tsx` la necesita para deducir el ancho a partir del alto: los\n"

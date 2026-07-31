@@ -1,0 +1,505 @@
+/* El carné de /escarapela réplica medida de `Carnet-foro-1.jpg (1).jpeg`.
+ *
+ * TODAS las cotas de este archivo salen de `scripts/escarapela-medir.py`, que mide la pieza y
+ * escribe `design-extract/escarapela/report.md`. Ninguna se estima a ojo. Para revisarlas:
+ *
+ *   .venv-design/Scripts/python scripts/escarapela-medir.py   # mide la pieza
+ *   node scripts/escarapela-compare.mjs                       # captura este carné
+ *   .venv-design/Scripts/python scripts/escarapela-diff.py    # cota a cota, con su Δ
+ *
+ * Cuatro cosas que hay que tener presentes antes de tocar un número:
+ *
+ * - **Esta pieza va A SANGRE: el carné ES el lienzo**, 1080×1648 de borde a borde, y sus cuatro
+ *   esquinas son cuadradas. La pieza anterior (`Escarapela.png`) era un export con margen y
+ *   sombra donde el carné ocupaba 931×1429 dentro de 1024×1536, y de ahí salía la proporción
+ *   1024/1571. Aquí la proporción es **1024/1563** y el radio de esquina es **0**.
+ * - **1cqw = 10.24 px de ese carné normalizado.** Cada valor de aquí lleva al lado, en un
+ *   comentario, los px medidos de los que sale. El carné escala entero como una imagen.
+ * - **Cada cota vertical de texto se calcula, no se tantea.** Con Urbanist (asc 0.95em, desc
+ *   0.25em, versal 0.70em), la versal de la primera línea cae a
+ *   `(altura_de_linea - 1.2·cuerpo) / 2 + 0.25·cuerpo` del canto superior de la caja. De ahí
+ *   sale cada `top`: cota medida de la versal menos ese desplazamiento.
+ * - **El peso de cada texto sale del GROSOR DE ASTA de la pieza, no de su ancho.** El ancho lo
+ *   ajusta el tracking, así que no distingue un peso de otro; el asta sí. Medidos en la pieza
+ *   (milésimas de em) contra los de Urbanist: lockup 129 → bold, bajada 89 → medium, nombre
+ *   ~122 → bold, cargo 72 → regular, píldora 133 → black, rótulo del pie 116 → bold, y el
+ *   valor del pie 69 → regular.
+ *
+ * El contenedor de la query es el MARCO (.gt-escarapela-marco) y no el carné: `container-type`
+ * impone contención de layout, y la contención aplana `transform-style: preserve-3d` con la
+ * query en el carné, el volteo dejaría de ser 3D en silencio.
+ *
+ * Casi todo va POSICIONADO A SU COTA, no en flujo. En la pieza cada elemento está donde está,
+ * y encadenarlos por márgenes hacía que el error de uno se sumara al del siguiente: un nombre
+ * de dos líneas empujaba la píldora y el pie fuera del carné. Aquí un texto que se desborde
+ * comprime su propia zona y no mueve nada más. */
+
+.gt-escarapela-marco {
+  width: min(100%, 27.5rem); /* ~440px: el carné cómodo en móvil y contenido en escritorio */
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gt-space-6);
+}
+
+.gt-escarapela-escena {
+  width: 100%;
+  perspective: 1600px;
+}
+
+.gt-carne {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1024 / 1563; /* la pieza va a sangre: 1080×1648 normalizado a 1024 de ancho */
+  transform-style: preserve-3d;
+  transition: transform var(--gt-dur-lenta) var(--gt-ease);
+
+  /* Las tintas de ESTA pieza, medidas por MODA sobre el núcleo de cada masa, y acotadas al
+   * carné. No coinciden con los tokens del sistema, que salen de los PDF: la pieza es un
+   * export raster hecho aparte. Manda lo medido en cada pieza, pero solo aquí dentro:
+   * repintar los tokens globales cambiaría el sitio entero.
+   *
+   * Y son SEIS, no dos. Lo que el muestreo por moda destapó y un promedio de ventana escondía
+   * es que la pieza usa dos navies y tres celestes distintos, con cuotas del 99 % sobre masas
+   * planas o sea, decisiones, no ruido de compresión:
+   *
+   *   · el telón de la cabecera y el anillo del retrato comparten #1C2C4E;
+   *   · la píldora, los iconos del pie y el texto del pie comparten otro, #1F2E55;
+   *   · las dos bandas celestes y la regla bajo el nombre comparten #73BFE1;
+   *   · «en Acción» va en un celeste más claro, #89D0E5 (casi el --gt-celeste del sistema);
+   *   · y el grupo de personas de la píldora, en #6FBFE0 justo el celeste de la pieza
+   *     anterior, que era el mismo para todo.
+   *
+   * Ojo con lo que NO alcanza este override: los tokens derivados (--gt-noche, --gt-humo,
+   * --gt-celeste-tinte) se resuelven donde se declaran, en :root, así que siguen calculados
+   * sobre los azules del sistema. Es lo que se quiere: son colores de la página, no del carné.
+   *
+   * Sobre estos navies el blanco y el --gt-humo del dorso ganan contraste respecto de los
+   * tokens, nunca lo pierden; lo comprueba `node scripts/a11y-test.mjs`. */
+  --gt-navy: #1c2c4e;
+  --gt-celeste: #73bfe1;
+  --gt-carne-navy-datos: #1f2e55;
+  --gt-carne-celeste-claro: #89d0e5;
+  --gt-carne-celeste-icono: #6fbfe0;
+  --gt-carne-tinta: #000000;
+}
+
+.gt-carne--girada {
+  transform: rotateY(180deg);
+}
+
+.gt-carne__cara {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* Cuadrada, y medido: la pieza va a sangre y sus cuatro esquinas lo son. El troquel
+   * redondeado del carné físico queda fuera del encuadre de este export, así que no hay radio
+   * que replicar la anterior sí lo enseñaba, y de ahí venían sus 11.4px. */
+  border-radius: 0;
+  backface-visibility: hidden;
+  box-shadow: var(--gt-sombra-lamina);
+  /* La cara no activa se esconde del árbol de accesibilidad y del auditor de contraste a media
+   * vuelta. Bajo prefers-reduced-motion los tokens de duración son 0ms: intercambio instantáneo. */
+  visibility: visible;
+  transition: visibility 0s calc(var(--gt-dur-lenta) / 2);
+}
+
+.gt-carne--girada .gt-carne__cara--frontal,
+.gt-carne:not(.gt-carne--girada) .gt-carne__cara--trasera {
+  visibility: hidden;
+}
+
+/* La cara frontal lleva .gt-lamina: fondo blanco + inversión de tokens (--gt-acento, --gt-foco,
+ * --gt-linea) sobre campo claro. Los telones navy/celeste se pintan encima con el SVG. */
+
+.gt-carne__cara--trasera {
+  background: var(--gt-navy);
+  transform: rotateY(180deg);
+}
+
+/* ── Telones ─────────────────────────────────────────────────────────────────── */
+
+/* Un solo SVG a tamaño de carné: su viewBox son los mismos px normalizados que las cotas de
+ * abajo, así que los `d` medidos se pegan tal cual. */
+.gt-carne__fondo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gt-carne__onda-navy { fill: var(--gt-navy); }
+.gt-carne__onda-banda { fill: var(--gt-celeste); }
+
+/* ── Ranura del cordón ───────────────────────────────────────────────────────── */
+
+.gt-carne__ranura {
+  position: absolute;
+  top: 5.27cqw;    /* 54px  */
+  left: 38.28cqw;  /* 392px */
+  width: 23.54cqw; /* 241px */
+  height: 5.37cqw; /* 55px  */
+  border-radius: var(--gt-radio-pildora);
+  /* Troquel de verdad: se pinta con el fondo de la página, como si el carné estuviera
+   * perforado. En la pieza sale blanco porque el fondo del export es blanco. */
+  background: var(--gt-fondo);
+}
+
+/* ── Cabecera: lockup del foro y marca G-TALKS ──────────────────────────────── */
+
+/* El navy de detrás lo pinta el SVG del telón, que no es ancestro de estos textos: se repite en
+ * cada unonavy plano sobre navy plano, invisible— para que el fondo real sea legible desde el
+ * DOM (el auditor de contraste compone los background-color de los ancestros). */
+.gt-carne__foro,
+.gt-carne__lockup-regla,
+.gt-carne__bajada,
+.gt-carne__gtalks {
+  position: absolute;
+  color: var(--gt-blanco);
+  background: var(--gt-navy);
+}
+
+/* El «1» de la pieza no lleva el serif de la base: lo tapa la regla del lockup, que arranca en
+ * su mismo canto izquierdo. Por eso el alto va calculado para que el serif caiga DENTRO de la
+ * regla (ambos blancos, se funden) y lo que asoma por encima sea solo el asta.
+ *
+ * Y NO lleva el fondo navy de los textos de al lado: un Icono se pinta con
+ * `background-color: currentColor` sobre una máscara (ver Icono.css), así que un `background`
+ * propio lo borranavy sobre navy—. Tampoco le hace falta: es decorativo, y el auditor de
+ * contraste no audita iconos. */
+/* El alto es el del viewBox, no el de la tinta: `numeral-uno.svg` sale de los PDF y es la CAJA
+ * EM del glifo. Medido sobre su propio `d`: la tinta ocupa el 50.89 % del alto (desde el
+ * 29.50 %) y el 92.94 % del ancho (desde el 4.07 %).
+ *
+ * El tamaño NO se puede deducir del alto de la tinta, porque en la pieza el «1» está cortado
+ * por abajo: la regla del lockup le tapa el serif de la base. Se deduce del ANCHO, y del ancho
+ * de lo que sí se ve el asta con su bandera—, que en el glifo mide 50.9 de las 219.82
+ * unidades del viewBox. De ahí los tres valores:
+ *
+ *   alto  = 83 (ancho medido) / (50.9 / 219.82)             = 358.4px = 35.00cqw
+ *   top   = 123 (tinta medida)  29.50 % de 358.4            = 17.3px
+ *   left  = 97 (tinta medida)  4.07 % de 114.3 de ancho    = 92.35px
+ *
+ * Y la comprobación de que el razonamiento cierra: con esas tres cotas el serif de la base cae
+ * en y 301.4-305.3 y x 102.9-203.2, o sea DENTRO de la regla del lockup (y 302-306,
+ * x 102-490). Que es justo lo que hace la pieza los dos son blancos y se funden—, y por eso
+ * el «1» parece no tener serif.
+ *
+ * Y NO lleva el fondo navy de los textos de al lado: un Icono se pinta con
+ * `background-color: currentColor` sobre una máscara (ver Icono.css), así que un `background`
+ * propio lo borranavy sobre navy—. Tampoco le hace falta: es decorativo, y el auditor de
+ * contraste no audita iconos. */
+.gt-carne__numeral {
+  position: absolute;
+  top: 1.38cqw;  /* caja del viewBox; la tinta arranca en 123px */
+  left: 8.88cqw; /* caja del viewBox; la tinta arranca en 97px */
+  color: var(--gt-blanco);
+}
+
+.gt-carne__cara .gt-carne__foro {
+  top: 11.41cqw;  /* la versal de «Foro:» asienta en 123px */
+  left: 20.77cqw; /* la tinta de «Foro:» arranca en 217px */
+  margin: 0;
+  font-size: 6.45cqw;  /* 66px: versal medida de 47px / 0.70 de Urbanist */
+  font-weight: var(--gt-fw-bold); /* asta de 129/1000 em en la pieza */
+  line-height: 0.886;  /* 58.5px de paso entre líneas */
+  letter-spacing: -0.016em; /* la pieza compone más apretado que Urbanist por defecto */
+  white-space: nowrap;
+}
+
+/* «en Acción» NO va en el celeste de las bandas: es un tono más claro, medido aparte. */
+.gt-carne__foro-celeste {
+  color: var(--gt-carne-celeste-claro);
+}
+
+.gt-carne__lockup-regla {
+  top: 29.49cqw;   /* 302px */
+  left: 9.96cqw;   /* 102px */
+  width: 37.89cqw; /* 388px */
+  height: 0.39cqw; /* 4px   */
+  background: var(--gt-blanco);
+  border-radius: var(--gt-radio-pildora);
+}
+
+.gt-carne__cara .gt-carne__bajada {
+  top: 30.52cqw;  /* la versal asienta en 316px */
+  left: 9.84cqw;  /* la tinta arranca en 104px */
+  margin: 0;
+  font-size: 3.83cqw; /* 39.2px */
+  font-weight: var(--gt-fw-medium); /* asta de 89/1000 em en la pieza */
+  line-height: 1;
+  letter-spacing: 0.001em;
+  white-space: nowrap;
+}
+
+/* Las dos piezas de la marca comparten eje. Sus tintas medidas no lo comparten del todo
+ * (burbujas en 806, wordmark en 809), así que el eje es la media: 1.5px a cada una, por
+ * debajo del umbral de 3px del diff, y a cambio la marca no queda escalonada. */
+.gt-carne__gtalks {
+  top: 12.01cqw;  /* la tinta de las burbujas arranca en 123px */
+  left: 78.86cqw; /* eje: 807.5px */
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Negativo a propósito: el viewBox del wordmark trae aire arriba y abajo (su tinta ocupa el
+ * 54.31 % del alto, arrancando al 21.67 %), y ese aire hay que descontarlo. Entre la tinta de
+ * las burbujas (acaba en 231) y la del wordmark (arranca en 244) hay 13px, y el aire de la
+ * caja ya aporta 14.24: de ahí el 1.24px negativo. Las burbujas, en cambio, sí van a ras de su
+ * viewBox (su tinta lo ocupa entero). */
+.gt-carne__gtalks-burbujas {
+  margin-bottom: -0.12cqw;
+  /* Los 1.5px de cada una respecto del eje común, devueltos: el `relative` no mueve la
+   * columna, solo el dibujo. */
+  position: relative;
+  left: -0.20cqw;
+}
+
+.gt-carne__gtalks-wordmark {
+  position: relative;
+  left: 0.20cqw;
+}
+
+/* ── Cuerpo ──────────────────────────────────────────────────────────────────── */
+
+.gt-carne__cuerpo {
+  position: absolute;
+  inset: 0;
+  color: var(--gt-carne-tinta);
+  text-align: center;
+}
+
+.gt-carne__cuerpo > * {
+  position: absolute;
+}
+
+/* El retrato de esta pieza SÍ es un círculo: 509.1 × 508.8 medidos, o sea iguales dentro de un
+ * píxel. Se dice porque en la pieza anterior no lo era (479×496, una elipse de verdad), y esa
+ * diferencia estaba en el dibujo, no en la medición.
+ *
+ * El anillo es un trazo fino de 4px y el filete blanco que lo separa de la foto es de 18.5,
+ * casi el doble que los 12 de la pieza anterior. */
+.gt-carne__retrato {
+  top: 45.87cqw;   /* 469.7px */
+  left: 25.15cqw;  /* 257.5px */
+  width: 49.72cqw;  /* 509.1px */
+  height: 49.69cqw; /* 508.8px */
+  border-radius: 50%;
+  border: 0.42cqw solid var(--gt-navy); /* 4px medidos */
+  padding: 1.81cqw;                     /* filete blanco de 18.5px entre trazo y foto */
+  background: var(--gt-blanco);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.gt-carne__foto {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.gt-carne__iniciales {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--gt-celeste-tinte);
+  font-size: 14cqw;
+  font-weight: var(--gt-fw-black);
+  letter-spacing: 0.02em;
+  color: var(--gt-navy);
+}
+
+/* Negro puro, no el navy de la pieza anterior: medido #000000 con una cuota del 84 %. */
+.gt-carne__cara .gt-carne__nombre {
+  top: 97.49cqw;   /* la versal asienta en 1015px */
+  left: 50.05cqw;  /* centro medido: 512.5px */
+  translate: -50% 0;
+  width: 88cqw;
+  margin: 0;
+  font-weight: var(--gt-fw-bold); /* asta de ~122/1000 em en la pieza, no black */
+  line-height: 1.05;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  text-wrap: balance; /* si aun así parte, que parta parejo */
+  /* El font-size lo pone el componente por estilo inline: 9.35cqw de base, reducido con
+   * nombres largos para asentar en una línea, como la pieza. */
+}
+
+.gt-carne__regla {
+  top: 109.18cqw;  /* 1118px */
+  left: 13.57cqw;  /* 139px  */
+  width: 72.95cqw; /* 747px  */
+  height: 0.39cqw; /* 4px    */
+  background: var(--gt-celeste);
+  border-radius: var(--gt-radio-pildora);
+}
+
+.gt-carne__cara .gt-carne__cargo {
+  top: 111.24cqw;  /* la versal de «G» asienta en 1149px */
+  left: 50.10cqw;  /* centro medido: 513px */
+  translate: -50% 0;
+  width: 80cqw;
+  margin: 0;
+  font-size: 4.79cqw; /* 49.1px */
+  font-weight: var(--gt-fw-regular); /* asta de 72/1000 em en la pieza */
+  line-height: 1.15;  /* el line-height editorial de base.css descuadraría las cotas del carné */
+  letter-spacing: 0.004em;
+}
+
+.gt-carne__cara .gt-carne__pildora {
+  top: 120.70cqw;   /* 1236px */
+  left: 7.91cqw;    /* 81px   */
+  width: 84.28cqw;  /* 863px  */
+  height: 12.99cqw; /* 133px  */
+  margin: 0;
+  border-radius: var(--gt-radio-pildora);
+  background: var(--gt-carne-navy-datos);
+  display: flex;
+  align-items: center;
+  /* Anclado a la izquierda, no centrado: en la pieza el grupo arranca en 142px y su eje
+   * (495px para el rótulo) no coincide con el de la píldora (512.5px). Con un rol más largo o
+   * más corto crece hacia la derecha, que es donde hay sitio. */
+  justify-content: flex-start;
+  padding-left: 5.96cqw; /* 61px: el icono arranca en 142px */
+  gap: 3.81cqw;          /* 39px del icono al separador */
+}
+
+/* Sin corrección vertical: el viewBox del icono trazado ES su caja de tinta, y esa tinta
+ * (y 1268-1337) ya está centrada en la píldora (1236-1369). */
+.gt-carne__pildora-icono {
+  color: var(--gt-carne-celeste-icono);
+}
+
+.gt-carne__pildora-sep {
+  width: 0.20cqw;  /* 2px  */
+  height: 6.74cqw; /* 69px */
+  background: var(--gt-carne-celeste-icono);
+  border-radius: var(--gt-radio-pildora);
+}
+
+.gt-carne__pildora-rol {
+  position: relative;
+  top: 0.44cqw;        /* la versal no cae centrada en la píldora: 4.5px más abajo */
+  margin-left: 2.54cqw; /* 26px: del separador al rótulo hay más aire que del icono a él */
+  font-size: 5.58cqw;  /* 57.1px: versal medida de 40px / 0.70 */
+  font-weight: var(--gt-fw-black); /* asta de 133/1000 em en la pieza */
+  line-height: 1;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  color: var(--gt-blanco);
+}
+
+/* Dos renglones apilados, y una REJILLA de dos columnas con cuatro hijos, no dos filas
+ * sueltas. El motivo es medido: los dos iconos tienen anchos distintos (calendario 36px,
+ * alfiler 30px) pero comparten eje (145px), y los dos rótulos arrancan en la misma x (196px).
+ * Con dos filas independientes y un `gap`, el rótulo del alfiler entraría 6px antes.
+ *
+ * La primera columna mide lo que el icono más ancho y centra su contenido; de ahí que los dos
+ * iconos queden en el mismo eje sin cablear ninguna corrección. */
+.gt-carne__cara .gt-carne__pie {
+  top: 136.75cqw; /* la versal del primer renglón asienta en 1409px */
+  left: 12.40cqw; /* 127px: el canto izquierdo del icono del calendario */
+  display: grid;
+  grid-template-columns: 3.52cqw 1fr; /* 36px: la caja del icono */
+  align-items: center;
+  justify-items: center;
+  column-gap: 3.02cqw; /* 33px: del canto de la caja del icono al arranque del rótulo */
+  row-gap: 0;
+  font-size: 3.87cqw;  /* 39.6px */
+  font-weight: var(--gt-fw-regular); /* asta de 69/1000 em en el valor */
+  line-height: 1.212;  /* 48px de paso entre renglones (versales en 1409 y 1457) */
+  letter-spacing: -0.003em;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--gt-carne-navy-datos);
+}
+
+/* El texto, pegado a la izquierda de su celda; el `justify-items: center` es para el icono.
+ * Va por clase y no por `> span`: `Icono` también renderiza un `span`, así que un selector de
+ * elemento descentraría los dos iconos y se llevaría por delante el eje común. */
+.gt-carne__pie-texto {
+  justify-self: start;
+  /* 1.5px: la versal del texto cae algo por debajo de la del icono en la rejilla. */
+  position: relative;
+  top: -0.15cqw;
+}
+
+.gt-carne__pie strong {
+  font-weight: var(--gt-fw-bold); /* asta de 116/1000 em en el rótulo */
+}
+
+.gt-carne__pie-icono {
+  position: relative;
+  color: var(--gt-carne-navy-datos);
+}
+
+/* Los dos iconos NO están en el mismo ritmo que sus renglones. Medido: las versales van a
+ * 1409 y 1457 (48px de paso), pero los ejes de los iconos van a 1425.5 y 1468 (42.5). La
+ * pieza está compuesta a mano y el alfiler quedó 5px más arriba de donde lo dejaría la
+ * rejilla; se replica en vez de «arreglarse», que es de lo que va esto. */
+.gt-carne__pie-icono--lugar {
+  top: -0.49cqw; /* 5px */
+}
+
+/* El aire entre el rótulo y su valor son 13-14px, y el espacio duro solo aporta ~12. */
+.gt-carne__pie-valor {
+  margin-left: 0.10cqw; /* 1px */
+}
+
+/* ── Dorso: el QR ────────────────────────────────────────────────────────────── */
+
+.gt-carne__dorso {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 24cqw;
+}
+
+.gt-carne__dorso-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.6cqw;
+  color: var(--gt-blanco);
+}
+
+.gt-carne__qr-panel {
+  margin-top: 8cqw;
+  padding: 3cqw;
+  border-radius: 3cqw;
+  background: var(--gt-blanco);
+}
+
+.gt-carne__qr {
+  display: block;
+  width: 60cqw; /* cada px de más agranda los puntos: con una URL larga, el QR es denso */
+  height: 60cqw;
+  /* El azul medido en la pieza «Diseño de Código QR.png» (#023F86 sobre un PNG con antialias)
+   * es el azul GECELCA de marca ya medido en las demás piezas: --gt-azul-gecelca, no el navy. */
+  color: var(--gt-azul-gecelca);
+}
+
+.gt-carne__dorso-texto {
+  margin: 8cqw 10cqw 0;
+  font-size: 3.8cqw;
+  font-weight: var(--gt-fw-light);
+  color: var(--gt-humo);
+  text-align: center;
+}
+
+/* ── Controles ───────────────────────────────────────────────────────────────── */
+
+.gt-escarapela-voltear {
+  /* .gt-boton pone lo demás; aquí solo el ancho mínimo para que el texto no baile al alternar. */
+  min-width: 12.5rem;
+  justify-content: center;
+}

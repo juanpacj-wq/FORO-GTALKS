@@ -6,13 +6,13 @@ import './LineaDelDia.css'
  * La jornada como línea de tiempo de una sola pista.
  *
  * Antes esto era un gráfico de barras donde el alto codificaba «intensidad»
- * —cuánta gente hay en escena—. Era un dato inventado: en la agenda de un día
+ *cuánta gente hay en escena—. Era un dato inventado: en la agenda de un día
  * lo único que existe de verdad es **cuándo empieza cada cosa y cuánto dura**.
  * Una segunda dimensión que no corresponde a nada obliga a leer dos veces y
  * miente un poco.
  *
  * Aquí hay una sola pista: el alto es constante y solo el ancho significa algo.
- * El tipo de bloque se distingue por tratamiento —relleno, contorno, trama— y
+ * El tipo de bloque se distingue por tratamientorelleno, contorno, trama— y
  * no por tamaño, así que la comparación entre duraciones queda limpia: el
  * almuerzo de 2 h 30 ocupa cinco veces lo que una ponencia de 30 min y se ve.
  *
@@ -159,7 +159,7 @@ export default function LineaDelDia({
         {bloque ? (
           <>
             <span className="gt-dato gt-linea__pie-hora">
-              {formatoHora(bloque.inicio).hora} {formatoHora(bloque.inicio).meridiano} —{' '}
+              {formatoHora(bloque.inicio).hora} {formatoHora(bloque.inicio).meridiano}{' '}
               {formatoHora(bloque.fin).hora} {formatoHora(bloque.fin).meridiano}
             </span>
             <span className="gt-linea__pie-titulo">{bloque.titulo}</span>
