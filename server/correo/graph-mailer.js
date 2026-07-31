@@ -22,7 +22,9 @@ import crypto from 'node:crypto';
 import { ConfidentialClientApplication, LogLevel } from '@azure/msal-node';
 
 const GRAPH_V1 = 'https://graph.microsoft.com/v1.0';
-const TIEMPO_LIMITE_MS = 10_000;
+// El mensaje lleva la pieza del correo incrustada (~1.5 MB ya en base64): con 10 s, una subida
+// lenta se anotaría como `fallido` sin serlo, y un timeout no se reintenta solo.
+const TIEMPO_LIMITE_MS = 30_000;
 /** Tope de la espera que pida `Retry-After`: más que esto, se da por fallido y se revisa a mano. */
 const ESPERA_MAX_MS = 30_000;
 /** Solo estos merecen un reintento. Un 403 no mejora repitiéndolo. */
@@ -82,7 +84,7 @@ export function crearMailer({ obtenerToken, baseUrl = GRAPH_V1, fetchImpl = fetc
   // hora no puede convertirse en una tormenta de 429.
   let cola = Promise.resolve();
 
-  async function intentar({ remitente, para, asunto, html, peticion }) {
+  async function intentar({ remitente, para, asunto, html, adjuntos, peticion }) {
     const token = await obtenerToken();
     const url = `${baseUrl}/users/${encodeURIComponent(remitente)}/sendMail`;
 
@@ -101,6 +103,18 @@ export function crearMailer({ obtenerToken, baseUrl = GRAPH_V1, fetchImpl = fetc
           subject: asunto,
           body: { contentType: 'HTML', content: html },
           toRecipients: [{ emailAddress: { address: para } }],
+          // Adjuntos EN el mensaje (la pieza inline, `cid:`). Se mapean solo los campos
+          // conocidos, uno a uno: lo que el llamador ponga de más no viaja a Graph.
+          ...(adjuntos?.length && {
+            attachments: adjuntos.map((a) => ({
+              '@odata.type': '#microsoft.graph.fileAttachment',
+              name: a.nombre,
+              contentType: a.contentType,
+              contentId: a.contentId,
+              isInline: a.enLinea === true,
+              contentBytes: a.contentBytes,
+            })),
+          }),
         },
         // Deja copia en Enviados: es evidencia de auditoría sin costo.
         saveToSentItems: true,

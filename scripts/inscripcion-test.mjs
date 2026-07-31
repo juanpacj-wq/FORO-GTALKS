@@ -13,9 +13,10 @@ import http from 'node:http'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { crearMailer } from '../server/correo/graph-mailer.js'
-import { componerInscripcion } from '../server/correo/plantilla-inscripcion.js'
+import { componerInscripcion, cargarImagenCorreo } from '../server/correo/plantilla-inscripcion.js'
 import { cargarEvento } from '../server/correo/evento.js'
 import {
   leerConfiguracion, iniciarInscripcion, reservarInscripcion, enviarInscripcion,
@@ -28,6 +29,7 @@ function check(nombre, ok, detalle = '') {
   if (!ok) fallos++
 }
 
+const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'gtalks-inscripcion-'))
 let n = 0
 const nuevoLibro = () => path.join(TMP, `libro-${++n}.jsonl`)
@@ -176,6 +178,13 @@ const LIBRO_1 = nuevoLibro()
   check('con el destinatario correcto', env.mensaje.message.toRecipients[0].emailAddress.address === 'ana@gecelca.com.co')
   check('deja copia en Enviados (evidencia)', env.mensaje.saveToSentItems === true)
   check('y lleva el client-request-id que se anotó en el libro', env.peticionId === l[1].peticion)
+
+  const adj = env.mensaje.message.attachments || []
+  check(
+    'la pieza viaja como adjunto EN LÍNEA (fileAttachment, isInline)',
+    adj.length === 1 && adj[0]['@odata.type'] === '#microsoft.graph.fileAttachment' && adj[0].isInline === true,
+  )
+  check('y el HTML del mensaje la referencia por su cid', Boolean(adj[0]) && env.mensaje.message.body.content.includes(`cid:${adj[0].contentId}`))
 }
 
 console.log('\nLista blanca')
@@ -512,25 +521,46 @@ console.log('\nLa plantilla')
 
 {
   const evento = cargarEvento()
-  const { asunto, html } = componerInscripcion({
+  const imagen = cargarImagenCorreo()
+  // `nombre` ya no se interpola (el cuerpo es la pieza); se sigue pasando hostil para que, si
+  // alguien lo reintroduce sin escapar, esta prueba lo grite.
+  const { asunto, html, adjuntos } = componerInscripcion({
     nombre: '<script>alert(1)</script> Ana',
     evento,
     url: 'https://gtalks.gecelca.com.co',
+    imagen,
   })
 
   check('el asunto nombra el foro', asunto.includes(`${evento.edicion}° Foro GECELCA ${evento.marca}`), asunto)
-  check('el nombre sale ESCAPADO', html.includes('&lt;script&gt;') && !html.includes('<script>'))
-  check('cita la fecha del evento', html.includes(evento.fecha.texto))
-  check('y el lugar', html.includes(evento.lugar))
-  check('enlaza a /escarapela del origen público', html.includes('https://gtalks.gecelca.com.co/escarapela'))
+  check('nada del token llega al HTML', !html.includes('<script>') && !html.includes('alert(1)'))
+  check('el cuerpo es la pieza, inline por cid y sin imágenes remotas', html.includes('src="cid:') && !/src="https?:/i.test(html))
+  check(
+    'la imagen entera es un enlace a /escarapela del origen público',
+    /<a href="https:\/\/gtalks\.gecelca\.com\.co\/escarapela"[^>]*>\s*<img/.test(html),
+  )
+  check('con texto alterno para quien no la vea', /<img[^>]+alt="[^"]{20,}"/.test(html))
+  check(
+    'y un enlace textual de respaldo al mismo destino',
+    (html.match(/https:\/\/gtalks\.gecelca\.com\.co\/escarapela/g) || []).length >= 2,
+  )
+
+  check(
+    'el adjunto es UNO, en línea, y casa con el cid del HTML',
+    adjuntos.length === 1 && adjuntos[0].enLinea === true && html.includes(`cid:${adjuntos[0].contentId}`),
+  )
+  const pieza = fs.readFileSync(path.join(RAIZ, 'imagen correo.png'))
+  check('sus bytes son EXACTAMENTE los de la pieza oficial', adjuntos[0].contentBytes === pieza.toString('base64'))
+  check('declarada como image/png', adjuntos[0].contentType === 'image/png')
+
   check('declara el idioma es-CO', html.includes('lang="es-CO"'))
-  check('sin imágenes remotas (Outlook las bloquea, y serían rastreo)', !/<img/i.test(html))
   check('sin hojas de estilo externas', !/<link/i.test(html))
   check('no pide credenciales ni verificaciones', !/contrase|verifica tu cuenta/i.test(html))
 
-  // Regla dura del proyecto: es-CO con TUTEO. Ningún imperativo en voseo.
+  // Regla dura del proyecto: es-CO con TUTEO. Ningún imperativo en voseo, tampoco en el alterno
+  // (que vive dentro de una etiqueta y el desetiquetado se lo comería).
   const voseo = /\b(cre[áa]|gener[áa]|abr[íi]|hac[ée]|ten[ée]|pon[ée]|eleg[íi]|guard[áa]|envi[áa]|segu[íi]|registrate|logueate)\b/i
-  check('el copy no tiene voseo', !voseo.test(html.replace(/<[^>]+>/g, ' ')))
+  const texto = `${html.replace(/<[^>]+>/g, ' ')} ${html.match(/alt="([^"]*)"/)?.[1] || ''}`
+  check('el copy no tiene voseo', !voseo.test(texto))
 }
 
 // ── Limpieza ─────────────────────────────────────────────────────────────────

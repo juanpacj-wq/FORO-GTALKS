@@ -45,7 +45,7 @@ import { fileURLToPath } from 'node:url';
 
 import { crearLibro } from './libro-inscripciones.js';
 import { crearMailer, crearProveedorDeToken } from './graph-mailer.js';
-import { componerInscripcion } from './plantilla-inscripcion.js';
+import { componerInscripcion, cargarImagenCorreo } from './plantilla-inscripcion.js';
 import { cargarEvento } from './evento.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -181,6 +181,7 @@ let cfg = null;
 let libro = null;
 let mailer = null;
 let evento = null;
+let imagen = null;
 
 /**
  * Arranca el módulo. Idempotente. Devuelve un resumen para la línea de arranque.
@@ -201,17 +202,20 @@ export function iniciarInscripcion({ env = process.env, mailer: mailerInyectado 
   cfg = conf;
   if (cfg.modo === 'off') return { modo: 'off', destinatarios: 0 };
 
-  // El contenido del evento y el libro son requisitos del ENVÍO, no del sitio. Si fallan, se
-  // apaga el correo y se sigue sirviendo: el foro es público y tumbarlo entero porque a
-  // `evento.json` le falte la sede sería desproporcionado. El aviso es ruidoso a propósito.
+  // El contenido del evento, la pieza del correo y el libro son requisitos del ENVÍO, no del
+  // sitio. Si fallan, se apaga el correo y se sigue sirviendo: el foro es público y tumbarlo
+  // entero porque a `evento.json` le falte la sede sería desproporcionado. El aviso es ruidoso
+  // a propósito.
   try {
     evento = cargarEvento();
+    imagen = cargarImagenCorreo();
     libro = crearLibro(cfg.libro);
     libro.cargar();
   } catch (err) {
     console.error(`  ⚠  [inscripcion] no se pudo arrancar el envío, queda DESACTIVADO: ${err.message}`);
     cfg = { ...conf, modo: 'off' };
     libro = null;
+    imagen = null;
     return { modo: 'off', destinatarios: 0 };
   }
 
@@ -245,6 +249,7 @@ export function _reiniciar() {
   libro = null;
   mailer = null;
   evento = null;
+  imagen = null;
 }
 
 /**
@@ -288,7 +293,7 @@ export function reservarInscripcion({ oid, correo }) {
  * No lanza nunca. Un fallo de correo no puede alterar el inicio de sesión de nadie: es el mismo
  * criterio de degradación suave que `obtenerPerfil` en `auth/m365.js`.
  */
-export async function enviarInscripcion({ oid, correo, nombre }) {
+export async function enviarInscripcion({ oid, correo }) {
   if (!cfg || cfg.modo === 'off' || !libro) return;
 
   try {
@@ -327,7 +332,7 @@ export async function enviarInscripcion({ oid, correo, nombre }) {
       return;
     }
 
-    const { asunto, html } = componerInscripcion({ nombre, evento, url: cfg.origen });
+    const { asunto, html, adjuntos } = componerInscripcion({ evento, url: cfg.origen, imagen });
     const r = await mailer.enviar({
       remitente: cfg.remitente,
       // `destino`, no `correo`: en modo `lista` es la entrada de la configuración, no la cadena
@@ -335,6 +340,7 @@ export async function enviarInscripcion({ oid, correo, nombre }) {
       para: destino,
       asunto,
       html,
+      adjuntos,
     });
 
     if (r.ok) {

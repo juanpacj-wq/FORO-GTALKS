@@ -15,21 +15,30 @@ import {
   LLAMADO,
   PONENTES,
   SOBRE_EL_FORO,
+  TRAMOS,
   formatoHora,
 } from '../data/foro'
 import './InicioPage.css'
 
-/** «8:30 a.m. – 4:30 p.m.», sacado de la agenda y no escrito a mano. */
-function jornada() {
-  const abre = formatoHora(AGENDA[0].inicio)
-  const cierra = formatoHora(AGENDA[AGENDA.length - 1].fin)
+/** «8:30 a.m. – 12:00 p.m.», el rango de un tramo de la agenda. */
+function rango({ inicio, fin }: { inicio: string; fin: string }) {
+  const abre = formatoHora(inicio)
+  const cierra = formatoHora(fin)
   return `${abre.hora} ${abre.meridiano} – ${cierra.hora} ${cierra.meridiano}`
 }
 
-const FICHA = [
-  { rotulo: 'Fecha', valor: EVENTO.fecha.texto },
-  { rotulo: 'Sede', valor: EVENTO.lugar },
-  { rotulo: 'Jornada', valor: jornada() },
+/** «8:30 a.m. – 4:30 p.m.», de extremo a extremo, para el apunte de la agenda. */
+function jornada() {
+  return rango({ inicio: AGENDA[0].inicio, fin: AGENDA[AGENDA.length - 1].fin })
+}
+
+/* La jornada va partida en mañana y tarde (ver TRAMOS): de extremo a extremo
+   anunciaba ocho horas seguidas y se comía el almuerzo libre. Por eso el valor
+   de la ficha es una lista de líneas y no una cadena. */
+const FICHA: { rotulo: string; lineas: string[]; clase?: string }[] = [
+  { rotulo: 'Fecha', lineas: [EVENTO.fecha.texto] },
+  { rotulo: 'Sede', lineas: [EVENTO.lugar] },
+  { rotulo: 'Jornada', lineas: TRAMOS.map(rango), clase: 'gt-ficha__valor--horas' },
 ]
 
 export default function InicioPage() {
@@ -71,10 +80,16 @@ export default function InicioPage() {
             <p className="gt-hero__intro">{BIENVENIDA[0][0] as string}</p>
 
             <dl className="gt-ficha">
-              {FICHA.map(({ rotulo, valor }) => (
+              {FICHA.map(({ rotulo, lineas, clase }) => (
                 <div className="gt-ficha__item" key={rotulo}>
                   <dt className="gt-dato gt-ficha__rotulo">{rotulo}</dt>
-                  <dd className="gt-ficha__valor">{valor}</dd>
+                  <dd className={clase ? `gt-ficha__valor ${clase}` : 'gt-ficha__valor'}>
+                    {lineas.map((linea) => (
+                      <span className="gt-ficha__linea" key={linea}>
+                        {linea}
+                      </span>
+                    ))}
+                  </dd>
                 </div>
               ))}
             </dl>

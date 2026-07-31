@@ -8,12 +8,11 @@ export default function PonentesPage() {
     <section className="gt-pagina gt-grano">
       <div className="gt-contenedor">
         <SectionTitle como="h1" apunte={`${PONENTES.length} personas`}>
-          Ponentes
+          Expertos que impulsan la conversación
         </SectionTitle>
 
         <p className="gt-pagina__intro">
-          Quienes intervienen en el foro, en el orden del programa. Cada perfil reúne su trayectoria
-          y los bloques en los que participa.
+          Conoce a los líderes y expertos que harán parte del foro. Explora su trayectoria, experiencia y los espacios en los que compartirán su visión sobre los retos y oportunidades del sector energético.
         </p>
 
         <ul className="gt-ponentes__lista">

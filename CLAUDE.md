@@ -23,8 +23,10 @@ un dorso con volteo 3D y el QR de registro de asistencia hacia la Power App de c
 `foro2026.andeg.org` de la que partió el proyecto ya no existe. El sistema visual está medido sobre
 las piezas y documentado en [`docs/SISTEMA-DE-DISENO.md`](./docs/SISTEMA-DE-DISENO.md) léelo
 antes de tocar `src/design/` o de añadir cualquier valor de estilo; la escarapela tiene su propia
-sección ahí. `/encuestas` (dos enlaces a Microsoft Forms) y `/escarapela` cerraron los pendientes
-#6 y #5; quedan los pendientes de contenido de siempre (sede, fotos, biografías).
+sección ahí. `/encuestas` (dos encuestas de Microsoft Forms: la de oportunidades enlaza directo y
+la de satisfacción abre por reloj al cierre del evento ver Convenciones) y `/escarapela`
+cerraron los pendientes #6 y #5; quedan los pendientes de contenido de siempre (sede, fotos,
+biografías).
 
 ## Fuente de verdad del diseño y del contenido
 
@@ -276,6 +278,14 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   reinicio le escribiría otra vez a todo el mundo—. Lo comprueba
   `node scripts/inscripcion-test.mjs` contra un Graph falso, y hay que correrlo tras tocar
   cualquier cosa de `server/correo/`. Manual completo: `docs/SEGURIDAD.md` §Correo de inscripción.
+- **El cuerpo del correo ES la pieza `imagen correo.png` (raíz), otra entrega no acumulativa.**
+  Va incrustada **en línea** por `cid:` —nunca como imagen remota: Outlook las bloquea y serían
+  rastreo— y envuelta entera en el enlace a `PUBLIC_ORIGIN + /escarapela`, con un enlace textual
+  de respaldo debajo. La lee `cargarImagenCorreo()` **al arrancar**, no al enviar: si falta, no es
+  un PNG o no cabe en los ~4 MB de `sendMail`, el envío queda apagado desde el arranque con aviso
+  ruidoso. Tiene que estar **commiteada** (el despliegue empaqueta con `git archive`) y adoptar
+  una entrega nueva es reemplazar el archivo y volver a correr `inscripcion-test.mjs`, que exige
+  que los bytes del adjunto sean exactamente los de la pieza.
 - **El destinatario no se comprueba una vez, sino tres, y el destino sale de la CONFIGURACIÓN.**
   `destinoAutorizado()` no devuelve un booleano: devuelve **la entrada de
   `INSCRIPCION_DESTINATARIOS`** con la que coincidió, y es esa cadena la que se envía. Así ninguna
@@ -293,6 +303,31 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   único que cambió es un campo dentro de `/api/me`, y `gate-test.mjs` verifica que sigue siendo
   así. La interfaz **solo anuncia lo que el servidor confirma**: `pendiente` y `no_aplica` no
   pintan nada, porque nunca se anuncia un correo que quizá no salió.
+- **La encuesta de satisfacción abre por reloj, y el reloj es el del SERVIDOR.** No recibe
+  respuestas antes de que el foro termine, así que su URL **no está en el bundle**: vive en
+  `server/encuestas.js` y `GET /api/encuestas` (público, solo lectura, `no-store`) la entrega
+  cuando pasó `fecha.cierreIso` de `src/data/evento.json` la hora lleva su desfase `-05:00`
+  explícito, y sin él el arranque aborta—. El cliente (`src/data/encuestas.ts`) **falla cerrado**:
+  sin confirmación del servidor pinta el botón `aria-disabled` con su aviso, y programa el volteo
+  restando dos relojes del servidor (`desde − ahora`), nunca con el local. Tocar cualquiera de las
+  dos puntas se verifica con `gate-test.mjs` (frontera exacta con reloj inyectado, URL ausente en
+  la respuesta cerrada, `POST` 404) e `interactions-test.mjs` (los dos estados del botón y el
+  volteo sin recargar). Manual: `docs/SEGURIDAD.md` §La encuesta de satisfacción abre por reloj.
+- **La jornada se anuncia partida en mañana y tarde, y el corte sale de la agenda.** La ficha del
+  hero dice «8:30 a.m. – 12:00 p.m.» y «2:30 p.m. – 4:30 p.m.» en dos líneas: de extremo a extremo
+  anunciaba ocho horas seguidas y se comía las dos y media de almuerzo libre. El corte es el
+  **bloque logístico más largo del día** (`TRAMOS` en `foro.ts`), no una hora escrita a mano, así
+  que si el almuerzo se mueve los dos tramos se mueven con él; sin descanso largo queda un solo
+  tramo, que es lo correcto. Los rangos no se parten (`.gt-ficha__valor--horas`): un «8:30 a.m. –»
+  arriba y un «12:00 p.m.» abajo se leen como dos horas sueltas. El apunte de *Agenda Académica*
+  sigue siendo el vano entero, que ahí es lo que se está midiendo.
+- **La presidencia va sin línea de horas en el índice de ponentes.** Abrir y cerrar es protocolo,
+  no programa, y «A cargo 9:00 a.m. y 4:10 p.m.» lo listaba como una intervención más;
+  `SIN_RESUMEN` en `foro.ts` deja esa fila con nombre y cargo. Va **por slug y no por papel**
+  —filtrar «a cargo» sería hoy lo mismo, pero mañana escondería sin avisar a quien herede el
+  papel— y `resumenDe` devuelve `''`, así que quien la pinte tiene que contar con la cadena vacía
+  y no envolverla a ciegas en su etiqueta. Lo fija `interactions-test.mjs` en dos mitades: diez
+  filas con línea, y que la que falta sea exactamente esa.
 - Los pendientes de contenido (sede real del evento, fotos de ponentes) se registran en
   `docs/PENDIENTES-DE-CONTENIDO.md`.
 

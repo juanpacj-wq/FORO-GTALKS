@@ -481,7 +481,7 @@ export const ENCUESTAS: readonly Encuesta[] = [
     id: 'oportunidades-y-amenazas',
     titulo: 'Oportunidades y amenazas',
     descripcion:
-      'Comparte cuáles consideras que son las principales oportunidades y amenazas para GECELCA.',
+      'Comparte tu visión sobre las principales oportunidades y desafíos que identificas para GECELCA en el contexto actual del sector energético.',
     accion: 'Compartir mi perspectiva',
     url: 'https://forms.cloud.microsoft/r/xxc8PGp3Ly',
   },
@@ -489,9 +489,8 @@ export const ENCUESTAS: readonly Encuesta[] = [
     id: 'satisfaccion',
     titulo: 'Encuesta de satisfacción',
     descripcion:
-      'Cuéntanos cómo fue tu experiencia en este espacio y ayúdanos a identificar oportunidades ' +
-      'de mejora.',
-    accion: 'Contar mi experiencia',
+      'Cuéntanos cómo fue tu experiencia durante el foro y ayúdanos a seguir fortaleciendo este espacio de conversación.',
+    accion: 'Compartir mi experiencia',
     // Sin `url` a propósito: pregunta por la experiencia del foro, así que no
     // recibe respuestas antes de que el foro termine. El enlace lo entrega
     // `/api/encuestas` pasado el cierre (`fecha.cierreIso` de evento.json);
@@ -508,9 +507,7 @@ export const ENCUESTA_SATISFACCION_AVISO =
 
 /** Entradilla de `/encuestas`, transcrita literal. Anuncia la lista de abajo. */
 export const ENCUESTAS_INTRO =
-  'Tu participación es fundamental para seguir construyendo el futuro de GECELCA. A ' +
-  'continuación, encontrarás dos encuestas que nos ayudarán a conocer tu perspectiva y a ' +
-  'mejorar continuamente este espacio:'
+  'Tu opinión es clave para seguir fortaleciendo GECELCA. Participa en las siguientes encuestas y comparte tu perspectiva sobre los temas abordados durante el foro y tu experiencia en este espacio.'
 
 // ---------------------------------------------------------------------- helpers
 
@@ -575,6 +572,38 @@ export const JORNADA = {
   },
 }
 
+/** Un descanso de esta duración o más parte el día en dos; por debajo, no. */
+const CORTE_MINIMO = 60
+
+/**
+ * La jornada partida en mañana y tarde: «8:30 a.m. – 12:00 p.m.» y «2:30 p.m.
+ * – 4:30 p.m.». Decir solo los extremos («8:30 a.m. – 4:30 p.m.») anunciaba
+ * ocho horas seguidas y se comía las dos y media de almuerzo libre.
+ *
+ * Sale de la agenda y no está escrita a mano, igual que `JORNADA`: el corte es
+ * el bloque logístico más largo del día —hoy «Almuerzo Libre», 2 h 30, frente a
+ * los 20 min de los dos coffee breaks—, así que si el programa se reordena o el
+ * almuerzo se mueve, los dos tramos se mueven con él.
+ *
+ * Si algún día no hubiera un descanso largo, queda un solo tramo: la jornada
+ * entera. Es el resultado correcto, no un caso a evitar.
+ */
+export const TRAMOS: { inicio: string; fin: string }[] = (() => {
+  const entero = { inicio: AGENDA[0].inicio, fin: AGENDA[AGENDA.length - 1].fin }
+  const dura = (b: Bloque) => minutos(b.fin) - minutos(b.inicio)
+
+  const corte = AGENDA.filter((b) => b.tipo === 'logistico' && dura(b) >= CORTE_MINIMO).sort(
+    (a, b) => dura(b) - dura(a),
+  )[0]
+
+  return corte
+    ? [
+        { inicio: entero.inicio, fin: corte.inicio },
+        { inicio: corte.fin, fin: entero.fin },
+      ]
+    : [entero]
+})()
+
 /** Papel de una persona dentro de un bloque concreto. */
 export type Intervencion = {
   bloque: Bloque
@@ -624,6 +653,20 @@ export function intervencionesDe(slug: string): Intervencion[] {
 }
 
 /**
+ * Quienes no llevan línea de resumen en el índice de ponentes.
+ *
+ * La presidencia abre y cierra: eso es protocolo, no programa, y «A cargo 9:00
+ * a.m. y 4:10 p.m.» lo listaba como si fuera una intervención más. Sin la línea
+ * quedan el nombre y el cargo, que es lo que dice de qué va.
+ *
+ * Va por slug y no por papel a propósito. Filtrar «a cargo» sería hoy lo mismo
+ * —solo Erick tiene hitos con ponente— pero mañana escondería sin avisar a
+ * quien herede el papel. La excepción es exactamente la que se pidió, y el
+ * `satisfies` la ata a un slug que exista: una errata no compila.
+ */
+const SIN_RESUMEN = ['erick-wehdeking-arcieri'] as const satisfies readonly PonenteSlug[]
+
+/**
  * Una línea con lo que hace una persona y a qué hora: «Ponente 9:20 a.m. ·
  * Panelista 11:20 a.m.». Es lo que convierte el índice de ponentes en un
  * índice del programa y no en un directorio de nombres.
@@ -631,11 +674,17 @@ export function intervencionesDe(slug: string): Intervencion[] {
  * Los papeles repetidos se agrupan en vez de repetirse: quien abre y cierra la
  * jornada sale como «A cargo 9:00 a.m. y 4:10 p.m.», no dos veces «A cargo».
  *
+ * Devuelve `''` para quien esté en `SIN_RESUMEN` —y también para quien no
+ * aparezca en la agenda—, así que quien la pinte tiene que contar con la cadena
+ * vacía y no envolverla a ciegas en su etiqueta.
+ *
  * Vive aquí y no en el componente porque se compone de tres piezas que ya
  * están en este archivo, y porque así no hay una segunda forma de decir lo
  * mismo esperando a divergir.
  */
 export function resumenDe(slug: string): string {
+  if ((SIN_RESUMEN as readonly string[]).includes(slug)) return ''
+
   const grupos = new Map<Intervencion['papel'], string[]>()
 
   for (const { bloque, papel } of intervencionesDe(slug)) {

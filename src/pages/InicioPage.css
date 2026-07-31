@@ -284,6 +284,20 @@
   text-wrap: balance;
 }
 
+/* Un dato puede traer más de una línea —la jornada trae mañana y tarde—, y
+   cada una ocupa la suya: en el mismo párrafo se leerían como un solo rango
+   larguísimo.                                                                */
+.gt-ficha__linea {
+  display: block;
+}
+
+/* Los rangos de hora no se parten. Un «8:30 a.m. –» arriba y un «12:00 p.m.»
+   abajo se leen como dos horas sueltas, justo lo contrario de lo que dicen.
+   Caben: la columna del hero mide 30rem como mínimo y el rango, 11.        */
+.gt-ficha__valor--horas .gt-ficha__linea {
+  white-space: nowrap;
+}
+
 /* En estrecho los tres datos se apilan: envueltos en fila dejaban una regla
    vertical colgando bajo el tercero.                                        */
 @media (max-width: 40rem) {

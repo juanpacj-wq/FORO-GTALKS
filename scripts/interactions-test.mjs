@@ -114,9 +114,20 @@ check('una ruta inexistente redirige a /', new URL(desktop.url()).pathname === '
 console.log('\nDatos')
 await desktop.goto(base + '/ponentes', { waitUntil: 'networkidle' })
 check('hay 11 ponentes', (await desktop.locator('.gt-ponente').count()) === 11)
+// La presidencia abre y cierra la jornada: eso es protocolo, no programa, así
+// que su fila va sin línea de horas (`SIN_RESUMEN` en foro.ts) y son diez, no
+// once. Se comprueban las dos mitades por separado —cuántas la llevan y que la
+// que falta es exactamente esa— porque un `=== 10` a secas daría por bueno que
+// la excepción se mueva de persona.
 check(
-  'cada fila dice cuándo interviene',
-  (await desktop.locator('.gt-ponente__resumen').count()) === 11,
+  'las diez filas del programa dicen cuándo intervienen',
+  (await desktop.locator('.gt-ponente__resumen').count()) === 10,
+)
+check(
+  'la fila de presidencia va sin horas',
+  (await desktop
+    .locator('.gt-ponente:has([href$="/erick-wehdeking-arcieri"]) .gt-ponente__resumen')
+    .count()) === 0,
 )
 await desktop.goto(base + '/', { waitUntil: 'networkidle' })
 check('hay 12 bloques de agenda', (await desktop.locator('.gt-agenda__fila').count()) === 12)

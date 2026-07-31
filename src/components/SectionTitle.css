@@ -55,8 +55,12 @@
     flex-wrap: wrap;
     gap: var(--gt-space-3);
   }
+  /* Se suelta el límite de 22ch, pero NO hasta `none`: con `flex: none` el
+     título mide su max-content, así que un titular largo —«Expertos que
+     impulsan la conversación»— se iba a 587 px y desbordaba la pantalla a lo
+     ancho en vez de envolver. El 100 % lo ata al contenedor.                 */
   .gt-titulo-seccion__texto {
-    max-width: none;
+    max-width: 100%;
   }
   .gt-titulo-seccion__riel {
     order: 3;

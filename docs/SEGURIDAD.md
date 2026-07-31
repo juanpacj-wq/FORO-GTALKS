@@ -25,6 +25,7 @@ No hay allowlist local ni roles de negocio.
 |---|---|
 | Navegación y subrecursos, con o sin sesión | **200** todo HTML sale con la `Content-Security-Policy` (el fallback SPA es la única puerta del HTML; `express.static` va con `index: false` justo para eso) |
 | `GET /api/me` sin sesión | 401 JSON, `no-store` |
+| `GET /api/encuestas` | 200 JSON público, `no-store`, sin cookie. La URL de la encuesta de satisfacción **solo aparece cuando el reloj del servidor pasó `fecha.cierreIso`** (ver §La encuesta de satisfacción abre por reloj) |
 | Métodos que no son de lectura, cross-site | 403 (`csrfMiddleware`: `Sec-Fetch-Site` u `Origin` contra `PUBLIC_ORIGIN`) |
 | Subrecurso inexistente | 404 JSON (el fallback SPA es solo para navegaciones) |
 | Errores del callback OIDC | 302 → `/escarapela?auth=<motivo>`, que la SPA explica junto al botón |
@@ -42,6 +43,25 @@ de la sesión; el sitio solo lo pinta, no guarda ni envía nada.
 (`server/correo/`, ver §Correo de inscripción). No añade superficie HTTP: no hay ruta para
 dispararlo, reenviarlo ni consultarlo lo comprueba `gate-test.mjs`—; lo único que cambió es un
 campo dentro de `/api/me`, que sigue cerrado sin sesión.
+
+### La encuesta de satisfacción abre por reloj
+
+Pregunta por la experiencia del foro, así que **no debe recibir respuestas antes de que el foro
+termine** (miércoles 5 de agosto de 2026, 4:00 p. m. de Colombia). La defensa es de **retención,
+no de interfaz**: la URL del formulario vive en `server/encuestas.js` y **no está en el bundle
+público**; `GET /api/encuestas` la entrega solo cuando el reloj **del servidor** pasó
+`fecha.cierreIso` de `src/data/evento.json` (con desfase `-05:00` explícito: la zona horaria del
+servidor no participa, y un `cierreIso` ambiguo aborta el arranque). Antes de esa hora el botón de
+`/encuestas` va deshabilitado con su aviso, y el cliente **falla cerrado**: sin confirmación del
+servidor sea porque aún no es la hora, porque `preview` no tiene API o porque la respuesta vino
+rota— no hay enlace que habilitar. Adelantar el reloj del teléfono no fabrica nada, porque no hay
+nada que fabricar.
+
+No añade superficie de escritura: es un GET de solo lectura sin sesión ni cookie, y no existe
+mutador que abra la encuesta antes de hora. `gate-test.mjs` ejercita la frontera exacta con reloj
+inyectado (`estadoEncuestas` es pura), comprueba que la respuesta cerrada no filtre la URL por
+ningún campo, y que `POST /api/encuestas` sea 404; `interactions-test.mjs` verifica los dos
+estados del botón y el volteo automático a la hora del servidor, sin recargar.
 
 ### El servidor de desarrollo
 
@@ -91,7 +111,8 @@ npm run build
 node scripts/inscripcion-test.mjs   # el correo de inscripción, sin red ni credenciales
 npm run start:local          # o `npm start` con el entorno puesto
 node scripts/gate-test.mjs   # matriz pública: 200+CSP en navegaciones, 401 /api/me, CSRF,
-                             # login OIDC sin prompt=none, cabeceras, sin Set-Cookie anónimo
+                             # login OIDC sin prompt=none, cabeceras, sin Set-Cookie anónimo,
+                             # y la encuesta de satisfacción: URL retenida hasta el cierre
 ```
 
 `inscripcion-test.mjs` no necesita servidor: levanta un **Graph falso** en loopback y se lo inyecta
@@ -174,6 +195,15 @@ es decir, quién abrió su escarapela. Es un **dato personal** y por eso va en d
 En el **primer** inicio de sesión de cada persona sale un correo de confirmación; los siguientes no
 vuelven a escribirle. Vive en `server/correo/` (cuatro módulos con una responsabilidad cada uno) y
 el plan completo está en [`PLAN-CORREO-INSCRIPCION.md`](./PLAN-CORREO-INSCRIPCION.md).
+
+**El cuerpo del correo ES la pieza oficial** (`imagen correo.png`, raíz del repo), incrustada **en
+línea** como adjunto con `Content-ID` (`cid:`) y envuelta entera en un enlace a
+`PUBLIC_ORIGIN + /escarapela`. No hay imágenes **remotas** —Outlook las bloquea y serían un píxel
+de rastreo—: la pieza viaja dentro del mensaje, así que se ve sin «descargar imágenes» y no delata
+cuándo se abre. La lee `cargarImagenCorreo()` **una vez al arrancar**: si falta, no es un PNG o no
+cabría en los ~4 MB de `sendMail`, el envío queda desactivado desde el arranque con un aviso
+ruidoso, no la mañana del foro. Bajo la imagen queda un enlace textual de respaldo al mismo
+destino, y el texto alterno de la imagen cuenta lo mismo a quien no la vea.
 
 **Permiso:** `Mail.Send` de **aplicación** (client credentials), no delegado el delegado
 enviaría «como» el asistente, desde su propia bandeja—. El remitente es un buzón del tenant
@@ -342,6 +372,7 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 | **El remitente NO está acotado en Exchange** | `Mail.Send` de aplicación permite, por defecto, enviar como **cualquier** buzón del tenant; el control que lo cierra es una `ApplicationAccessPolicy` (o RBAC for Applications) de Exchange Online, y **no se aplicó**: exige rol de *Organization Management*, que la cuenta del proyecto no tiene, y el sitio vive un solo día. Lo que sí queda es la lista blanca de **destinatarios** en el código (`INSCRIPCION_DESTINATARIOS`, fallo cerrado) y el secreto en `/etc/gtalks/env`. Decisión del usuario, 2026-07-30 | Si el correo se abre a todo el tenant, o si el sitio pasa a vivir más de una edición, aplicarla |
 | **Un reinicio entre la reserva y el envío deja un `reservado` huérfano**: esa persona no recibe correo y no se reintenta sola | La alternativa —reintentar al arrancar— puede **duplicar** envíos, que es justo el fallo que el módulo existe para evitar. El huérfano es visible con un `grep` sobre el libro | Revisar el libro una vez al día en la semana del foro |
 | **El aviso de privacidad promete el correo a todo el que entra**, y durante el piloto solo lo reciben los de la lista | Es una divulgación previa a un tratamiento de datos: sobre-informar es la dirección segura, informar de menos es la arriesgada. La interfaz, en cambio, **solo anuncia lo que el servidor confirma** | Deja de ser discrepancia en cuanto el modo pase a `todos` |
+| **La URL de la encuesta de satisfacción circuló en bundles anteriores** al gate por reloj | Quien la haya guardado de un despliegue previo puede abrir el formulario antes del cierre; el servidor solo puede retener lo que sirve HOY. El cierre de fondo está en Forms: la encuesta puede llevar además su propia **fecha de inicio** («Aceptar respuestas desde»), configurada por Comunicaciones en el tenant defensa en profundidad fuera de este repo | Antes del evento: pedir a Comunicaciones esa fecha de inicio en Forms |
 | **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde. (Con el sitio público el pico del login ya no es «todo el auditorio a la misma hora»: solo pasa por `/auth/*` quien abre su escarapela) | Ajustar con los rangos de egress cuando IT los entregue |
 
 ---

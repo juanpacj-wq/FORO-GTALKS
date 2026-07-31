@@ -61,3 +61,8 @@ deploy/deploy.env
 /9e1cf9d5-bad0-444b-b1fa-7ec681005d9f.jfif
 /cap-tmp.mjs
 /prompt_recreacion_escarapela.md
+/imagen correo.png
+
+# Anotaciones de operación con inventario interno del servidor (hostnames, IPs,
+# servicios). Como deploy/deploy.env: útil en la estación, no viaja a GitHub.
+/docs/fase1 anotaciones.md

@@ -35,6 +35,11 @@ export default function SpeakerCard({
   /** Nivel del encabezado según de qué cuelgue el listado. */
   como?: 'h2' | 'h3'
 }) {
+  /* Se resuelve antes de pintar porque puede venir vacía: la presidencia no
+     lleva línea (ver SIN_RESUMEN). Envolverla a ciegas dejaba un <span> vacío
+     ocupando su hueco bajo el cargo. */
+  const linea = resumen ? resumenDe(ponente.slug) : ''
+
   return (
     <li className="gt-ponente">
       <Link className="gt-ponente__enlace" to={`/ponentes/${ponente.slug}`} viewTransition>
@@ -47,7 +52,7 @@ export default function SpeakerCard({
         <span className="gt-ponente__texto">
           <Como className="gt-ponente__nombre">{ponente.nombre}</Como>
           <span className="gt-ponente__cargo">{ponente.cargo}</span>
-          {resumen && <span className="gt-ponente__resumen">{resumenDe(ponente.slug)}</span>}
+          {linea && <span className="gt-ponente__resumen">{linea}</span>}
         </span>
         <span className="gt-ponente__flecha" aria-hidden="true">
           →
