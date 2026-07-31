@@ -54,7 +54,13 @@ RestrictRealtime=true
 RestrictNamespaces=true
 RestrictAddressFamilies=AF_INET AF_INET6
 LockPersonality=true
-MemoryDenyWriteExecute=true
+# MemoryDenyWriteExecute NO se activa: el JIT de V8 marca páginas ya escritas como
+# ejecutables (mprotect W→X), la directiva se lo prohíbe y V8 lo trata como error FATAL,
+# no como degradación: el proceso cae con «Check failed: 12 == errno» en
+# SetPermissionsOnExecutableMemoryChunk (status=5/TRAP) y systemd lo reinicia en bucle.
+# Comprobado en el primer arranque real en producción (2026-07-31). Correr Node con
+# --jitless sí sería compatible, pero es un intérprete puro: no es opción seria aquí.
+MemoryDenyWriteExecute=no
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
 SystemCallErrorNumber=EPERM
