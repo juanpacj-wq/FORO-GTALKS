@@ -287,6 +287,78 @@ correo corporativo para confirmar tu inscripción.»*
 
 ---
 
+## Envío único del QR de asistencia
+
+El correo de inscripción solo llega a quien **ya entró** al sitio. Este otro cierra el hueco
+contrario: le manda a **todos los invitados** —se hayan inscrito o no— su código QR de registro
+antes del foro. Sale de `scripts/envio-qr.mjs`, **una sola vez**, y se corre a mano desde la
+estación. Plan completo en [`PLAN-ENVIO-QR.md`](./PLAN-ENVIO-QR.md).
+
+**No añade superficie HTTP.** El servidor no carga ni una línea de esto: no hay ruta para
+dispararlo, reenviarlo ni consultarlo. `server/correo/plantilla-envio-qr.js` vive junto a la otra
+plantilla por afinidad, pero nada de `server/app.js` la importa — y no puede: importa `uqr` y
+Playwright por la vía del script, y el despliegue los poda (`npm prune --omit=dev`).
+
+### El único fallo sin arreglo posible: el QR de otro
+
+Si a Ana le llega el código de Beto, Ana registra la asistencia de Beto y ninguno de los dos se
+entera. No hay forma de repararlo el día del evento. Cinco cosas lo impiden, y las cinco son de
+construcción, no de buena fe:
+
+| Defensa | Qué cierra |
+|---|---|
+| Bucle **secuencial** (`for…of` + `await`), nunca `Promise.all` | La cola de `graph-mailer` serializa el HTTP, pero no la composición del mensaje |
+| Un **contexto de navegador nuevo** por persona | Reutilizar una página y mutar una variable compartida es, literalmente, el mecanismo del cruce |
+| **Cero caché** de lo que depende de la persona | La pieza sí se memoiza (es la misma para todos); el QR jamás. Un `qrCache` en la plantilla serviría el primer código a los 163 |
+| El par **(destinatario, alias)** sale de la MISMA cadena | En modo `lista`, tanto el `para` como el `USUARIO` del QR se derivan de la entrada de `ENVIO_QR_DESTINATARIOS`. Sin esto, la lista blanca controlaría a quién se escribe pero no qué código lleva dentro, y un cruce en las pruebas a cuatro buzones pasaría inadvertido |
+| **Auto-chequeo con ZXing antes de enviar** | El script decodifica el PNG que acaba de generar y exige que diga la URL de esa persona. Si no coincide, **aborta el proceso entero**: un cruce detectado significa que el mecanismo está roto, y seguir sería apostar a que solo lo estaba en esa vuelta |
+
+Lo ejerce `node scripts/envio-qr-test.mjs` con una población de alias parecidos a propósito
+(`jcespedes`, `jcespede`, `jcespedez`), decodificando **los bytes reales del adjunto** de cada
+mensaje, y saboteando el generador para comprobar que el aborto ocurre de verdad.
+
+### El correo es una credencial portátil
+
+El QR registra la asistencia de esa persona **sin pedir autenticación**. Hasta ahora vivía detrás
+del login, en su escarapela; desde este envío vive también en una bandeja de entrada y en la
+carpeta Enviados del remitente. Consecuencias asumidas:
+
+- Quien tenga acceso al buzón de `ENVIO_QR_REMITENTE` puede registrar a los 163. Es el mismo
+  buzón, y por eso conviene que sea uno de servicio y no el de una persona.
+- Una regla de reenvío automático en Outlook manda el código a donde diga la regla. El código no
+  puede impedirlo; se cierra en Exchange.
+- Por eso el QR **no va envuelto en un enlace** y la URL de Power Apps **no aparece como texto**
+  en el mensaje: Outlook auto-enlaza cualquier URL suelta, y un toque desde el sofá sería un
+  auto-registro. El copy lo dice: *«Es personal e intransferible: no lo reenvíes ni lo compartas.»*
+
+### El origen público no se hereda del `.env`
+
+El correo enlaza a `PUBLIC_ORIGIN + /escarapela`, y el `.env` de la estación dice
+`http://localhost:5173` — correcto para desarrollar, catastrófico para un envío masivo. `envio-qr.mjs`
+**aborta** si `--confirmar` va con un origen que no sea `https://`; se le pasa en la línea de
+comando, que tiene precedencia sobre `--env-file`. El dominio es `cdp.gecelca.com.co`.
+
+### La audiencia se congela, y el libro es la memoria
+
+- `scripts/envio-qr-audiencia.mjs` lee el grupo **una vez** y escribe
+  `.datos/audiencia-<fecha>.json`, que **no se sobrescribe**. El envío usa ese archivo y **no
+  vuelve a consultar Graph**: leer el directorio y mandar correo son dos privilegios distintos, y
+  así lo que se manda es exactamente lo que un humano revisó.
+- El script audita antes de nada: conteo esperado, `oid` y alias únicos, alias de invitado B2B
+  (`#EXT#`), cuentas deshabilitadas, y **discrepancias entre el alias del `mail` y el del UPN** —
+  esa persona recibiría un QR distinto al de su propia escarapela. Los anómalos no se envían.
+- El libro es `.datos/envio-qr.jsonl`, con ruta **absoluta contra la raíz del repo**: correr el
+  script desde otra carpeta abriría un libro vacío y todo el mundo recibiría un segundo correo.
+  Guarda `oid`, estado, `ts` y `peticion`; **nunca la dirección**.
+- **Respaldarlo al terminar.** Vive en la estación y `.datos/` está en `.gitignore`. El registro
+  autoritativo de a quién le llegó sigue siendo el *message trace* de Exchange y la carpeta
+  Enviados; el libro solo evita repetir.
+- Reanudación: `enviado` no se repite jamás; un `fallido` se reintenta con `--reintentar`; un
+  `fallido` **por timeout** y un `reservado` huérfano son estados **desconocidos** (el mensaje pudo
+  haberse entregado) y exigen `--forzar`.
+
+---
+
 ## Secretos
 
 Viven en `/etc/gtalks/env`, **fuera del directorio de la app**, con permisos `0600 root:root`:
@@ -349,6 +421,10 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
    más que cualquier duración de sesión.
 4. Rotar `SESSION_SECRET`.
 5. Exportar la membresía del grupo y archivarla: es el registro auditable de quién pudo entrar.
+   `.datos/audiencia-<fecha>.json` **ya es** ese artefacto si se corrió el envío del QR.
+6. **Retirar `GroupMember.Read.All`** de la App Registration si se concedió para el envío del QR.
+7. Borrar `.datos/envio-qr*.jsonl`, `.datos/audiencia-*.json` y `.datos/qr/*.png`: son 163 alias
+   corporativos y 163 credenciales de asistencia en el disco de una estación.
 
 **Al abrir la siguiente:**
 
@@ -373,6 +449,9 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 | **Un reinicio entre la reserva y el envío deja un `reservado` huérfano**: esa persona no recibe correo y no se reintenta sola | La alternativa —reintentar al arrancar— puede **duplicar** envíos, que es justo el fallo que el módulo existe para evitar. El huérfano es visible con un `grep` sobre el libro | Revisar el libro una vez al día en la semana del foro |
 | **El aviso de privacidad promete el correo a todo el que entra**, y durante el piloto solo lo reciben los de la lista | Es una divulgación previa a un tratamiento de datos: sobre-informar es la dirección segura, informar de menos es la arriesgada. La interfaz, en cambio, **solo anuncia lo que el servidor confirma** | Deja de ser discrepancia en cuanto el modo pase a `todos` |
 | **La URL de la encuesta de satisfacción circuló en bundles anteriores** al gate por reloj | Quien la haya guardado de un despliegue previo puede abrir el formulario antes del cierre; el servidor solo puede retener lo que sirve HOY. El cierre de fondo está en Forms: la encuesta puede llevar además su propia **fecha de inicio** («Aceptar respuestas desde»), configurada por Comunicaciones en el tenant defensa en profundidad fuera de este repo | Antes del evento: pedir a Comunicaciones esa fecha de inicio en Forms |
+| **La app del login tiene `Group.ReadWrite.All` y `GroupMember.ReadWrite.All`** (concedidos el 2026-08-03) | Se pidió la variante de **lectura** (`GroupMember.Read.All`), que es la mínima para `/groups/{id}/members`; se concedieron las de **escritura**. El script solo hace `GET`, así que funciona igual — pero la misma App Registration que ya podía **enviar correo como cualquier buzón** y por la que **todo el mundo inicia sesión** puede ahora **crear, modificar y eliminar grupos y membresías de todo el tenant**. Los permisos de aplicación de Graph son de tenant y no se pueden acotar a un grupo: ni RBAC de Entra, ni unidades administrativas, ni RSC (que es de Teams) | **Bajarlos a `Group.Read.All` / `GroupMember.Read.All`** —no rompe nada— y **retirarlos cuando termine el envío**. Si el envío se repite cada edición, moverlos a una App Registration propia |
+| **El QR viaja por correo, y registra asistencia sin autenticar** | El código es el mismo que ya estaba en la escarapela; lo que cambia es que ahora vive también en una bandeja de entrada y en Enviados del remitente. Un reenvío permite que otra persona marque esa asistencia. Se acepta porque el control de asistencia de un foro de un día no justifica un segundo factor, y porque el correo lo dice explícitamente | Si alguna edición necesita asistencia fehaciente, el QR tiene que llevar un token de un solo uso, no el alias |
+| **El libro del envío vive en la estación**, sin respaldo automático y fuera de git | Es un archivo de 163 líneas sin direcciones de correo. La mitigación real es `--maximo N` obligatorio con `--confirmar`: un libro perdido cuesta N correos repetidos, no 163. Y el registro autoritativo es el *message trace* de Exchange, no el libro | Copiarlo a un sitio sincronizado tras cada corrida |
 | **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde. (Con el sitio público el pico del login ya no es «todo el auditorio a la misma hora»: solo pasa por `/auth/*` quien abre su escarapela) | Ajustar con los rangos de egress cuando IT los entregue |
 
 ---

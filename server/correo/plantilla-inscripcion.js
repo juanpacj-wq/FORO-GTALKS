@@ -24,34 +24,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { AZUL_MEDIO, BLANCO, CARTA, FUENTE, NAVY, PESO_MAX_BYTES, TINTA, esc } from './html-correo.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** La pieza oficial, en la raíz del repo junto a los PDF. El nombre es el de la entrega. */
 const RUTA_PIEZA = path.resolve(__dirname, '..', '..', 'imagen correo.png');
 
-/** `sendMail` de Graph acepta ~4 MB de petición y el base64 infla 4/3: más que esto rebota SIEMPRE. */
-const PESO_MAX_BYTES = 2.5 * 1024 * 1024;
-
 /** Referencia del adjunto dentro del HTML (`cid:`). Estable a propósito. */
 const CID_PIEZA = 'invitacion-gtalks';
-
-/** Escapa lo que se interpola en el HTML, aunque hoy todo venga de la configuración o del repo. */
-function esc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-const NAVY = '#1f335e';
-const CARTA = '#ededed';
-const TINTA = '#1d1d1b';
-const AZUL_MEDIO = '#1c6fb4';
-const BLANCO = '#ffffff';
-const FUENTE = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
 let piezaCache = null;
 

@@ -23,8 +23,9 @@ un dorso con volteo 3D y el QR de registro de asistencia hacia la Power App de c
 `foro2026.andeg.org` de la que partió el proyecto ya no existe. El sistema visual está medido sobre
 las piezas y documentado en [`docs/SISTEMA-DE-DISENO.md`](./docs/SISTEMA-DE-DISENO.md) léelo
 antes de tocar `src/design/` o de añadir cualquier valor de estilo; la escarapela tiene su propia
-sección ahí. `/encuestas` (dos encuestas de Microsoft Forms: la de oportunidades enlaza directo y
-la de satisfacción abre por reloj al cierre del evento ver Convenciones) y `/escarapela`
+sección ahí. `/encuestas` (tres encuestas de Microsoft Forms: oportunidades y las preguntas
+pendientes para panelistas enlazan directo, y la de satisfacción abre por reloj al cierre del
+evento ver Convenciones) y `/escarapela`
 cerraron los pendientes #6 y #5; quedan los pendientes de contenido de siempre (sede, fotos,
 biografías).
 
@@ -74,6 +75,8 @@ docs/PENDIENTES-DE-CONTENIDO.md
 docs/PLAN-REDISENO.md        El plan, ya ejecutado. Histórico.
 docs/DESPLIEGUE.md           Cómo llega un commit al servidor, y de dónde sale ese diseño.
 src/data/foro.ts             Todo el contenido. La agenda alimenta también los perfiles.
+src/data/qr-arte.ts          El dibujo del QR. UN archivo, DOS lectores: la
+                             escarapela y el correo del envío masivo
 src/design/                  tokens.css (medidos), fonts.css, base.css
                              iconos.ts y retratos.ts son GENERADOS: no editar a mano
                              iconos-extra.ts es MANUAL: lo que no tiene vector en los PDF
@@ -88,7 +91,10 @@ server/                      Identidad Entra ID + servido de dist/: app.js, auth
 server/correo/               El correo de inscripción del primer login.
                              Cuatro módulos, una responsabilidad cada uno:
                              libro (idempotencia), mailer (Graph), plantilla
-                             (pura) e inscripcion.js (la política)
+                             (pura) e inscripcion.js (la política).
+                             html-correo.js son las primitivas compartidas y
+                             plantilla-envio-qr.js es la del envío masivo, que
+                             el servidor NO carga
 deploy/                      systemd, nginx, logrotate y deploy.sh (ver docs/DESPLIEGUE.md)
 scripts/                     Extracción de diseño (Python) y verificación (Playwright)
 public/img/                  Assets extraídos de los PDF, todo SVG salvo las fotos
@@ -140,6 +146,19 @@ npm run start:local # igual, leyendo el .env del repo
 
 node scripts/inscripcion-test.mjs      # el correo de inscripción: sale UNA vez y solo una.
                                        # No necesita servidor, red ni credenciales
+node scripts/envio-qr-test.mjs         # el envío masivo del QR: que nadie reciba el código de
+                                       # otro. Sin red ni credenciales; sí necesita navegador
+
+# El envío único del QR a los invitados (estación, no servidor). Ver docs/PLAN-ENVIO-QR.md:
+node --env-file=.env scripts/envio-qr-audiencia.mjs                    # congela el grupo de Entra
+                                       # --grupo acepta el NOMBRE, no solo el Object ID
+                                       # --mas-correo <dir>  añade a quien no esté en el grupo
+node --env-file=.env scripts/envio-qr.mjs --audiencia .datos/audiencia-<fecha>-<grupo>.json
+                                       # ENSAYO: genera y verifica los QR, no envía
+node scripts/envio-qr-auditar.mjs .datos/audiencia-<…>.json
+                                       # segunda opinión: decodifica los PNG del ensayo y cruza
+                                       # nombre de archivo contra contenido
+node --env-file=.env scripts/envio-qr.mjs --audiencia … --confirmar --maximo 4
 
 # Con `npm run preview` levantado, en otra terminal:
 node scripts/screenshot.mjs shots      # capturas de las 5 rutas + escarapela con sesión y dorso
@@ -298,6 +317,36 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   direcciones que reciben sea exactamente el de la lista. **El ensayo escribe en un libro con
   sufijo `.simulacro`**: sin eso, ensayar con tu cuenta te dejaría anotado y no recibirías el
   correo real.
+- **El dibujo del QR vive en `src/data/qr-arte.ts` y tiene DOS lectores.** La escarapela lo pinta
+  como nodos SVG y `scripts/envio-qr.mjs` lo rasteriza a PNG para el correo; copiar el bucle habría
+  garantizado que dentro de un mes los dos se PAREZCAN sin ser iguales. Que sean el mismo dibujo no
+  es una convención: `qr-test.mjs` compara el `d` del navegador con el que produce Node **carácter
+  a carácter** (167 568 hoy) y comprueba que la tinta del carné es la constante que viaja al
+  correo. El módulo no puede tocar el DOM (lo carga Node) ni el disco (lo empaqueta Vite): por eso
+  `svgQrAutonomo` recibe la marca «G» por parámetro. Y una cota que no es cosmética: **el panel
+  mide un número ENTERO de módulos**, porque a 810 px sobre 89.1 módulos salían 9.09 píxeles por
+  módulo y **ZXing dejaba de leer el código** medido, no supuesto—.
+- **El envío masivo del QR sale UNA vez, y el cruce se aborta, no se anota.** `scripts/envio-qr.mjs`
+  le manda a cada invitado su código personal con el ID de la **mañana**. Cinco defensas de
+  construcción impiden el único fallo sin arreglo posible que a alguien le llegue el código de
+  otro—, y la última es que el script **decodifica con ZXing el PNG que acaba de generar** y, si no
+  dice la URL de esa persona, **aborta el proceso entero**. La audiencia se congela en un archivo
+  revisable y el envío no consulta Graph. Detalle en `docs/SEGURIDAD.md` §Envío único del QR.
+- **Un envío masivo lanzado con el `.env` a secas enlaza a `localhost`.** El correo apunta a
+  `PUBLIC_ORIGIN + /escarapela`, y el `.env` de la estación dice `http://localhost:5173` — que ahí
+  es lo correcto, porque el arranque lo valida contra `M365_REDIRECT_URI` y sin él no hay login
+  local. No lo delata nada: ni el asunto, ni la pieza, ni el QR. Se descubrió minutos antes de la
+  corrida real del 2026-08-04, con **ocho correos de prueba ya enviados con enlaces a localhost**.
+  Ahora `envio-qr.mjs` **aborta** si `--confirmar` va con un origen que no sea `https://`, y la
+  forma de dárselo es en la línea de comando —tiene precedencia sobre `--env-file`—:
+  `PUBLIC_ORIGIN=https://cdp.gecelca.com.co node --env-file=.env scripts/envio-qr.mjs …`.
+  El dominio es **`cdp.gecelca.com.co`**; `deploy/deploy.env` todavía dice `gtalks.gecelca.com.co`,
+  que ni resuelve. Y al comprobarlo con `curl`, `/` da **404** sin cabeceras `Sec-Fetch-*`: es el
+  diseño, no un fallo.
+- **La pieza de ese correo es `imagen correo qr.png`, NO la de inscripción.** Reemplazar
+  `imagen correo.png` cambiaría retroactivamente un correo que ya salió, y `inscripcion-test.mjs`
+  seguiría en verde porque compara contra el archivo y no contra los bytes históricos. Mientras el
+  arte definitivo no llegue, el script cae a la de inscripción y lo **dice** en cada corrida.
 - **El envío no añade superficie HTTP, y así se queda.** No hay ruta para dispararlo, reenviarlo ni
   consultarlo un botón de «reenviar» sería un generador de correo a discreción del cliente—; lo
   único que cambió es un campo dentro de `/api/me`, y `gate-test.mjs` verifica que sigue siendo
@@ -313,6 +362,15 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   dos puntas se verifica con `gate-test.mjs` (frontera exacta con reloj inyectado, URL ausente en
   la respuesta cerrada, `POST` 404) e `interactions-test.mjs` (los dos estados del botón y el
   volteo sin recargar). Manual: `docs/SEGURIDAD.md` §La encuesta de satisfacción abre por reloj.
+- **La regla que separa una encuesta abierta de una que abre por reloj es tener `url` o no.** Las
+  que la traen en `ENCUESTAS` (`foro.ts`) se pintan como enlace y viajan en el bundle; la que **no**
+  la trae es la que retiene el servidor. Hoy son tres —oportunidades, preguntas pendientes para
+  panelistas, y satisfacción— y **la de satisfacción va SIEMPRE la última**, porque
+  `interactions-test.mjs` la localiza con `:last-child`. Añadir una en medio obliga a mirar ese
+  arnés: cuando llegó la segunda abierta, la de satisfacción pasó de ser la 2.ª a la 3.ª y los
+  selectores por posición se quedaron apuntando a la tarjeta equivocada. Y el texto del botón tiene
+  que empezar distinto que el de las demás: quien navega con lector de pantalla recorre la página
+  saltando de enlace en enlace y solo oye su nombre.
 - **La jornada se anuncia partida en mañana y tarde, y el corte sale de la agenda.** La ficha del
   hero dice «8:30 a.m. – 12:00 p.m.» y «2:30 p.m. – 4:30 p.m.» en dos líneas: de extremo a extremo
   anunciaba ocho horas seguidas y se comía las dos y media de almuerzo libre. El corte es el

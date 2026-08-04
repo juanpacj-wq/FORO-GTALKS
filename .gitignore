@@ -66,6 +66,11 @@ deploy/deploy.env
 # inscripción y viaja incrustada en cada mensaje. server/correo/ la carga del disco
 # al arrancar: si no está versionada, el clon del servidor no la trae y el envío se
 # apaga solo. Se aprendió apagando el correo en producción el 2026-07-31.
+#
+# Y «imagen correo qr.png» tampoco: es la pieza del ENVÍO DEL QR, y va aparte a
+# propósito. Reemplazar la de inscripción para reutilizarla cambiaría retroactivamente
+# un correo que ya salió, y inscripcion-test.mjs no se enteraría: compara contra el
+# archivo, no contra los bytes históricos. Ver server/correo/plantilla-envio-qr.js.
 
 # Anotaciones de operación con inventario interno del servidor (hostnames, IPs,
 # servicios). Como deploy/deploy.env: útil en la estación, no viaja a GitHub.

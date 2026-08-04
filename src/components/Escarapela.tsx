@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 // `useState` sigue en uso para el tic del reloj del QR; el del volteo se fue a la página.
-import { QrCodeDataType, encode } from 'uqr'
 import { EVENTO, iniciales } from '../data/foro'
 import type { Usuario } from '../data/sesion'
 import { urlAsistencia } from '../data/escarapela'
+import { arteQr, cajaMarca, codificarQr } from '../data/qr-arte'
 import Icono from './Icono'
 import './Escarapela.css'
 
@@ -63,48 +63,14 @@ export default function Escarapela({
   }, [])
 
   const url = urlAsistencia(usuario.email, ahora)
-  // El estilo del QR es réplica MEDIDA de la pieza «Diseño de Código QR.png» (raíz), con
-  // scripts de medición sobre sus píxeles (ver docs/SISTEMA-DE-DISENO.md §La escarapela):
-  // puntos separados, marcadores redondeados, azul GECELCA y la «G» al centro.
-  //
-  // ecc 'Q' (25 % de recuperación) porque el claro del logo tapa ~3 % de los módulos. El borde
-  // del encode baja a 2 módulos a propósito: la zona de silencio que exige la norma (4) la
-  // completa de sobra el padding blanco del panel, y esos 2 módulos menos agrandan todos los
-  // demás con una URL de ~330 caracteres cada punto cuenta.
-  const qr = useMemo(() => encode(url, { ecc: 'Q', border: 2 }), [url])
-  const qrArte = useMemo(() => {
-    const s = qr.size
-    // Claro del logo: 10 % del lado (medido: el claro de la pieza es ceñido, ~1 módulo más
-    // allá de la «G»). Oclusión ≈ 3 % del área, muy por debajo de lo que ecc 'Q' recupera.
-    const claro = s * 0.1
-    const centro = s / 2
-    // Punto: 72 % del módulo. La medición cruda de la pieza da 62 %, pero sobre un PNG de
-    // 234 px el antialias muerde ~1 px por borde y sesga a la baja; 72 % reproduce el mismo
-    // gesto de puntos separados. Verificado decodificable con ZXing (la familia de lectores
-    // de los teléfonos) desde 500 px de captura jsQR, mucho más estricto que un lector
-    // real, solo lee este estilo con puntos tangentes, y ese no es el diseño de la pieza.
-    const r = 0.36
-    let d = ''
-    for (let y = 0; y < s; y++) {
-      for (let x = 0; x < s; x++) {
-        if (!qr.data[y][x]) continue
-        // Los marcadores de posición no van como puntos: se dibujan aparte, redondeados.
-        if (qr.types[y][x] === QrCodeDataType.Position) continue
-        const cx = x + 0.5
-        const cy = y + 0.5
-        if (Math.hypot(cx - centro, cy - centro) < claro) continue
-        d += `M${(cx + r).toFixed(2)} ${cy} a${r} ${r} 0 1 0 ${-2 * r} 0 a${r} ${r} 0 1 0 ${2 * r} 0 `
-      }
-    }
-    // Esquinas de los tres marcadores (el borde del encode los desplaza).
-    const b = (s - qr.version * 4 - 17) / 2
-    const marcadores = [
-      [b, b],
-      [s - b - 7, b],
-      [b, s - b - 7],
-    ] as const
-    return { d, claro, centro, marcadores }
-  }, [qr])
+  // El dibujo del QR NO vive aquí: vive en `src/data/qr-arte.ts`, porque tiene dos lectores
+  // esta pantalla y `scripts/envio-qr.mjs`, que lo rasteriza para el correo—. Todas las cotas
+  // medidas (punto al 72 %, claro al 10 %, marcadores redondeados, la «G» al 16 %, ecc 'Q' y
+  // borde 2) están allí con su justificación. `qr-test.mjs` exige que el `d` que pinta este
+  // componente sea idéntico al que produce Node: si divergen, el correo llevaría otro QR.
+  const qr = useMemo(() => codificarQr(url), [url])
+  const qrArte = useMemo(() => arteQr(qr), [qr])
+  const marca = useMemo(() => cajaMarca(qr, qrArte.centro), [qr, qrArte.centro])
 
   // Línea bajo el nombre: cargo → área → correo, la misma cascada del menú de sesión.
   const segundaLinea = usuario.cargo || usuario.area || usuario.email
@@ -271,13 +237,13 @@ export default function Escarapela({
                     </g>
                   ))}
                   {/* La «G» del centro: marca bicolor fija, va como imagen (regla del sistema).
-                      Ancho medido en la pieza: 16 % del lado del código. */}
+                      La caja la calcula `cajaMarca`, compartida con el QR del correo. */}
                   <image
                     href="/img/marca-g.svg"
-                    x={qrArte.centro - qr.size * 0.08}
-                    y={qrArte.centro - qr.size * 0.08 * (46.24 / 51.62)}
-                    width={qr.size * 0.16}
-                    height={qr.size * 0.16 * (46.24 / 51.62)}
+                    x={marca.x}
+                    y={marca.y}
+                    width={marca.ancho}
+                    height={marca.alto}
                   />
                 </svg>
               </div>

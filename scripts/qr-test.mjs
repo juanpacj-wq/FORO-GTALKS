@@ -95,6 +95,43 @@ for (const dsf of [2, 3]) {
   await page.close()
 }
 
+// ── 1b. El dibujo del navegador y el de Node son EL MISMO ────────────────────────────────────
+// El arte del QR salió de `Escarapela.tsx` a `src/data/qr-arte.ts` porque tiene dos lectores:
+// esta pantalla y `scripts/envio-qr.mjs`, que lo rasteriza para el correo. Que sea «el mismo
+// diseño» no puede quedar en una convención entre dos implementaciones: aquí se compara el `d`
+// que el navegador tiene pintado en el DOM con el que produce Node para la misma URL, carácter a
+// carácter. Si alguien toca una cota, el correo y la escarapela dejan de coincidir y esto se pone
+// rojo antes de que salgan 163 correos con otro código.
+console.log('\nEl dibujo del navegador es exactamente el que produce Node')
+{
+  const page = await browser.newPage({ viewport: { width: 1200, height: 1400 } })
+  await page.route('**/api/me', (ruta) => ruta.fulfill({ json: IDENTIDAD }))
+  await page.goto(base + '/escarapela', { waitUntil: 'networkidle' })
+  await page.click('.gt-escarapela-voltear')
+  await page.waitForTimeout(1100)
+
+  const url = await page.locator('.gt-carne__qr').getAttribute('data-contenido')
+  const dNavegador = await page.locator('.gt-carne__qr path').first().getAttribute('d')
+  const tintaNavegador = await page.locator('.gt-carne__qr').evaluate((el) => getComputedStyle(el).color)
+
+  const { arteQr, codificarQr, QR_TINTA } = await import('../src/data/qr-arte.ts')
+  const dNode = arteQr(codificarQr(url)).d
+
+  check('el `d` del navegador y el de Node son idénticos', dNavegador === dNode,
+    dNavegador === dNode ? `(${dNode.length} caracteres)` : 'el arte divergió')
+
+  // Y la tinta: el correo no tiene `tokens.css`, así que `qr-arte.ts` la lleva literal. Que sea
+  // el MISMO azul que pinta el carné se comprueba, no se supone.
+  const aHex = (rgb) => {
+    const [r, g, b] = rgb.match(/\d+/g).map(Number)
+    return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
+  }
+  check('y la tinta del carné es la constante que viaja al correo',
+    aHex(tintaNavegador) === QR_TINTA.toLowerCase(), `carné=${aHex(tintaNavegador)} qr-arte=${QR_TINTA}`)
+
+  await page.close()
+}
+
 // ── 2. La jornada del ID_CAPACITACION es la de Bogotá, venga de donde venga el reloj ─────────
 console.log('\nLa jornada del ID_CAPACITACION se decide en hora de Bogotá (UTC-5)')
 
