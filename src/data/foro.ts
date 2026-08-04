@@ -467,7 +467,7 @@ export interface Encuesta {
 }
 
 /**
- * Las dos encuestas del foro, en el orden en que las entregó Comunicaciones.
+ * Las tres encuestas del foro, en el orden en que las entregó Comunicaciones.
  *
  * **Dónde quedan las respuestas**: en Microsoft Forms, dentro del tenant de
  * GECELCA. Este proyecto no guarda ninguna, así que sigue sin necesitar base de
@@ -475,6 +475,11 @@ export interface Encuesta {
  *
  * El título y la descripción van literales, como el resto del copy
  * institucional.
+ *
+ * **El orden importa y no es alfabético**: las dos primeras están abiertas
+ * siempre y la de satisfacción va última porque es la única que abre por reloj.
+ * `interactions-test.mjs` la localiza por posición, así que insertar una en
+ * medio obliga a ajustar ese arnés no es opcional.
  */
 export const ENCUESTAS: readonly Encuesta[] = [
   {
@@ -484,6 +489,21 @@ export const ENCUESTAS: readonly Encuesta[] = [
       'Comparte tu visión sobre las principales oportunidades y desafíos que identificas para GECELCA en el contexto actual del sector energético.',
     accion: 'Compartir mi perspectiva',
     url: 'https://forms.cloud.microsoft/r/xxc8PGp3Ly',
+  },
+  {
+    id: 'preguntas-panelistas',
+    titulo: 'Preguntas pendientes para panelistas',
+    descripcion:
+      'Si tu pregunta no alcanzó a ser respondida durante el panel, compártela aquí. La haremos llegar al panelista correspondiente.',
+    // «Enviar» y no «Compartir»: los otros dos controles ya empiezan por
+    // «Compartir mi…», y quien navega con lector de pantalla recorre la página
+    // saltando de enlace en enlace, oyendo el principio de cada uno.
+    accion: 'Enviar mi pregunta',
+    // Abierta SIEMPRE: se responde después del panel, pero no hay nada que
+    // retener —a diferencia de la de satisfacción, esta no pregunta por la
+    // experiencia del evento, así que una respuesta temprana no la contamina—.
+    // Por eso la URL sí viaja en el bundle, como la de oportunidades.
+    url: 'https://forms.cloud.microsoft/r/t2uUak9Vzu',
   },
   {
     id: 'satisfaccion',

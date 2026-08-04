@@ -198,7 +198,7 @@ if (sinBio) {
   console.log('   --   ya no queda ningún ponente sin biografía: ese caso no se puede verificar')
 }
 
-// La página de encuestas entrega dos destinos, pero ya no son simétricos: la
+// La página de encuestas entrega tres destinos, y no son simétricos: la
 // de satisfacción abre por reloj el servidor retiene la URL hasta el cierre
 // del evento (server/encuestas.js) y preview NO tiene /api/encuestas, así que
 // aquí se ve exactamente el estado «cerrada» (fail-closed). Se verifica cada
@@ -230,25 +230,34 @@ const encuestas = await desktop.$$eval('.gt-encuesta', (tarjetas) =>
   }),
 )
 
-check('hay 2 encuestas', encuestas.length === 2, `hay ${encuestas.length}`)
-const [oportunidades, satisfaccion] = encuestas
+check('hay 3 encuestas', encuestas.length === 3, `hay ${encuestas.length}`)
+const [oportunidades, panelistas, satisfaccion] = encuestas
 
-check(
-  `«${oportunidades.enlace?.nombre}» apunta a un formulario`,
-  Boolean(oportunidades.enlace?.href.startsWith('https://')),
-  oportunidades.enlace?.href ?? '(sin enlace)',
-)
-check(
-  `«${oportunidades.enlace?.nombre}» abre fuera con rel seguro`,
-  oportunidades.enlace?.target === '_blank' &&
-    oportunidades.enlace?.rel.includes('noopener') &&
-    oportunidades.enlace?.rel.includes('noreferrer'),
-  `target=${oportunidades.enlace?.target} rel=${oportunidades.enlace?.rel}`,
-)
+// Las dos primeras están abiertas SIEMPRE y se comprueban igual: enlace https
+// que sale del sitio con el `rel` seguro. La de satisfacción es la única que no
+// es un enlace, y va la última a propósito.
+for (const abierta of [oportunidades, panelistas]) {
+  check(
+    `«${abierta.enlace?.nombre}» apunta a un formulario`,
+    Boolean(abierta.enlace?.href.startsWith('https://')),
+    abierta.enlace?.href ?? '(sin enlace)',
+  )
+  check(
+    `«${abierta.enlace?.nombre}» abre fuera con rel seguro`,
+    abierta.enlace?.target === '_blank' &&
+      abierta.enlace?.rel.includes('noopener') &&
+      abierta.enlace?.rel.includes('noreferrer'),
+    `target=${abierta.enlace?.target} rel=${abierta.enlace?.rel}`,
+  )
+}
 check(
   'la de satisfacción NO es un enlace: no hay URL que seguir',
   satisfaccion.enlace === null,
   satisfaccion.enlace?.href ?? '',
+)
+check(
+  'y es la ÚNICA sin enlace: las otras dos no dependen del reloj',
+  encuestas.filter((e) => e.enlace === null).length === 1,
 )
 check(
   'su botón está deshabilitado pero recibe foco (aria-disabled)',
@@ -260,11 +269,16 @@ check(
   satisfaccion.boton?.aviso === AVISO_SATISFACCION,
   satisfaccion.boton?.aviso ?? '(sin aviso)',
 )
-check(
-  'los dos controles no se llaman igual',
-  oportunidades.enlace?.nombre !== satisfaccion.boton?.nombre,
-  `${oportunidades.enlace?.nombre} | ${satisfaccion.boton?.nombre}`,
-)
+// Ningún control puede llamarse como otro: quien navega con lector de pantalla
+// recorre la página saltando de enlace en enlace y solo oye su nombre.
+{
+  const nombres = encuestas.map((e) => e.enlace?.nombre ?? e.boton?.nombre ?? '')
+  check(
+    'los tres controles se llaman distinto',
+    new Set(nombres).size === 3,
+    nombres.join(' | '),
+  )
+}
 
 // El aviso se VE al pasar el mouse (en móvil lo muestra el toque; con teclado,
 // el foco vía :focus-within). Oculto sigue en el DOM para el lector, así que lo
@@ -289,7 +303,7 @@ const URL_PRUEBA = 'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=pru
     }),
   )
   await abierta.goto(base + '/encuestas', { waitUntil: 'networkidle' })
-  const enlace = await abierta.$eval('.gt-encuesta:nth-child(2) a.gt-boton', (a) => ({
+  const enlace = await abierta.$eval('.gt-encuesta:last-child a.gt-boton', (a) => ({
     href: a.href,
     target: a.target,
     rel: a.rel,
@@ -339,7 +353,7 @@ console.log('\nEncuestas (el volteo a la hora del cierre, sin recargar)')
   check('arranca cerrada', (await volteo.locator('.gt-boton--inactivo').count()) === 1)
   // El hook espera max(restante + margen, piso 5 s): el enlace aparece solo.
   await volteo
-    .locator('.gt-encuesta:nth-child(2) a.gt-boton')
+    .locator('.gt-encuesta:last-child a.gt-boton')
     .waitFor({ state: 'visible', timeout: 15000 })
   check('y a la hora del servidor el enlace aparece SIN recargar', true)
   check('con más de una consulta al servidor', consultas >= 2, `consultas=${consultas}`)

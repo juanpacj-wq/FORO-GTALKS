@@ -11,19 +11,24 @@ import './PonentesPage.css'
 import './EncuestasPage.css'
 
 /**
- * Las dos encuestas del foro.
+ * Las tres encuestas del foro.
  *
  * No hay formulario propio ni hace falta: las respuestas viven en Microsoft
  * Forms, dentro del tenant de GECELCA, así que el proyecto sigue sin base de
- * datos ni endpoint de escritura. El trabajo de esta página es entregar los dos
+ * datos ni endpoint de escritura. El trabajo de esta página es entregar los
  * destinos diciendo qué se pregunta en cada uno.
  *
- * Con una diferencia entre ellos: la de satisfacción pregunta por la
+ * Con una diferencia entre ellas: la de satisfacción pregunta por la
  * experiencia del foro, así que no abre hasta que el foro cierra. Su URL no
  * está en este bundle la retiene el servidor y la entrega `/api/encuestas`
  * pasada la hora de `evento.json`—, y mientras tanto el botón va deshabilitado
  * con su aviso. Quien decide es el reloj del SERVIDOR: adelantar el del
  * teléfono no fabrica el enlace. Ver `BotonSatisfaccion` abajo.
+ *
+ * Las otras dos —oportunidades y las preguntas pendientes para panelistas— van
+ * abiertas siempre: traen su `url` y `PieEncuesta` las pinta como enlace. La
+ * regla que separa unas de otras es esa y solo esa: **sin `url`, el servidor
+ * decide**.
  *
  * Que el enlace sale del sitio lo marca la flecha en diagonal del botón
  * (`--externo`), y nada más: el aviso escrito debajo de cada botón se quitó por
