@@ -252,7 +252,15 @@ esac || { echo "   FALLO: /auth/login devolvió $(val login), se esperaba 302" >
 # la URL, se avisa y NO se cuenta como fallo del sitio: la ruta de red de tu portátil no
 # es la salud del servidor. Un código HTTP inesperado sí cuenta.
 if [ -n "$URL_PUBLICA" ]; then
-	CODIGO="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$URL_PUBLICA/" 2>/dev/null || echo 000)"
+	# Las cabeceras `Sec-Fetch-*` NO son opcionales aquí, igual que en la comprobación de
+	# arriba: `server/app.js` distingue una NAVEGACIÓN de un subrecurso, y a un subrecurso
+	# inexistente le responde 404 JSON a propósito. Sin ellas, `/` devuelve 404 en un sitio
+	# perfectamente sano y este bloque lo tomaría por fallo, disparando el rollback de un
+	# despliegue bueno. Estuvo así hasta el 2026-08-04 y no se notó porque la URL configurada
+	# no resolvía: daba 000, que se ignora.
+	CODIGO="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 \
+		-H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' \
+		"$URL_PUBLICA/" 2>/dev/null || echo 000)"
 	case "$CODIGO" in
 		200) echo "   200 $URL_PUBLICA/ (nginx + TLS de pie)" ;;
 		000) echo "   AVISO: no se pudo alcanzar $URL_PUBLICA desde esta estación (¿VPN, DNS interno?). No se toma como fallo." ;;
