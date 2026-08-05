@@ -176,6 +176,19 @@ añadió gente el riesgo fue el mismo y el `POST` suelto no lo cubría:
 > sí esté**. La comprobación buena es listar los miembros y buscarlo ahí, que es lo que hace
 > `envio-qr-audiencia.mjs`.
 
+### Estar en el grupo NO es la única forma de poder entrar
+
+Comprobado el 2026-08-05, y conviene saberlo antes de añadir a nadie «para que pueda entrar»: la
+Enterprise Application **`LOGIN_G_TALKS`** tiene `appRoleAssignmentRequired: true`, y lo que hay
+asignado son **dos grupos y cinco usuarios sueltos** (`LOGIN FOROS: 1 GTALK`, `TEST_CORREO_QR`, y
+`smunevar`, `rmanrique`, `llondono`, `lrojas`, `jcespedes`). O sea: «no está en el grupo» **no**
+quiere decir «no puede iniciar sesión».
+
+Por eso a `llondono` (Luis Alfredo Londoño Torres) se le mandó el correo el 2026-08-05 con
+`--mas-correo` y **sin tocar el grupo**: su enlace a `/escarapela` funciona por la asignación
+directa. Se mira con `GET /servicePrincipals?$filter=appId eq '{M365_CLIENT_ID}'` y luego
+`appRoleAssignedTo`, no con la membresía del grupo.
+
 **`--mas-correo <dirección>`** (repetible) añade a alguien que **no** está en el grupo pero debe
 recibir el correo. Se resuelve contra Graph igual que los del grupo, así que entra al archivo con
 su `oid` y su nombre reales — no es una edición a mano del JSON. Si ya venía en el grupo, no se
