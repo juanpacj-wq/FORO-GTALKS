@@ -47,8 +47,23 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** La pieza de ESTE correo. Va en la raíz del repo, versionada, junto a las demás entregas. */
-const RUTA_PIEZA = path.resolve(__dirname, '..', '..', 'imagen correo qr.png');
+/**
+ * La pieza de ESTE correo. Va en la raíz del repo, versionada, junto a las demás entregas.
+ *
+ * Hay DOS y las dos se conservan, que es la excepción a «manda la última»:
+ *
+ *   `imagen correo qr.png`      titular «¡Mañana tenemos una importante cita!». Son los bytes
+ *                               exactos que recibieron las 169 personas del 2026-08-04.
+ *   `imagen correo qr hoy.png`  la misma pieza con el titular en «¡Hoy…», generada por
+ *                               `scripts/pieza-correo-hoy.py`. Es la que se usa.
+ *
+ * La vieja no se borra ni se sobrescribe: el envío del día del foro tenía que decir «hoy», pero
+ * reemplazar el archivo haría que el repo afirmara que aquellas 169 recibieron algo que no
+ * recibieron, y ningún arnés lo gritaría —`envio-qr-test.mjs` compara el adjunto contra el
+ * ARCHIVO, no contra los bytes históricos—. Es la misma razón por la que este correo nunca
+ * compartió pieza con el de inscripción.
+ */
+const RUTA_PIEZA = path.resolve(__dirname, '..', '..', 'imagen correo qr hoy.png');
 /** Mientras no llegue el arte definitivo, se usa la del correo de inscripción y se avisa. */
 const RUTA_PIEZA_PROVISIONAL = path.resolve(__dirname, '..', '..', 'imagen correo.png');
 
@@ -66,12 +81,14 @@ const LADO_QR_CSS = 270;
  * y el copy de las piezas se transcribe, no se genera (misma regla que `foro.ts`). Lo único que se
  * corrigió es un espacio doble entre «FORO» y la comilla.
  *
- * ⚠ **Dice «MAÑANA», así que este correo solo es cierto el día ANTES del foro.** Enviado el 5 de
- * agosto mentiría, y enviado el 3 también. La pieza dice lo mismo («¡Mañana tenemos una importante
- * cita!»), así que las dos cosas caducan juntas: si el envío se corre otro día, hay que cambiar
- * las dos, no solo una.
+ * ⚠ **Este asunto CADUCA, y no caduca solo: caduca con la pieza.** Decía «MAÑANA» y salió así el
+ * 2026-08-04, la víspera. El 5, para los rezagados que entraron al grupo esa misma mañana, citarlos
+ * para mañana era falso, así que pasó a «HOY» — y con él el titular de la pieza, porque el asunto
+ * y la imagen dicen lo mismo y cambiar uno solo deja el mensaje contradiciéndose. Si este envío
+ * vuelve a correrse otro día, se cambian **los dos**: aquí y con
+ * `scripts/pieza-correo-hoy.py`. `envio-qr-test.mjs` exige que el asunto y la pieza concuerden.
  */
-const ASUNTO = 'TE ESPERAMOS MAÑANA EN NUESTRO 1ER FORO “ENERGÍA EN ACCIÓN”';
+const ASUNTO = 'TE ESPERAMOS HOY EN NUESTRO 1ER FORO “ENERGÍA EN ACCIÓN”';
 
 let piezaCache = null;
 

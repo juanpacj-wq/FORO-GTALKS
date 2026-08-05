@@ -149,6 +149,13 @@ node scripts/inscripcion-test.mjs      # el correo de inscripción: sale UNA vez
 node scripts/envio-qr-test.mjs         # el envío masivo del QR: que nadie reciba el código de
                                        # otro. Sin red ni credenciales; sí necesita navegador
 
+# Sumar invitados al grupo de Entra (estación). NUNCA con un POST a mano: ver PLAN-ENVIO-QR.md
+node --env-file=.env scripts/personas-resolver.mjs --archivo .datos/nuevos-<fecha>.txt
+                                       # de NOMBRES («APELLIDOS NOMBRES») a direcciones. Falla
+                                       # cerrado: sin UNA coincidencia exacta no escribe nada
+node --env-file=.env scripts/grupo-agregar.mjs --archivo .datos/nuevos-<fecha>-correos.txt
+                                       # ENSAYO. Con --confirmar escribe y verifica LISTANDO
+
 # El envío único del QR a los invitados (estación, no servidor). Ver docs/PLAN-ENVIO-QR.md:
 node --env-file=.env scripts/envio-qr-audiencia.mjs                    # congela el grupo de Entra
                                        # --grupo acepta el NOMBRE, no solo el Object ID
@@ -343,10 +350,29 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   El dominio es **`cdp.gecelca.com.co`**; `deploy/deploy.env` todavía dice `gtalks.gecelca.com.co`,
   que ni resuelve. Y al comprobarlo con `curl`, `/` da **404** sin cabeceras `Sec-Fetch-*`: es el
   diseño, no un fallo.
-- **La pieza de ese correo es `imagen correo qr.png`, NO la de inscripción.** Reemplazar
-  `imagen correo.png` cambiaría retroactivamente un correo que ya salió, y `inscripcion-test.mjs`
-  seguiría en verde porque compara contra el archivo y no contra los bytes históricos. Mientras el
-  arte definitivo no llegue, el script cae a la de inscripción y lo **dice** en cada corrida.
+- **La pieza de ese correo es la suya, NO la de inscripción.** Reemplazar `imagen correo.png`
+  cambiaría retroactivamente un correo que ya salió, y `inscripcion-test.mjs` seguiría en verde
+  porque compara contra el archivo y no contra los bytes históricos.
+- **Ese correo CADUCA, y caduca por dos sitios a la vez.** Decía «mañana» —en el asunto y en el
+  titular de la pieza— y salió así el 4 de agosto, la víspera. El 5, para los rezagados, había que
+  decir «hoy»: **se cambian los dos o ninguno**, porque con uno solo el mensaje se contradice
+  (en la bandeja «HOY» y al abrirlo «¡Mañana…» en 36 px). El asunto vive en
+  `plantilla-envio-qr.js`; el titular lo reescribe `scripts/pieza-correo-hoy.py` **generándolo, no
+  retocándolo a mano**: solo sintetiza «Hoy» (el «¡» y el «tenemos» son píxeles originales
+  desplazados), ajusta la fuente por diferencia de píxeles contra «Mañana» —Urbanist 36/700, astas
+  de 4.57 px contra 4.55— y saca el hueco entre palabras de la propia fuente. `envio-qr-test.mjs`
+  ata las dos puntas y se pone rojo si el asunto y la pieza hablan de días distintos.
+- **Y por eso hay DOS piezas del QR, que es la excepción a «manda la última».**
+  `imagen correo qr.png` son los bytes que recibieron las 169 del día 4;
+  `imagen correo qr hoy.png` es la que se usa. Sobrescribir la vieja haría que el repo afirmara
+  que aquellas 169 recibieron algo que no recibieron, sin que ningún arnés lo gritara.
+- **A nadie se le mete al grupo con un `POST` a mano.** `scripts/personas-resolver.mjs` traduce
+  NOMBRES a direcciones —las listas llegan «APELLIDOS NOMBRES» y Entra guarda «Nombres
+  Apellidos»— exigiendo **una sola** coincidencia exacta contra todo el directorio, y
+  `scripts/grupo-agregar.mjs` da el alta resolviendo **todas** antes de escribir ninguna. Dos
+  detalles que costaron: la comprobación buena es **listar** los miembros, porque
+  `GET /members/{oid}/$ref` devuelve 404 aunque la persona sí esté; y un nombre que no casa no se
+  aproxima, se enseñan los candidatos y decide un humano.
 - **El envío no añade superficie HTTP, y así se queda.** No hay ruta para dispararlo, reenviarlo ni
   consultarlo un botón de «reenviar» sería un generador de correo a discreción del cliente—; lo
   único que cambió es un campo dentro de `/api/me`, y `gate-test.mjs` verifica que sigue siendo

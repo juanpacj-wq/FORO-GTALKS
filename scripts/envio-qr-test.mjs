@@ -371,12 +371,20 @@ console.log('\nLa plantilla')
   // ponerse rojo en vez de colarse a 163 bandejas.
   check(
     'el asunto es exactamente el entregado por Comunicaciones',
-    asunto === 'TE ESPERAMOS MAÑANA EN NUESTRO 1ER FORO “ENERGÍA EN ACCIÓN”',
+    asunto === 'TE ESPERAMOS HOY EN NUESTRO 1ER FORO “ENERGÍA EN ACCIÓN”',
     `«${asunto}»`,
   )
   check('sin espacios dobles', !/ {2}/.test(asunto))
-  // Dice «MAÑANA»: el correo solo es cierto el día ANTES del foro, y la pieza dice lo mismo.
-  check('y la pieza lo acompaña: el envío es la víspera', /MAÑANA/.test(asunto))
+  // El asunto y el titular de la pieza dicen lo mismo, y por eso caducan juntos. Con «HOY» en el
+  // asunto y la pieza de la víspera dentro, el mensaje se contradiría a sí mismo: arriba «¡Mañana
+  // tenemos una importante cita!» y en la bandeja «TE ESPERAMOS HOY». Esto lo ata.
+  const diaDelAsunto = /\bHOY\b/.test(asunto) ? 'hoy' : /\bMAÑANA\b/.test(asunto) ? 'víspera' : '?'
+  const diaDeLaPieza = /qr hoy\.png$/.test(pieza.ruta) ? 'hoy' : 'víspera'
+  check(
+    'el asunto y el titular de la pieza hablan del mismo día',
+    diaDelAsunto === diaDeLaPieza,
+    `(asunto «${diaDelAsunto}» · pieza «${path.basename(pieza.ruta)}»)`,
+  )
   check('declara el idioma es-CO', html.includes('lang="es-CO"'))
   check('sin hojas de estilo externas', !html.includes('<link'))
   check('sin imágenes remotas', !html.includes('src="http'))

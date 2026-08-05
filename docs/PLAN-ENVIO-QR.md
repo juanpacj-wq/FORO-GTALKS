@@ -1,9 +1,14 @@
 # Envío único del QR de asistencia a todos los invitados
 
-> ## Estado: EJECUTADO el 2026-08-04
+> ## Estado: EJECUTADO el 2026-08-04, y cerrado el 2026-08-05 con **180 de 180**
 >
 > **165 de 165 enviados, cero fallos.** Corrida de 20 minutos desde `admapps365@gecelca.com.co`,
 > con la pieza definitiva (`imagen correo qr.png`) y el asunto entregado por Comunicaciones.
+>
+> Después llegaron rezagados en tandas —hasta 169 el mismo día 4, y **11 más la mañana del 5**—,
+> cada tanda en modo `lista` sobre el mismo libro, que es lo que impide que nadie reciba dos. El
+> día 5 el correo tuvo que cambiar: decía «mañana» y el foro era ese día. Ver
+> §El correo caducaba, y caducaba por dos sitios.
 >
 > | Comprobación | Resultado |
 > |---|---|
@@ -150,6 +155,22 @@ materializó.
 | Fecha | Cambio | Cómo |
 |---|---|---|
 | 2026-08-04 | **+ `csotomayor@gecelca.com.co`** (Carlos Sotomayor Ahumada) al grupo `LOGIN FOROS: 1 GTALK`. El grupo pasó de 163 a **164** | `POST /groups/{id}/members/$ref` con la App Registration del login, a petición del usuario |
+| 2026-08-04 | Altas sueltas a lo largo del día hasta **169**, cada una con su envío en modo `lista` | igual |
+| 2026-08-05 | **+ 11** el día del foro: `lbolano`, `jgarciapa`, `cpatino`, `mcalderony`, `abarrosv`, `choward`, `alopezh`, `dagamez`, `mmiranda`, `cahumada`, `rreyes`. El grupo pasó de 169 a **180** | `scripts/grupo-agregar.mjs`, que ya no es un `POST` a mano |
+
+**Desde el 2026-08-05 esto no se hace a mano.** Dos scripts nuevos, porque las tres veces que se
+añadió gente el riesgo fue el mismo y el `POST` suelto no lo cubría:
+
+- **`scripts/personas-resolver.mjs`** — de NOMBRES a direcciones. Las listas llegan como
+  «APELLIDOS NOMBRES» y el directorio guarda «Nombres Apellidos»; traducir eso a mano es donde se
+  cuela el error. Compara conjuntos de palabras normalizadas contra las 1749 cuentas del dominio,
+  exige **una sola** coincidencia exacta y, si no la hay, **no escribe el archivo de direcciones** y
+  enseña los candidatos. De 14 nombres, 5 no casaron solos y los resolvió un humano mirando que el
+  candidato fuera único (un solo «Yerena», una sola «Catrin», un solo «Renato» entre 14 «Reyes»).
+- **`scripts/grupo-agregar.mjs`** — el alta. Resuelve **todas** las direcciones antes de escribir
+  ninguna (media lista dentro es peor que ninguna), enseña nombre + `mail` + UPN + alias del QR de
+  cada persona, es idempotente con quien ya está, y **verifica listando** los miembros al final —
+  no con `GET /members/{oid}/$ref`, que devuelve 404 aunque la persona sí esté.
 
 > Ojo con la comprobación: `GET /groups/{id}/members/{oid}/$ref` devuelve **404 aunque la persona
 > sí esté**. La comprobación buena es listar los miembros y buscarlo ahí, que es lo que hace
@@ -220,6 +241,33 @@ PUBLIC_ORIGIN=https://cdp.gecelca.com.co node --env-file=.env scripts/envio-qr.m
 > Ojo al comprobarlo con `curl`: `/` devuelve **404** si no se mandan las cabeceras `Sec-Fetch-*`.
 > No es un fallo, es el diseño (`server/app.js` distingue navegación de subrecurso). Hay que
 > emular una navegación, como hace `gate-test.mjs`.
+
+### El correo caducaba, y caducaba por dos sitios
+
+Se compuso para salir la **víspera**. El asunto decía `TE ESPERAMOS MAÑANA…` y el titular de la
+pieza, «¡Mañana tenemos una importante cita!». Correcto el 4; el 5, para los once que entraron al
+grupo esa misma mañana, los citaba para el día siguiente cuando el foro era ese.
+
+Lo que no es obvio: **son dos sitios y hay que cambiar los dos**. Corregir solo el asunto deja el
+mensaje contradiciéndose consigo mismo —en la bandeja «HOY», y al abrirlo «¡Mañana…» en letra de
+36 px—, y corregir solo la pieza deja la mentira en lo único que se lee sin abrir. Por eso:
+
+- El asunto vive en `server/correo/plantilla-envio-qr.js`.
+- El titular de la pieza lo reescribe **`scripts/pieza-correo-hoy.py`**, que no es un retoque a
+  mano: entra la pieza original y sale la variante, reproducible. Solo sintetiza «Hoy» —el «¡» y
+  el «tenemos» son los píxeles originales, recortados y desplazados—, la fuente no se adivina
+  sino que se ajusta minimizando la diferencia de píxeles contra la palabra «Mañana» (Urbanist
+  36 px peso 700; astas de 4.57 px contra 4.55 del original), y el hueco entre palabras sale de
+  componer «Hoy tenemos» en la misma fuente en vez de copiar los 12 px que había tras la «a». El
+  script comprueba las cotas del original antes de tocar nada y aborta si el arte cambió.
+- **`envio-qr-test.mjs` ata las dos puntas**: comprueba que el día del asunto y el de la pieza
+  sean el mismo. Con «HOY» en el asunto y la pieza de la víspera dentro, se pone rojo.
+
+Y una tercera cosa que sí importa: **la pieza vieja NO se sobrescribe**. `imagen correo qr.png`
+son los bytes que recibieron las 169 del día 4; la variante va a `imagen correo qr hoy.png`. Si se
+reemplazara, el repositorio afirmaría que aquellas 169 recibieron algo que no recibieron, y ningún
+arnés lo gritaría —los tests comparan el adjunto contra el ARCHIVO, no contra los bytes
+históricos—. Es la misma razón por la que este correo nunca compartió pieza con el de inscripción.
 
 ## Fase 4 — Los arneses ✔
 
