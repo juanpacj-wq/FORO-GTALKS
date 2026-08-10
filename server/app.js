@@ -39,6 +39,7 @@ import {
   iniciarInscripcion, reservarInscripcion, enviarInscripcion, estadoInscripcion,
 } from './correo/inscripcion.js';
 import { estadoEncuestas } from './encuestas.js';
+import { iniciarCertificados, estadoCertificado, rutaCertificado } from './certificados.js';
 import {
   isConfigured as m365Configured, m365Config,
   getAuthCodeUrl, acquireTokenByCode, getLogoutUrl, obtenerPerfil,
@@ -68,6 +69,7 @@ const RUTAS_SPA = [
   /^\/ponentes\/[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/,
   /^\/escarapela$/,
   /^\/encuestas$/,
+  /^\/certificado$/,
 ];
 const destinoSeguro = (p) => (RUTAS_SPA.some((r) => r.test(p)) ? p : '/');
 
@@ -390,7 +392,28 @@ export function buildAuthApp() {
       authenticated: true,
       user: { nombre_completo, cargo, area, upn, email, oid, roles },
       inscripcion: estadoInscripcion(oid),
+      // Como `inscripcion`: estado del servidor, no promesa. `no_aplica` cuando la función está
+      // apagada, cuando la persona no asistió y cuando el oid no existe — a la interfaz le da
+      // igual cuál de los tres, y a un curioso también debe darle igual.
+      certificado: estadoCertificado(oid),
     });
+  });
+
+  // ── El certificado de participación: bytes pre-generados, SOLO del oid de la sesión ────────
+  // No admite parámetros: no hay forma de pedir el de otro, ni de listar, ni de enumerar (la
+  // regla de docs/EXPORTAR-INSCRITOS.md sobre «la peor puerta» se cumple por construcción).
+  // `revalidate` va aquí igual que en /api/me: esto ES identidad —entrega un documento con
+  // nombre y cédula—, y una sesión revocada en Entra no debe poder descargarlo.
+  app.get('/api/certificado', asyncH(revalidate), (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    if (!estaAutenticado(req.session)) return res.status(401).json({ authenticated: false });
+    const ruta = rutaCertificado(req.session.user.oid);
+    // La misma forma que el 404 genérico: la respuesta no distingue «no asististe» de «esto no
+    // existe», que es exactamente lo que /api/me ya dice con `no_aplica`.
+    if (!ruta) return res.status(404).json({ error: 'No encontrado', codigo: 'no_encontrado' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Certificado de participacion G-TALKS.pdf"');
+    res.sendFile(ruta);
   });
 
   // ── Encuestas: estado público, de solo lectura ──────────────────────────────
@@ -466,6 +489,14 @@ export function buildAuthApp() {
         ` · credenciales ${ins.credenciales}` +
         ` · libro ${ins.libro}` +
         ` · ya inscritos: ${JSON.stringify(ins.resumen)}`,
+  );
+
+  // Certificados: la línea dice CUÁNTOS hay, nunca quiénes (esto va a journald).
+  const certs = iniciarCertificados();
+  console.log(
+    certs.activo
+      ? `  [certificados] ${certs.personas} certificado(s) servibles desde ${certs.dir}`
+      : '  [certificados] descarga DESACTIVADA (CERTIFICADOS_DIR vacío)',
   );
 
   return app;
