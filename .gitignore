@@ -56,6 +56,14 @@ IMagenes ponentes/
 # no tiene por qué viajar ahí. La plantilla sí se versiona.
 deploy/deploy.env
 
+# Candidatas tipográficas descargadas para identificar la fuente del certificado
+# (scripts/certificado-fuente.py las re-descarga). Lo único que el GENERADOR necesita
+# sí se versiona: Poppins Regular con su licencia OFL — sin ella no se regenera ningún
+# certificado, el mismo argumento que fotos-origen/.
+fuentes-origen/*
+!fuentes-origen/Poppins-Regular.ttf
+!fuentes-origen/Poppins-OFL.txt
+
 # ─── Entregas superadas y borradores sueltos de la raíz ───
 # Material de trabajo que no viaja a GitHub. La pieza VIGENTE del carné
 # («Carnet-foro-1.jpg (1).jpeg») sí se versiona, igual que los PDF: es fuente de
