@@ -114,6 +114,14 @@
   transition: opacity var(--gt-transicion);
 }
 
+/* Escape gana a hover y a foco: descartado es descartado (WCAG 1.4.13). La clase va doblada
+   porque `:focus-within` también puntúa como clase (0,3,0): con dos solas, el foco ganaría el
+   empate que no es empate y Escape no descartaría nada. */
+.gt-certificado__gate.gt-certificado__gate--suprimido .gt-certificado__aviso {
+  visibility: hidden;
+  opacity: 0;
+}
+
 /* El aviso ocupa sitio absoluto: la página necesita aire debajo para que el
    emergente no choque con el pie. */
 .gt-certificado__acciones:has(.gt-certificado__gate) {

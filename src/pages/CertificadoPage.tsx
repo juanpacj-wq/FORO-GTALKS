@@ -68,6 +68,10 @@ function BotonDescarga() {
 
 function BotonRetenido() {
   const [avisando, setAvisando] = useState(false)
+  // Escape SUPRIME el aviso aunque el botón siga enfocado. Sin este estado, `:focus-within`
+  // lo mantendría visible y Escape no descartaría nada (WCAG 1.4.13). Se levanta al volver a
+  // interactuar (clic) o al salir del botón.
+  const [suprimido, setSuprimido] = useState(false)
 
   useEffect(() => {
     if (!avisando) return
@@ -76,15 +80,31 @@ function BotonRetenido() {
   }, [avisando])
 
   return (
-    <span className={'gt-certificado__gate' + (avisando ? ' gt-certificado__gate--avisando' : '')}>
+    <span
+      className={
+        'gt-certificado__gate' +
+        (avisando ? ' gt-certificado__gate--avisando' : '') +
+        (suprimido ? ' gt-certificado__gate--suprimido' : '')
+      }
+    >
       <button
         type="button"
         className="gt-boton gt-boton--inactivo gt-certificado__descargar"
         aria-disabled="true"
         aria-describedby="gt-certificado-aviso"
-        onClick={() => setAvisando((v) => !v)}
-        onKeyDown={(e) => e.key === 'Escape' && setAvisando(false)}
-        onBlur={() => setAvisando(false)}
+        onClick={() => {
+          setSuprimido(false)
+          setAvisando((v) => !v)
+        }}
+        onKeyDown={(e) => {
+          if (e.key !== 'Escape') return
+          setAvisando(false)
+          setSuprimido(true)
+        }}
+        onBlur={() => {
+          setAvisando(false)
+          setSuprimido(false)
+        }}
       >
         Descarga tu certificado (PDF)
       </button>

@@ -64,7 +64,7 @@ const SUBRECURSO = (dest) => ({
 // ─────────────────────────────────────── navegaciones: públicas, con cabeceras
 console.log('\nNavegación sin sesión → el sitio se sirve, con la CSP puesta')
 
-for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas']) {
+for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas', '/certificado']) {
   const r = await pedir(ruta, { headers: NAVEGA })
   const csp = r.headers['content-security-policy'] || ''
   check(`${ruta} se sirve (200, HTML)`, r.status === 200 && (r.headers['content-type'] || '').includes('text/html'), String(r.status))
@@ -146,6 +146,51 @@ console.log('\nIdentidad y mutadores → 401 / 403')
     check(`POST ${ruta} no existe`, post.status === 404, String(post.status))
     const get = await pedir(ruta, { headers: SUBRECURSO('empty') })
     check(`GET ${ruta} tampoco`, get.status === 404, String(get.status))
+  }
+}
+
+// ─────────────────── el certificado: identidad cerrada y CERO superficie extra
+console.log('\nCertificado → 401 sin sesión, sin rutas hermanas, sin fallback')
+
+{
+  const r = await pedir('/api/certificado')
+  check('/api/certificado responde 401 sin sesión', r.status === 401, String(r.status))
+  check('y no se cachea', (r.headers['cache-control'] || '').includes('no-store'), r.headers['cache-control'] || '')
+  check('y no fija cookies', r.headers['set-cookie'] === undefined, String(r.headers['set-cookie'] || ''))
+  check('y no filtra nada un PDF empieza por %PDF, un 401 por {', r.cuerpo.startsWith('{'), r.cuerpo.slice(0, 24))
+}
+
+{
+  // Navegar directo a /api/certificado sin sesión NO cae al fallback SPA: la identidad decide,
+  // no la heurística de navegación (`esNavegacion` excluye /api/ por construcción, y esto lo fija).
+  const r = await pedir('/api/certificado', { headers: NAVEGA })
+  check('/api/certificado navegado sin sesión sigue siendo 401 JSON', r.status === 401 && !(r.headers['content-type'] || '').includes('html'), `${r.status} ${r.headers['content-type'] || ''}`)
+}
+
+{
+  // Mutadores: la ruta es de SOLO lectura. Cross-site los corta el CSRF; same-origin no existen.
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+    const r = await pedir('/api/certificado', { method, headers: { 'sec-fetch-site': 'same-origin' } })
+    check(`${method} /api/certificado no existe`, r.status === 404, String(r.status))
+  }
+}
+
+{
+  // La «peor puerta» (docs/EXPORTAR-INSCRITOS.md) sigue sin existir: nada de listar, nada de
+  // pedir por identificador. El certificado de OTRO no se puede nombrar en ninguna URL.
+  for (const ruta of [
+    '/api/certificados',
+    '/api/certificado/jcespedes',
+    '/api/certificado/00000000-1111-2222-3333-444444444444',
+    '/api/certificado?oid=otro',
+    '/api/asistentes',
+  ]) {
+    const r = await pedir(ruta, { headers: SUBRECURSO('empty') })
+    // `?oid=` cae en la MISMA ruta (el parámetro se ignora y responde su propio 401);
+    // todo lo demás no existe.
+    const esperado = ruta.includes('?') ? 401 : 404
+    check(`GET ${ruta} → ${esperado}`, r.status === esperado, String(r.status))
+    check(`GET ${ruta} no filtra datos`, !/nombre|cedula|cédula|\.pdf/i.test(r.cuerpo), r.cuerpo.slice(0, 40))
   }
 }
 

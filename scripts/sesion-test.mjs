@@ -232,6 +232,61 @@ for (const [estado, fragmento] of [
   await p.close()
 }
 
+// ───────────────────────────────────────── el certificado, en la interfaz
+console.log('\nEl certificado')
+
+// La misma regla del correo: solo se anuncia lo que el servidor CONFIRMA. `disponible` literal
+// pinta la descarga; `no_aplica` pinta el botón retenido con su aviso; y el campo AUSENTE (un
+// servidor viejo) cae en retenido — jamás en descarga.
+for (const [nombre, extra, esperaDescarga] of [
+  ['disponible', { certificado: 'disponible' }, true],
+  ['no_aplica', { certificado: 'no_aplica' }, false],
+  ['campo ausente (server viejo)', {}, false],
+]) {
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await p.route('**/api/me', (ruta) => ruta.fulfill({ json: { ...IDENTIDAD, ...extra } }))
+  await p.goto(base + '/certificado', { waitUntil: 'networkidle' })
+
+  const enlace = p.locator('a.gt-certificado__descargar')
+  const retenido = p.locator('button.gt-certificado__descargar')
+  if (esperaDescarga) {
+    check(`«${nombre}»: la descarga es un enlace a /api/certificado`,
+      (await enlace.count()) === 1 && (await enlace.getAttribute('href')) === '/api/certificado')
+    check('  sin botón retenido', (await retenido.count()) === 0)
+  } else {
+    check(`«${nombre}»: no hay ningún enlace de descarga`, (await enlace.count()) === 0)
+    check('  y el botón retenido existe, enfocable y descrito',
+      (await retenido.count()) === 1 &&
+      (await retenido.getAttribute('aria-disabled')) === 'true' &&
+      (await retenido.getAttribute('aria-describedby')) === 'gt-certificado-aviso')
+  }
+  await p.close()
+}
+
+{
+  // El aviso del botón retenido: emerge con el clic, se cierra con Escape, y nombra el contacto.
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await p.route('**/api/me', (ruta) => ruta.fulfill({ json: { ...IDENTIDAD, certificado: 'no_aplica' } }))
+  await p.goto(base + '/certificado', { waitUntil: 'networkidle' })
+  const aviso = p.locator('#gt-certificado-aviso')
+  check('el aviso vive en el DOM aunque no se vea', (await aviso.count()) === 1)
+  check('  y no es visible en reposo', !(await aviso.isVisible()))
+  // `force`: Playwright respeta aria-disabled y se niega a pulsarlo sin él — señal de que el
+  // botón se anuncia como corresponde.
+  await p.click('button.gt-certificado__descargar', { force: true })
+  await p.waitForTimeout(250)
+  check('  el toque lo hace emerger', await aviso.isVisible())
+  check('  y dice a quién escribirle', ((await aviso.textContent()) || '').includes('María Cristina'))
+  // El flujo de teclado: el foco lo hace emerger (focus-within) y Escape lo DESCARTA aunque el
+  // foco siga en el botón (WCAG 1.4.13; el estado --suprimido gana a hover y foco).
+  await p.locator('button.gt-certificado__descargar').focus()
+  check('  el foco también lo hace emerger', await aviso.isVisible())
+  await p.keyboard.press('Escape')
+  await p.waitForTimeout(250)
+  check('  Escape lo cierra sin soltar el foco', !(await aviso.isVisible()))
+  await p.close()
+}
+
 // ──────────────────────────────────────────────────────────── sin sesión
 console.log('\nSin sesión (visitante anónimo, preview, capturas)')
 
@@ -244,6 +299,13 @@ check('y el sitio se ve igual que siempre', await sinSesion.locator('.gt-hero__t
 await sinSesion.goto(base + '/escarapela', { waitUntil: 'networkidle' })
 check('la escarapela invita a entrar', await sinSesion.locator('.gt-escarapela__entrar').isVisible())
 check('sin pintar ningún carné', (await sinSesion.locator('.gt-carne').count()) === 0)
+
+await sinSesion.goto(base + '/certificado', { waitUntil: 'networkidle' })
+check('el certificado invita a entrar, con su destino de retorno',
+  (await sinSesion.locator('.gt-certificado__entrar').getAttribute('href')) === '/auth/login?destino=/certificado')
+check('sin ninguna descarga ni botón retenido', (await sinSesion.locator('.gt-certificado__descargar').count()) === 0)
+check('y con el aviso de privacidad antes del login',
+  ((await sinSesion.locator('.gt-certificado__registro').textContent()) || '').toLowerCase().includes('asistencia'))
 // El nombre del fixture coincide a propósito con el contacto del pie de página (EVENTO.contacto
 // en foro.ts), que es contenido público: lo que jamás puede aparecer sin sesión es el correo,
 // que solo existe en /api/me.

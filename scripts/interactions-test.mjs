@@ -100,6 +100,21 @@ check(
   await esperarA(async () => (await desktop.locator('.gt-perfil__item').count()) > 0),
 )
 
+console.log('\nCertificado')
+// Las interacciones CON sesión (estados del botón, el aviso emergente, Escape) viven en
+// sesion-test.mjs, que es donde se intercepta /api/me. Aquí, lo estructural: la ruta es de
+// primera clase se llega desde el nav y no redirige— y sin sesión solo invita a entrar.
+await desktop.goto(base + '/', { waitUntil: 'networkidle' })
+await desktop.click('.gt-header__enlace[href="/certificado"], nav a[href="/certificado"]')
+await desktop.waitForURL('**/certificado')
+check('el nav lleva a /certificado', new URL(desktop.url()).pathname === '/certificado')
+check(
+  'sin sesión: invita a entrar con retorno a /certificado',
+  await esperarA(async () =>
+    (await desktop.locator('.gt-certificado__entrar').getAttribute('href')) === '/auth/login?destino=/certificado'),
+)
+check('y la vista previa es la pieza sin datos', await desktop.locator('.gt-certificado__pieza img').isVisible())
+
 console.log('\nRutas inválidas')
 await desktop.goto(base + '/ponentes/no-existe', { waitUntil: 'networkidle' })
 check(

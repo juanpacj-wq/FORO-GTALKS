@@ -23,6 +23,7 @@ const RUTAS = [
   '/ponentes/jose-fernando-prada',
   '/escarapela',
   '/encuestas',
+  '/certificado',
 ]
 
 let fallos = 0

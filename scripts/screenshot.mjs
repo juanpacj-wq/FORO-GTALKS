@@ -20,6 +20,7 @@ const routes = [
   ['perfil-ponencia', '/ponentes/jose-fernando-prada'],
   ['escarapela', '/escarapela'],
   ['encuestas', '/encuestas'],
+  ['certificado', '/certificado'],
 ]
 
 mkdirSync(outDir, { recursive: true })
