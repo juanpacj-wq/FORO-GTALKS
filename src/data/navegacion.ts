@@ -1,9 +1,10 @@
-/** Los 4 destinos del sitio. El primero es la home, que además tiene anclas. */
+/** Los 5 destinos del sitio. El primero es la home, que además tiene anclas. */
 export const NAV = [
   { etiqueta: 'Bienvenida', ruta: '/' },
   { etiqueta: 'Ponentes', ruta: '/ponentes' },
   { etiqueta: 'Escarapela', ruta: '/escarapela' },
   { etiqueta: 'Encuestas', ruta: '/encuestas' },
+  { etiqueta: 'Certificado', ruta: '/certificado' },
 ] as const
 
 /** Secciones de la home. El scrollspy del header resalta la que esté a la vista. */

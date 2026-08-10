@@ -11,6 +11,7 @@ const TITULOS: Record<string, string> = {
   '/ponentes': `Ponentes ${TITULO_BASE}`,
   '/escarapela': `Escarapela ${TITULO_BASE}`,
   '/encuestas': `Encuestas ${TITULO_BASE}`,
+  '/certificado': `Certificado ${TITULO_BASE}`,
 }
 
 /** Deja que una página fije su propio `<title>`, para las rutas dinámicas. */

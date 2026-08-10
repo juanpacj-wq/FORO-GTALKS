@@ -100,23 +100,9 @@
   display: block;
 }
 
-.gt-boton--inactivo {
-  border-color: var(--gt-linea);
-  color: var(--gt-humo);
-  background: transparent;
-  cursor: not-allowed;
-}
-
-/* Sin flecha: todavía no es un enlace, y el hover no lo enciende. */
-.gt-boton--inactivo::after {
-  content: none;
-}
-
-.gt-boton--inactivo:hover {
-  background: transparent;
-  border-color: var(--gt-linea);
-  color: var(--gt-humo);
-}
+/* `.gt-boton--inactivo` vivía aquí; se promovió a base.css cuando el
+   certificado empezó a usarlo también. Aquí quedan el gate y el aviso, que
+   son composición de ESTA tarjeta. */
 
 /* El aviso es una superficie clara: papel sobre el campo oscuro, como manda
    `.gt-lamina` (que pone fondo y tinta; aquí solo viven posición y cuerpo).

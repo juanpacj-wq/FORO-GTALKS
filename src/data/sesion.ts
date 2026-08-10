@@ -33,9 +33,18 @@ export interface Inscripcion {
   ts?: string
 }
 
+/**
+ * El certificado de participación, tal como lo reporta el servidor
+ * (`server/certificados.js`). `no_aplica` cubre a la vez «la descarga está
+ * apagada», «esta persona no tiene certificado» y «el servidor aún no conoce
+ * el campo» (un despliegue viejo): la interfaz solo anuncia la descarga cuando
+ * el servidor la confirma con `disponible`, nunca por omisión.
+ */
+export type EstadoCertificado = 'disponible' | 'no_aplica'
+
 export type EstadoSesion =
   | { estado: 'cargando' }
-  | { estado: 'dentro'; usuario: Usuario; inscripcion: Inscripcion }
+  | { estado: 'dentro'; usuario: Usuario; inscripcion: Inscripcion; certificado: EstadoCertificado }
   | { estado: 'sin-sesion' } // sin identidad: visitante anónimo, o servido sin el server (preview)
 
 /**
@@ -65,6 +74,9 @@ async function consultarSesion(): Promise<EstadoSesion> {
       estado: 'dentro',
       usuario: datos.user,
       inscripcion: datos.inscripcion ?? { estado: 'no_aplica' },
+      // Fallo cerrado: solo `disponible` literal habilita la descarga. Cualquier otra cosa
+      // incluido un servidor que no conozca el campo— es `no_aplica`.
+      certificado: datos.certificado === 'disponible' ? 'disponible' : 'no_aplica',
     }
   } catch {
     return { estado: 'sin-sesion' }

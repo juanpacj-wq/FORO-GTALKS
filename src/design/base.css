@@ -349,11 +349,14 @@ b {
    - El base es un remate de sección«ver los perfiles»— y por eso va en
      hairline: propone, no empuja. Plano celeste al pasar por encima.
    - `--solido` es para cuando el enlace ES el contenido de la página y no su
-     remate. Hoy solo lo usan las dos encuestas: esa página no tiene nada más
-     que hacer que entregar los dos formularios.
+     remate: las encuestas, el login de la escarapela y la descarga del
+     certificado.
    - `--externo` marca que el destino está fuera del sitio.
-
-   No hay inscripción ni descarga que ofrecer todavía (pendiente #8).         */
+   - `--inactivo` es el botón RETENIDO: existe y se enfoca (para que el lector
+     de pantalla lo encuentre y lea su aviso), pero todavía no es un enlace.
+     Nació en las encuestas (la de satisfacción antes del cierre) y lo comparte
+     el certificado (asistencia sin registrar); por eso vive aquí y no en el
+     CSS de una página.                                                       */
 
 .gt-boton {
   display: inline-flex;
@@ -415,6 +418,26 @@ b {
 /* El desplazamiento acompaña a la punta: en diagonal, no a la derecha. */
 .gt-boton--externo:hover::after {
   translate: 0.2rem -0.2rem;
+}
+
+/* Retenido: hairline débil, humo en vez de celeste (7.4:1 sobre navy) y sin
+   flecha, porque la flecha promete un destino que aún no está. El hover no lo
+   enciende: no hay nada que encender.                                        */
+.gt-boton--inactivo {
+  border-color: var(--gt-linea);
+  color: var(--gt-humo);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.gt-boton--inactivo::after {
+  content: none;
+}
+
+.gt-boton--inactivo:hover {
+  background: transparent;
+  border-color: var(--gt-linea);
+  color: var(--gt-humo);
 }
 
 /* --- Accesibilidad --------------------------------------------------------- */
