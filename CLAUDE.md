@@ -412,6 +412,22 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   papel— y `resumenDe` devuelve `''`, así que quien la pinte tiene que contar con la cadena vacía
   y no envolverla a ciegas en su etiqueta. Lo fija `interactions-test.mjs` en dos mitades: diez
   filas con línea, y que la que falta sea exactamente esa.
+- **El certificado de participación se descarga de `/certificado`, y el servidor no compone
+  ninguno.** Los PDF (nombre + cédula sobre la pieza `Certificado de participación.png`) se
+  generan y verifican en la ESTACIÓN con el bucle
+  `certificados-audiencia.mjs` (congela 134 con oid, se revisa A MANO) →
+  `certificados-generar.py` (texto vectorial en Poppins Regular decisión del usuario tras
+  descartar 13 candidatas con `certificado-fuente.py`; las cotas salen de «C.C:», el único
+  texto-sobre-raya de la pieza) → `certificados-auditar.py` (la segunda opinión: capa de texto
+  contra archivo contra audiencia; probada con sabotaje). El servidor solo aprende un manifiesto
+  `oid → archivo` (sin nombres ni cédulas) desde `CERTIFICADOS_DIR` — vacío no existe, a medias
+  ABORTA — y `GET /api/certificado` entrega ÚNICAMENTE el del oid de la sesión: sin parámetros,
+  sin listado, con `revalidate`. La interfaz solo anuncia lo que `/api/me` confirma con el
+  literal `disponible`; sin asistencia registrada, botón retenido con aviso emergente (Escape le
+  gana a hover y foco: la clase `--suprimido` va DOBLADA porque `:focus-within` puntúa como
+  clase). Las cédulas jamás tocan git (repo público: `*.xlsx` ignorado); la subida va por
+  `deploy/certificados-subir.sh` y exige RESTART. Manual: `docs/SEGURIDAD.md` §El certificado y
+  `docs/PLAN-CERTIFICADO-WEB.md`.
 - Los pendientes de contenido (sede real del evento, fotos de ponentes) se registran en
   `docs/PENDIENTES-DE-CONTENIDO.md`.
 

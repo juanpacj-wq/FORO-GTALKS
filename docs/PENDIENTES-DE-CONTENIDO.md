@@ -96,5 +96,18 @@ entradilla esté en **todas** tampoco:
   tamaño realmente calculado, que el primer párrafo destaque sobre el segundo. Es la comprobación
   que impide que la discrepancia vuelva sin que nadie se entere.
 
+### El contacto del aviso del certificado
+
+El botón retenido de `/certificado` (quien entra sin asistencia registrada) remite hoy a
+**María Cristina Giraldo (mgiraldo@gecelca.com.co)** — el nombre coincide con el contacto del pie
+del sitio, pero el **canal** está por confirmar con ella: ¿correo, Teams, o el teléfono del pie?
+El texto vive en `AVISO_SIN_ASISTENCIA` de `src/pages/CertificadoPage.tsx`.
+
+### El certificado de Howard es de entrega manual
+
+HOWARD DIAZ GRANADOS CATRIN (C.C. 1.140.885.324) asistió pero no tiene cuenta en Entra: no puede
+iniciar sesión ni descargar. Queda anotado en la audiencia congelada (`entregaManual`); su PDF
+hay que producirlo aparte y hacérselo llegar por otra vía.
+
 Todo microcopy **nuevo** de la interfaz (botones, estados vacíos, mensajes de error) va en
 español de Colombia con tuteo.

@@ -359,6 +359,46 @@ comando, que tiene precedencia sobre `--env-file`. El dominio es `cdp.gecelca.co
 
 ---
 
+## El certificado de participación se descarga, y solo el propio
+
+Tras el foro, cada asistente descarga su certificado en PDF desde `/certificado`, autenticándose
+con la misma sesión de Entra de la escarapela. El modelo de amenaza es el heredero directo del
+del envío del QR: **que Ana descargue el certificado de Beto** — un documento con el nombre y la
+cédula de otra persona. Y hay una segunda amenaza propia: que la ruta nueva se convierta en **la
+«peor puerta»** contra la que advierte `docs/EXPORTAR-INSCRITOS.md` (una que sirva el registro de
+asistencia). No lo es, y no por convención sino por construcción: la ruta **no admite parámetros**.
+
+El servidor **no compone** ningún certificado: los PDF se generan en la estación
+(`scripts/certificados-generar.py`), se verifican dos veces y se suben pre-hechos a
+`/var/lib/gtalks/certificados/` (fuera de `/opt/gtalks`: sobreviven a los despliegues, como el
+libro). `GET /api/certificado` solo entrega bytes que ya existían.
+
+| Guardia | Dónde | Qué impide |
+|---|---|---|
+| La audiencia se congela en un archivo revisable, con oid/alias/cédula únicos y fallo cerrado | `scripts/certificados-audiencia.mjs` | Que una ambigüedad del directorio o un nombre mal partido lleguen a un diploma sin que un humano los vea |
+| Auto-chequeo por PDF: reabrir, rasterizar, y restar contra una referencia sin textos; centrado ±2 px y ancho esperado | `scripts/certificados-generar.py` | Un texto fuera de su sitio, un nombre que desborde su raya, cualquier cambio fuera de las dos bandas |
+| Segunda opinión por otra vía: la capa de texto de CADA pdf contra el archivo que lo nombra y contra la audiencia congelada, no contra el manifiesto del mismo lote | `scripts/certificados-auditar.py` | El cruce A-con-datos-de-B, que el auto-chequeo no puede ver porque compararía B contra B. Probado con sabotaje |
+| El manifiesto lleva `oid → archivo` y nada más | `certificados-generar.py` → `server/certificados.js` | Que el servidor conozca nombres o cédulas que no necesita (minimización, como el libro sin direcciones) |
+| `CERTIFICADOS_DIR` vacío = la función no existe; a medias = el arranque ABORTA; allowlist del nombre de archivo + `resolve` dentro del directorio | `server/certificados.js` (`iniciarCertificados`) | Encender a medias, y el traversal por manifiesto — negado por construcción y fijado por `certificados-server-test.mjs` |
+| La ruta resuelve SOLO el oid de la sesión; sin parámetros, sin listado, sin hermanas | `server/app.js` (`GET /api/certificado`) + `gate-test.mjs` | Pedir el certificado de otro o enumerar: no existe URL que lo nombre |
+| `revalidate` también en la descarga | `server/app.js` | Que una sesión revocada en Entra siga descargando un documento con datos personales |
+| La interfaz solo anuncia lo que el servidor confirma: solo el literal `disponible` pinta descarga | `src/data/sesion.ts` + `sesion-test.mjs` | Prometer un certificado que quizá no existe (campo ausente, server viejo, persona sin asistencia) |
+
+Notas que no son obvias:
+
+- **`no_aplica` no distingue** «apagado», «sin certificado» y «oid desconocido», a propósito: la
+  respuesta del 404 tiene la misma forma que el 404 genérico.
+- **El repo es público y las cédulas jamás lo tocan**: `*.xlsx` está en `.gitignore` desde la
+  Fase 0 de esta función, la audiencia congelada vive en `.datos/` (ignorado) y el despliegue
+  empaqueta con `git archive`. La subida de los PDF va por `deploy/certificados-subir.sh` (tar
+  por stdin de ssh + sha256), nunca por git.
+- **Cargar el manifiesto exige reiniciar el servicio** tras cada subida: el mapa vive en memoria.
+- **HOWARD DIAZ GRANADOS CATRIN no tiene cuenta en Entra**: no puede iniciar sesión y su
+  certificado es de **entrega manual** (queda anotado en la audiencia congelada, campo
+  `entregaManual`).
+
+---
+
 ## Secretos
 
 Viven en `/etc/gtalks/env`, **fuera del directorio de la app**, con permisos `0600 root:root`:
@@ -425,6 +465,9 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 6. **Retirar `GroupMember.Read.All`** de la App Registration si se concedió para el envío del QR.
 7. Borrar `.datos/envio-qr*.jsonl`, `.datos/audiencia-*.json` y `.datos/qr/*.png`: son 163 alias
    corporativos y 163 credenciales de asistencia en el disco de una estación.
+8. Borrar `.datos/certificados/` y `.datos/certificados-audiencia-*.json` de la estación, y
+   `/var/lib/gtalks/certificados/` del servidor (con `CERTIFICADOS_DIR=` vaciado antes del
+   restart): son 134 nombres con cédula en disco, y pasado el ciclo ya nadie los descarga.
 
 **Al abrir la siguiente:**
 
@@ -453,6 +496,8 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 | **El QR viaja por correo, y registra asistencia sin autenticar** | El código es el mismo que ya estaba en la escarapela; lo que cambia es que ahora vive también en una bandeja de entrada y en Enviados del remitente. Un reenvío permite que otra persona marque esa asistencia. Se acepta porque el control de asistencia de un foro de un día no justifica un segundo factor, y porque el correo lo dice explícitamente | Si alguna edición necesita asistencia fehaciente, el QR tiene que llevar un token de un solo uso, no el alias |
 | **El libro del envío vive en la estación**, sin respaldo automático y fuera de git | Es un archivo de 163 líneas sin direcciones de correo. La mitigación real es `--maximo N` obligatorio con `--confirmar`: un libro perdido cuesta N correos repetidos, no 163. Y el registro autoritativo es el *message trace* de Exchange, no el libro | Copiarlo a un sitio sincronizado tras cada corrida |
 | **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde. (Con el sitio público el pico del login ya no es «todo el auditorio a la misma hora»: solo pasa por `/auth/*` quien abre su escarapela) | Ajustar con los rangos de egress cuando IT los entregue |
+| **El nombre y la cédula del certificado van en Poppins Regular, que NO es la fuente exacta de la pieza** | Se midieron 13 candidatas con tres arneses (`scripts/certificado-fuente.py`); ninguna ES la de la pieza (mejor IoU alineado 0.608). Poppins Regular clava el peso (asta 3.00 px, la misma) y es la más cercana en forma; al cuerpo del diploma la diferencia no se percibe sin comparar glifo a glifo. Decisión del usuario, 2026-08-10 | Si Comunicaciones entrega la fuente original: añadirla a CANDIDATAS, correr el arnés, regenerar y resubir |
+| **`GET /api/certificado` es la primera ruta HTTP que sirve un dato del registro de asistencia** | La «peor puerta» de EXPORTAR-INSCRITOS era una que sirviera EL registro; esta sirve UN archivo estático, solo al dueño del oid de la sesión, sin parámetros ni enumeración posibles, con `revalidate` y `no-store`. El dato que entrega ya pertenece a quien lo pide | Cada edición: si la función no se repite, vaciar `CERTIFICADOS_DIR` y la ruta responde 404 para todo el mundo |
 
 ---
 

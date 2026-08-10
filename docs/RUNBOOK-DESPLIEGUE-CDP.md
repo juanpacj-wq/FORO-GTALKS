@@ -238,6 +238,12 @@ MAIL_TENANT_ID=
 MAIL_CLIENT_ID=
 MAIL_CLIENT_SECRET=
 
+# ── Certificados de participación — vacío hasta subirlos con
+#    deploy/certificados-subir.sh; a medias, el arranque aborta. Los PDF viven
+#    fuera de /opt/gtalks para sobrevivir a los despliegues, como el libro.
+#    Tras cada subida: systemctl restart gtalks (el manifiesto se carga al arrancar). ──
+CERTIFICADOS_DIR=
+
 # ── Servidor: solo loopback; nginx es el único que le habla ──
 SERVER_PORT=3000
 SERVER_HOST=127.0.0.1
