@@ -17,6 +17,14 @@ dist/
 # Registros: pueden contener el correo corporativo de los asistentes.
 *.log
 
+# Listados con DATOS PERSONALES (cédulas, nombres de la planta): jamás a GitHub.
+# «ASISTENCIA FORO.xlsx» trae la cédula de cada asistente y este repo es público.
+# Ningún .xlsx del árbol es fuente de verdad del sitio: los que produce el flujo de
+# inscritos ya viven en .datos/ (ignorado); cualquier otro es material de trabajo.
+*.xlsx
+# Exportes de buzón guardados con prisa en la raíz (correo corporativo real).
+/Mail - *.pdf
+
 # Estado local del correo de inscripción (libro de inscripciones, JSONL por `oid`). En producción
 # vive en /var/lib/gtalks/, fuera del repo. NO es un log y NO se rota: si se trunca, el servidor
 # vuelve a escribirle a todo el mundo. Ver server/correo/libro-inscripciones.js.
