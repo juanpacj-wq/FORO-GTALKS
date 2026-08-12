@@ -228,7 +228,10 @@ for (const [estado, fragmento] of [
   await p.goto(base + '/escarapela', { waitUntil: 'networkidle' })
   const aviso = ((await p.locator('.gt-escarapela__registro').textContent()) || '').toLowerCase()
   check('el aviso previo al login menciona el registro de asistencia', aviso.includes('asistencia'))
-  check('y el correo de inscripción', aviso.includes('correo') && aviso.includes('inscripción'))
+  // Hasta el 2026-08-12 aquí se exigía que el aviso anunciara ADEMÁS el correo de inscripción.
+  // El envío está apagado (INSCRIPCION_MODO=off) y el usuario retiró la frase: no se anuncia un
+  // correo que no va a salir. La comprobación se invierte para que la mención no vuelva sola.
+  check('y ya no anuncia el correo de inscripción', !aviso.includes('inscripción'))
   await p.close()
 }
 
@@ -304,8 +307,13 @@ await sinSesion.goto(base + '/certificado', { waitUntil: 'networkidle' })
 check('el certificado invita a entrar, con su destino de retorno',
   (await sinSesion.locator('.gt-certificado__entrar').getAttribute('href')) === '/auth/login?destino=/certificado')
 check('sin ninguna descarga ni botón retenido', (await sinSesion.locator('.gt-certificado__descargar').count()) === 0)
-check('y con el aviso de privacidad antes del login',
-  ((await sinSesion.locator('.gt-certificado__registro').textContent()) || '').toLowerCase().includes('asistencia'))
+{
+  const aviso = ((await sinSesion.locator('.gt-certificado__registro').textContent()) || '').toLowerCase()
+  check('y con el aviso de privacidad antes del login', aviso.includes('asistencia'))
+  // La misma inversión que en /escarapela: con el envío apagado, el aviso ya no anuncia
+  // ningún correo de inscripción, y esta comprobación impide que la frase vuelva sola.
+  check('que tampoco anuncia el correo de inscripción', !aviso.includes('inscripción'))
+}
 // El nombre del fixture coincide a propósito con el contacto del pie de página (EVENTO.contacto
 // en foro.ts), que es contenido público: lo que jamás puede aparecer sin sesión es el correo,
 // que solo existe en /api/me.

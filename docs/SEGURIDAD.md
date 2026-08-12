@@ -282,8 +282,11 @@ red** relacionada con el correo, ni siquiera para pedir el token.
   comparan con los desenlaces.
 
 El **aviso de privacidad** vive junto al botón de entrar, **antes** del login: *«Tu acceso queda
-registrado para el control de asistencia del foro. La primera vez que entres, te escribimos a tu
-correo corporativo para confirmar tu inscripción.»*
+registrado para el control de asistencia del foro.»* Hasta el 2026-08-12 tenía una segunda frase
+que anunciaba el correo de inscripción; el usuario la retiró con el envío ya apagado
+(`INSCRIPCION_MODO=off`): no se anuncia un correo que no va a salir. Si el envío volviera a
+encenderse, la frase tiene que volver con él — `sesion-test.mjs` vigila hoy que NO esté, así que
+ese arnés se invierte a la vez.
 
 ---
 

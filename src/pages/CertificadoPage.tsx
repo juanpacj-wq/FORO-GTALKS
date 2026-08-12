@@ -161,10 +161,10 @@ export default function CertificadoPage() {
                   Entrar con otra cuenta
                 </a>
               )}
-              {/* Aviso de privacidad, ANTES del login: el mismo de /escarapela. */}
+              {/* Aviso de privacidad, ANTES del login: el mismo de /escarapela (que explica
+                  por qué ya no menciona el correo de inscripción). */}
               <p className="gt-certificado__registro">
-                Tu acceso queda registrado para el control de asistencia del foro. La primera vez
-                que entres, te escribimos a tu correo corporativo para confirmar tu inscripción.
+                Tu acceso queda registrado para el control de asistencia del foro.
               </p>
             </>
           )}

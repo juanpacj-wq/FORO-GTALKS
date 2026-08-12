@@ -299,12 +299,11 @@ export default function EscarapelaPage() {
                   </a>
                 )}
                 {/* Aviso de privacidad. Va ANTES del login, no después: es el orden que exige
-                    un tratamiento de datos que se anuncia. La segunda frase cubre el correo de
-                    inscripción, que sale en el primer inicio de sesión. */}
+                    un tratamiento de datos que se anuncia. Tuvo una segunda frase sobre el
+                    correo de inscripción; se retiró el 2026-08-12 con el envío ya apagado
+                    (INSCRIPCION_MODO=off): no se anuncia un correo que no va a salir. */}
                 <p className="gt-escarapela__registro">
-                  Tu acceso queda registrado para el control de asistencia del foro. La primera
-                  vez que entres, te escribimos a tu correo corporativo para confirmar tu
-                  inscripción.
+                  Tu acceso queda registrado para el control de asistencia del foro.
                 </p>
               </>
             )}
