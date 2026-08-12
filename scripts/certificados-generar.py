@@ -13,7 +13,6 @@
 #                                        NI nombre NI cédula: el servidor no los necesita
 #   .datos/certificados/hoja-contactos.png   los certificados en rejilla con su alias al pie,
 #                                        para revisarlos A OJO antes de subir nada
-#   public/img/certificado-muestra.webp  la pieza SIN datos para la vista previa de /certificado
 #
 # ── De dónde sale cada cota (medido, no estimado) ────────────────────────────
 #
@@ -320,15 +319,11 @@ def main() -> None:
         dib.text((x + 6, y + alto_celda - PIE + 4), m['archivo'][:-4], font=etiqueta, fill=(200, 220, 240))
     hoja.save(destino / 'hoja-contactos.png')
 
-    # ── La muestra pública para /certificado: la pieza tal cual, SIN datos ──
-    img_pub = RAIZ / 'public' / 'img'
-    im = Image.open(PIEZA).convert('RGB')
-    im.resize((878, 621), Image.LANCZOS).save(img_pub / 'certificado-muestra.webp', 'WEBP', quality=80, method=6)
-    im.save(img_pub / 'certificado-muestra@2x.webp', 'WEBP', quality=80, method=6)
+    # (Hasta el 2026-08-12 aquí se emitía public/img/certificado-muestra.webp, la vista previa
+    #  de /certificado. El usuario retiró la imagen de la página y el derivado se fue con ella.)
 
     print(f'\n✔ {len(manifiesto)} certificado(s) en {destino.relative_to(RAIZ)}')
     print(f'  manifiesto.json (oid → archivo; sin datos personales) · hoja-contactos.png para revisar a ojo')
-    print(f'  public/img/certificado-muestra.webp (+@2x) regenerados para la página')
     print('\nSegunda opinión, por la otra vía:')
     print(f'  .venv-design/Scripts/python scripts/certificados-auditar.py {ruta_audiencia.relative_to(RAIZ)}\n'.replace('\\', '/'))
 

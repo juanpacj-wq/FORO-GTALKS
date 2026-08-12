@@ -113,7 +113,29 @@ check(
   await esperarA(async () =>
     (await desktop.locator('.gt-certificado__entrar').getAttribute('href')) === '/auth/login?destino=/certificado'),
 )
-check('y la vista previa es la pieza sin datos', await desktop.locator('.gt-certificado__pieza img').isVisible())
+// La vista previa de la pieza existió hasta el 2026-08-12; el usuario la retiró y la página
+// quedó en título + lead + párrafo + botón. Este check impide que vuelva sin decisión.
+check('y no hay vista previa: la página anuncia y entrega, no enseña',
+  (await desktop.locator('.gt-certificado__pieza').count()) === 0)
+
+console.log('\nAltura de arranque')
+// Pedido del usuario (2026-08-12): /ponentes, /encuestas y /certificado arrancan a la MISMA
+// altura que /escarapela. El recorte del padding vive en `.gt-pagina` (PonentesPage.css) y
+// ninguna página lo redefine; aquí se mide sobre píxeles renderizados el canto superior del
+// h1 de cada una, no el CSS que se cree que aplica.
+const alturaH1 = async (ruta) => {
+  await desktop.goto(base + ruta, { waitUntil: 'networkidle' })
+  return desktop.locator('h1').first().evaluate((el) => Math.round(el.getBoundingClientRect().top))
+}
+const alturas = {}
+for (const ruta of ['/escarapela', '/ponentes', '/encuestas', '/certificado']) {
+  alturas[ruta] = await alturaH1(ruta)
+}
+check(
+  'las cuatro páginas del chasis arrancan a la altura de /escarapela',
+  new Set(Object.values(alturas)).size === 1,
+  JSON.stringify(alturas),
+)
 
 console.log('\nRutas inválidas')
 await desktop.goto(base + '/ponentes/no-existe', { waitUntil: 'networkidle' })

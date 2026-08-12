@@ -2,16 +2,9 @@
  * PonentesPage.css y el carné en components/Escarapela.css; aquí van el díptico de la página,
  * la alerta del callback, el molde de los estados sin carné y la zona de entrada/controles. */
 
-/* El chasis abre con `clamp(7rem, 14vh, 9.5rem)`, reserva heredada de cuando el header era
- * FIJO y el contenido tenía que arrancar por debajo de él. Hoy es `sticky` y ya ocupa sus
- * ~96px en el flujo, así que esa reserva es aire sobre aire y aquí se nota más que en ninguna
- * otra página del chasis: el carné mide ~670px de alto y esos 144px de banda muerta lo
- * empujaban fuera de la primera pantalla. Es el mismo recorte, y por el mismo motivo, que ya
- * se hizo en `.gt-hero` (ver InicioPage.css). Va acotado a esta página a propósito: /ponentes
- * y /encuestas arrancan con una lista, no con una pieza que quiera caber entera. */
-.gt-pagina--escarapela {
-  padding-top: clamp(2.5rem, 6vh, 4.5rem);
-}
+/* El recorte del `padding-top` que nació aquí (el carné de ~670px no cabía en la primera
+ * pantalla con la reserva del header fijo) es desde el 2026-08-12 el del CHASIS entero:
+ * vive en `.gt-pagina` (PonentesPage.css) y esta página ya no redefine nada. */
 
 /* ── El díptico ──────────────────────────────────────────────────────────────── */
 /* Cuatro áreas y no dos columnas sueltas: `titulo`, `discurso` y `acciones` se apilan a la

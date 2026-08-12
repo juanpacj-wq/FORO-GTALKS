@@ -1,9 +1,15 @@
 /* Chasis de las páginas interiores: campo oscuro, título con riel y una
    medida de lectura corta para la entradilla.                                */
 
+/* El `padding-top` original era `clamp(7rem, 14vh, 9.5rem)`: la reserva de cuando el header era
+ * FIJO y el contenido tenía que arrancar por debajo de él. Hoy es `sticky` y ya ocupa sus ~96px
+ * en el flujo, así que esa reserva era aire sobre aire. Se recortó primero solo en /escarapela
+ * (su carné de ~670px no cabía en la primera pantalla) y el 2026-08-12 el usuario pidió la misma
+ * altura de arranque para TODAS las páginas del chasis: el recorte vive aquí y ninguna página lo
+ * redefine. Es el mismo ajuste, y por el mismo motivo, que `.gt-hero` (ver InicioPage.css). */
 .gt-pagina {
   background: var(--gt-noche);
-  padding-top: clamp(7rem, 14vh, 9.5rem);
+  padding-top: clamp(2.5rem, 6vh, 4.5rem);
   padding-bottom: var(--gt-seccion);
   min-height: 70vh;
 }

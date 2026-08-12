@@ -36,21 +36,6 @@ const AVISO_SIN_ASISTENCIA =
   'Si asististe y crees que es un error, escríbele a María Cristina Giraldo ' +
   '(mgiraldo@gecelca.com.co).'
 
-function VistaPrevia() {
-  return (
-    <figure className="gt-certificado__pieza">
-      <img
-        src="/img/certificado-muestra.webp"
-        srcSet="/img/certificado-muestra.webp 878w, /img/certificado-muestra@2x.webp 1755w"
-        sizes="(min-width: 64rem) 52rem, 100vw"
-        width={878}
-        height={621}
-        alt="Certificado de participación del 1° Foro GECELCA, sin diligenciar: el tuyo lleva tu nombre y tu cédula."
-      />
-    </figure>
-  )
-}
-
 function BotonDescarga() {
   return (
     <>
@@ -155,8 +140,6 @@ export default function CertificadoPage() {
             {mensaje}
           </p>
         )}
-
-        <VistaPrevia />
 
         <div className="gt-certificado__acciones">
           {sesion.estado === 'sin-sesion' && (

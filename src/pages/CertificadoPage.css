@@ -1,11 +1,9 @@
 /* /certificado — la página que entrega el PDF de participación.
 
-   Composición en una sola columna centrada: la pieza es apaisada (1755:1241) y
-   partir la página en dos columnas la encogería sin necesidad. La vista previa
-   es la pieza SIN datos personales el PDF de cada quien los lleva; la página
-   jamás—. El campo es oscuro, como todo el sitio; la pieza ES el papel, así
-   que no necesita `.gt-lamina`: se enmarca con el hairline y la sombra del
-   sistema y nada más.                                                        */
+   Composición en una sola columna: título, lead, un párrafo y el botón. Hubo
+   una vista previa de la pieza (sin datos personales) hasta el 2026-08-12; el
+   usuario la retiró: la página anuncia y entrega, no enseña. El campo es
+   oscuro, como todo el sitio.                                                */
 
 .gt-certificado {
   display: flex;
@@ -33,25 +31,6 @@
   border-radius: var(--gt-radio-chico);
   color: var(--gt-texto);
   font-size: var(--gt-fs-sm);
-}
-
-/* --- La vista previa -------------------------------------------------------
-   El marco no inventa forma: radio de caja y sombra de lámina del sistema. La
-   imagen manda su proporción con width/height del propio elemento (878×621) y
-   `max-width` la pliega en móvil sin desbordar nada.                         */
-.gt-certificado__pieza {
-  margin: 0;
-  max-width: 52rem;
-  border: var(--gt-borde) solid var(--gt-linea);
-  border-radius: var(--gt-radio-chico);
-  overflow: hidden;
-  box-shadow: var(--gt-sombra-lamina);
-}
-
-.gt-certificado__pieza img {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 
 /* --- Las acciones ---------------------------------------------------------- */
@@ -83,8 +62,8 @@
 /* --- El gate del botón retenido --------------------------------------------
    El mismo patrón del gate de encuestas: el aviso SIEMPRE está en el DOM
    (`aria-describedby` lo anuncia), y verse se ve con hover, foco o el toque
-   (`--avisando`). Aquí el aviso va DEBAJO del botón el botón es lo último de
-   la página y arriba taparía la pieza—.                                      */
+   (`--avisando`). El aviso va DEBAJO del botón el botón es lo último de la
+   página y arriba taparía el texto—.                                        */
 .gt-certificado__gate {
   position: relative;
   display: block;

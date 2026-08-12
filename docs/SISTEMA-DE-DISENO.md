@@ -812,11 +812,13 @@ alto, y eso rompe el chasis de una columna de `.gt-pagina`:
   arrancaba en y=437 y se cortaba por abajo, mientras la mitad derecha de la pantalla quedaba
   vacía. En el díptico arranca en y=240 y cierra en 912, con su botón de volteo dentro de la
   primera pantalla.
-- **La reserva de arriba era aire sobre aire.** `.gt-pagina` abre con `clamp(7rem, 14vh, 9.5rem)`,
+- **La reserva de arriba era aire sobre aire.** `.gt-pagina` abría con `clamp(7rem, 14vh, 9.5rem)`,
   heredado de cuando el header era `position: fixed`. Hoy es `sticky` y ya ocupa su sitio en el
   flujo, así que esos 144 px eran banda muerta —el mismo defecto, y el mismo recorte, que ya se
-  hizo en `.gt-hero` (ver §La foto del hero)—. Va acotado a `.gt-pagina--escarapela`: /ponentes y
-  /encuestas abren con una lista, no con una pieza que quiera caber entera.
+  hizo en `.gt-hero` (ver §La foto del hero)—. El recorte (`clamp(2.5rem, 6vh, 4.5rem)`) nació
+  acotado a `.gt-pagina--escarapela` y el 2026-08-12 el usuario pidió la misma altura de arranque
+  para todas las páginas: hoy vive en el CHASIS (`.gt-pagina`, PonentesPage.css), ninguna página
+  lo redefine, y `interactions-test.mjs` mide que los cuatro `h1` arranquen a la misma altura.
 - **Las columnas arrancan a la vez (`align-items: start`), no centradas.** Centrarlas contra el
   alto del carné devolvía 340 px de hueco entre el título y el texto: la misma banda muerta,
   movida a la izquierda. Con `start`, el sobrante de la columna corta cae al final de la página.

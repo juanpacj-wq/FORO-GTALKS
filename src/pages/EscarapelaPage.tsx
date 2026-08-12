@@ -202,7 +202,7 @@ export default function EscarapelaPage() {
     sesion.estado === 'dentro' ? MENSAJES_INSCRIPCION[sesion.inscripcion.estado] : null
 
   return (
-    <section className="gt-pagina gt-pagina--escarapela gt-grano">
+    <section className="gt-pagina gt-grano">
       <div className="gt-contenedor">
         <div className="gt-escarapela__zona">
           {/* El título va DENTRO de la rejilla: es lo que deja que la pieza suba a su altura

@@ -69,7 +69,8 @@ idéntico a una referencia sin textos; dentro, centrado ±2 px y ancho esperado;
 se detecta por **diferencia** contra la referencia (un umbral fijo confundía la torre del fondo).
 La banda del nombre cubre la **cola de la Q**, que cruza la raya como en cualquier diploma.
 Produce además `manifiesto.json` (oid → archivo, **sin** datos personales), la hoja de contactos
-para revisar a ojo, y `public/img/certificado-muestra.webp` (la vista previa pública, sin datos).
+para revisar a ojo. (Hasta el 2026-08-12 emitía además `public/img/certificado-muestra.webp`, la
+vista previa pública de la página; el usuario retiró la imagen y el derivado se fue con ella.)
 
 ## Fase 4 — La segunda opinión ✔
 
