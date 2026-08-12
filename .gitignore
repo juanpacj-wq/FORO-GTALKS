@@ -22,6 +22,11 @@ dist/
 # Ningún .xlsx del árbol es fuente de verdad del sitio: los que produce el flujo de
 # inscritos ya viven en .datos/ (ignorado); cualquier otro es material de trabajo.
 *.xlsx
+# El listado de asistentes del 2026-08-12 (asistentes.md) trae la cédula de las 155
+# personas en su columna IDENTIF. — mismo trato que el Excel. Se cubre también el
+# nombre intermedio que tuvo la entrega (asistentescedula.md), por si reaparece.
+/asistentes.md
+/asistentescedula.md
 # Exportes de buzón guardados con prisa en la raíz (correo corporativo real).
 /Mail - *.pdf
 

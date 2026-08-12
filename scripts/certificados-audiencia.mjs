@@ -7,10 +7,17 @@
 //
 // La fuente es el REGISTRO DE ASISTENCIA, no el grupo de invitados: certifica quien fue.
 // Concretamente: la hoja `Hoja1` de «ASISTENCIA FORO.xlsx» (completada contra Entra y contra la
-// planta el 2026-08-10) más los tres contratistas que asistieron sin escanear QR, que están en
-// `.datos/planta-contratistas-2026-08-10.txt` y no en la hoja. Los 14 de la hoja «query (13)»
-// que no pasaron a Hoja1 quedan FUERA por decisión del usuario (2026-08-10) — si eso cambia,
-// se re-congela, no se parchea.
+// planta el 2026-08-10) más quienes asistieron sin escanear QR, que no están en la hoja y van
+// nombrados en SIN_QR con su cédula en `.datos/sin-qr-2026-08-12.txt`. Los 14 de la hoja
+// «query (13)» que no pasaron a Hoja1 quedan FUERA por decisión del usuario (2026-08-10) — si
+// eso cambia, se re-congela, no se parchea.
+//
+// El 2026-08-12 llegó `asistentes.md` (155 filas) y los sin-QR pasaron de 3 a 24: los 21 nuevos
+// son TODOS «ASISTIÓ, NO QR». El diff contra la audiencia del 10 enseñó dos cosas que el listado
+// solo no dice: nueve de sus filas son personas que YA estaban (misma persona, grafía distinta o
+// nombre truncado: Lamboglia/LAMBLOGIA, REYES RENATO por Renato Reyes Bilbao…), y Edgar
+// Paternina Amaris —que escaneó QR y está en Hoja1— no aparece en el md. La instrucción fue
+// AGREGAR, así que se conserva: 132 de Hoja1 + 23 sin-QR descargables = 155, y Howard aparte.
 //
 // ── Por qué se congela, y por qué se revisa a mano ───────────────────────────
 //
@@ -41,23 +48,48 @@ const opcion = (n, d) => {
   const i = argv.indexOf(n)
   return i === -1 ? d : argv[i + 1]
 }
-// 135 asistentes menos Howard (sin cuenta en Entra → entrega manual) = 134 descargables.
-const esperados = Number(opcion('--esperados', '134'))
+// 156 asistentes menos Howard (sin cuenta en Entra → entrega manual) = 155 descargables.
+const esperados = Number(opcion('--esperados', '155'))
 const rutaXlsx = path.resolve(RAIZ, opcion('--archivo', 'ASISTENCIA FORO.xlsx'))
-const rutaPlanta = path.resolve(RAIZ, opcion('--planta', '.datos/planta-contratistas-2026-08-10.txt'))
+const rutaPlanta = path.resolve(RAIZ, opcion('--planta', '.datos/sin-qr-2026-08-12.txt'))
 
 function abortar(mensaje) {
   console.error(`\n✗ ${mensaje}\n`)
   process.exit(1)
 }
 
-// ── Los tres que asistieron sin QR ───────────────────────────────────────────
-// Van por NOMBRE, no por correo: la planta no trae direcciones. Se resuelven contra el
+// ── Los que asistieron sin QR ────────────────────────────────────────────────
+// Van por NOMBRE, no por correo: los listados no traen direcciones. Se resuelven contra el
 // directorio con el criterio de `personas-resolver.mjs`: UNA coincidencia exacta o nada.
+// Los tres primeros son los contratistas del 2026-08-10; el resto llegó con `asistentes.md`
+// el 2026-08-12. KOPP va con esa grafía a propósito: el listado decía «KOOP», que no existe en
+// el directorio — el cargo y la gerencia de la fila (Analista de Sistemas de Gestión) son
+// exactamente los de Kenneth Kopp Sierra (kkopp@), así que la errata es del listado.
 const SIN_QR = [
   'HOWARD DIAZ GRANADOS CATRIN',
   'LOPEZ HINCAPIE ALEJANDRO JOSE',
   'AGAMEZ CALDERON DANILO',
+  'WEHDEKING ARCIERI ERICK',
+  'FRANCO ZAMBRANO HERNANDO JOSE',
+  'GUTIERREZ SANTIAGO MOISES',
+  'VARGAS USTARIZ SONIA MARGARITA',
+  'AHUMADA MARRUGO VICTOR ALONSO',
+  'PORRAS CANDAMA KARINA ISABEL',
+  'ECHEVERRIA MONSALVE FELIPE DE JESUS',
+  'SUAREZ SUAZA ANDREA CAROLINA',
+  'CANTILLO VEGA MARTHA VIRGINIA',
+  'SILVA PEREZ JORGE LUIS',
+  'VALENCIA SILVERA LUZ ESTELLA',
+  'KOPP SIERRA KENNETH',
+  'COLLANTE FALLA ANGELA MARIA',
+  'VEGA LLINAS CAROLINA',
+  'MUNEVAR RINCON SOFIA MARIA',
+  'MENDEZ CASTELLAR CHRISTIAN ENRIQUE',
+  'CÁRCAMO AROCA JORGE',
+  'LINDO VALDEZ DAYANA MODESTA',
+  'LAINO GARCIA DOMINGO',
+  'PRIETO LOCARNO MIGUEL',
+  'USECHE PINTO JAVIER EDUARDO',
 ]
 
 // Quien se sabe SIN cuenta en Entra no bloquea el congelado: no puede iniciar sesión, así que su
@@ -87,6 +119,11 @@ const ORDEN_A_MANO = new Map([
   ['ytorrenegra@gecelca.com.co', 'Yennifer Yojana Torrenegra Antequera'],
   ['lcrismatt@gecelca.com.co', 'Liliana De La Concepcion Crismatt Castillo'],
   ['nvilla@gecelca.com.co', 'Neicer De Jesus Villa Jimenez'],
+  // Los dos de la entrega del 2026-08-12 que no particionan: «Jose» no está en el givenName de
+  // Entra («Hernando» a secas) y «Estella» difiere de su «Stella». Grafía del listado, como
+  // siempre; Entra solo es el testigo del orden.
+  ['hfranco@gecelca.com.co', 'Hernando Jose Franco Zambrano'],
+  ['lvalencia@gecelca.com.co', 'Luz Estella Valencia Silvera'],
 ])
 
 /** Palabras normalizadas (sin tildes, sin ñ/n, MAYÚSCULAS) — el criterio de personas-resolver. */
@@ -261,7 +298,16 @@ for (const pedido of SIN_QR) {
     const resto = [...x.p]
     return pp.every((w) => { const i = resto.indexOf(w); if (i === -1) return false; resto.splice(i, 1); return true })
   })
-  const casadas = exactas.length ? exactas : contenidas
+  // La inversa: el displayName de Entra a veces trae MENOS palabras que el listado («Hernando
+  // Franco Zambrano» para FRANCO ZAMBRANO HERNANDO JOSE). Se exigen al menos 3 palabras del
+  // directorio contenidas en el pedido — con 2 casaría cualquiera que comparta nombre y un
+  // apellido — y sigue valiendo la regla de siempre: UNA coincidencia o nada.
+  const inversas = (exactas.length || contenidas.length) ? [] : indexados.filter((x) => {
+    if (x.p.length < 3) return false
+    const resto = [...pp]
+    return x.p.every((w) => { const i = resto.indexOf(w); if (i === -1) return false; resto.splice(i, 1); return true })
+  })
+  const casadas = exactas.length ? exactas : (contenidas.length ? contenidas : inversas)
   if (casadas.length !== 1) {
     anomaliasGlobales.push({
       correo: `(sin resolver) ${pedido}`,

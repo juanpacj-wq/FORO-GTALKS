@@ -1,11 +1,11 @@
 # El certificado de participación se descarga de la web, cada quien el suyo
 
-> ## Estado: CONSTRUIDO el 2026-08-10 · pendiente el despliegue por etapas
+> ## Estado: CONSTRUIDO el 2026-08-10 · audiencia AMPLIADA a 155 el 2026-08-12 · pendiente el despliegue por etapas
 >
 > | Comprobación | Resultado |
 > |---|---|
-> | Audiencia congelada | **134 personas** (Hoja1 + 2 sin-QR con cuenta; Howard = entrega manual) |
-> | PDFs generados y auto-chequeados | 134 de 134 |
+> | Audiencia congelada | **155 personas** (Hoja1 + 23 sin-QR con cuenta; Howard = entrega manual) |
+> | PDFs generados y auto-chequeados | 155 de 155 |
 > | Auditoría independiente (archivo ↔ contenido ↔ fuente) | en verde; probada con sabotaje (2 PDF cruzados → rojo por 2 vías) |
 > | `certificados-server-test.mjs` | 21 comprobaciones en verde (apagado, a medias, 5 manifiestos hostiles) |
 > | `sesion-test.mjs` (estados de la página) | en verde; de aquí salió el fallo real de especificidad de `--suprimido` |
@@ -29,6 +29,7 @@ asistente, con la misma sesión de Entra de la escarapela, descarga su PDF perso
 | El nombre pintado | MAYÚSCULAS sostenidas, orden «NOMBRES APELLIDOS», grafía del Excel reordenada con givenName/surname de Entra como testigo | Usuario, 2026-08-10. Nueve fichas con grafías divergentes van a mano, comentadas en `certificados-audiencia.mjs` |
 | La cédula pintada | Con puntos de miles (1.003.239.160) | La convención colombiana; como vino la lista de la planta |
 | Audiencia | Hoja1 + los 3 sin-QR = 135 → **134 descargables** (Howard sin cuenta Entra: entrega manual) | Usuario, 2026-08-10. Los 14 de «query (13)» quedan FUERA por decisión explícita — no es un olvido |
+| Audiencia ampliada | `asistentes.md` (155 filas, con cédulas) sumó **21 sin-QR nuevos** → 155 descargables. Se AGREGÓ, no se reemplazó: Edgar Paternina Amaris (escaneó QR, está en Hoja1) no aparece en ese listado y se conserva | Usuario, 2026-08-12. El md traía además 9 filas con grafías divergentes de gente que ya estaba (no son personas nuevas) y la errata «KOOP» por Kopp |
 | Sin asistencia registrada | Botón retenido + aviso emergente que remite a María Cristina Giraldo (mgiraldo@) | Pedido del usuario; el canal exacto del contacto es pendiente de contenido |
 | La fuente | **Poppins Regular, definitiva** | 13 candidatas medidas, ninguna ES la de la pieza; Poppins clava el peso (asta 3.00 px). Riesgo aceptado en SEGURIDAD.md. Usuario, 2026-08-10 |
 | Dónde se generan los PDF | En la estación, jamás en el servidor ni en el navegador | El server de producción no gana dependencias (npm ci --ignore-scripts, prune) y la CSP no se toca. El precedente es el QR |
@@ -107,7 +108,7 @@ sha256 doble → `/var/lib/gtalks/certificados/` (`gtalks:gtalks`, 0640) + resta
    `CERTIFICADOS_DIR` local + `npm run start:local` → `gate-test` + descarga real verificada.
 2. **Producción acotada**: subir SOLO esos 4; los cuatro descargan su PDF real (mgiraldo es
    además la persona del aviso); el resto ve el botón retenido en vivo.
-3. **Producción completa**: subir los 134 y anunciar.
+3. **Producción completa**: subir los 155 y anunciar.
 
 ## Orden de ejecución
 

@@ -467,7 +467,8 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
    corporativos y 163 credenciales de asistencia en el disco de una estación.
 8. Borrar `.datos/certificados/` y `.datos/certificados-audiencia-*.json` de la estación, y
    `/var/lib/gtalks/certificados/` del servidor (con `CERTIFICADOS_DIR=` vaciado antes del
-   restart): son 134 nombres con cédula en disco, y pasado el ciclo ya nadie los descarga.
+   restart): son 155 nombres con cédula en disco, y pasado el ciclo ya nadie los descarga.
+   `asistentes.md` (raíz, ignorado por git) también se borra: es el listado con las 155 cédulas.
 
 **Al abrir la siguiente:**
 
