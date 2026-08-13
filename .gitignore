@@ -50,6 +50,23 @@ shots/
 # Se procesan con:  .venv-design/Scripts/python scripts/build-retratos.py
 retratos-origen/
 
+# Las fotos del evento para /galeria, por el mismo motivo y con un agravante:
+# son ~1.5 GB de originales de 33 MP con EXIF de cámara. Lo que se versiona es
+# el derivado webp de public/img/galeria/ (sin metadatos) y su manifiesto.
+# Se procesan con:  .venv-design/Scripts/python scripts/build-galeria.py
+Contenido Memorias del evento/
+# El mismo lote tal como llegó el envío, sin renombrar a lo que el guion espera.
+# Se cubre también ese nombre, igual que asistentescedula.md: la carpeta ya está
+# en la estación con 1.6 GB dentro, y un nombre distinto al canónico basta para
+# que deje de estar cubierta sin que nada avise.
+Contenido galería audiovisual/
+
+# Las presentaciones de los ponentes, fuente del ZIP de «Descargar contenido»
+# de /galeria. Como las fotos: se empaquetan en la estación
+# (scripts/descargas-empaquetar.py → .datos/descargas/) y viajan por ssh
+# (deploy/descargas-subir.sh), nunca por git.
+presentaciones/
+
 # Lo mismo, pero tal como llega el envío de Comunicaciones: la carpeta sin
 # renombrar, con las fotos originales y el .docx de perfiles. De aquí se copia
 # cada foto a retratos-origen/<slug>.jpg y se procesa; el envío en crudo no
