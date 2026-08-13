@@ -836,6 +836,107 @@ ingreso igual en los dos estados.
 
 ---
 
+## La galería
+
+`/galeria` enseña las 80 fotografías de la jornada con dos vistas del mismo manifiesto: el
+**abanico** (`AbanicoFotos.tsx`, el elemento firma de la página) y la **rejilla índice**
+(`GaleriaPage.css`), unidas por un único visor (`VisorFotos.tsx`, un `<dialog>` nativo).
+La referencia visual del abanico es un mazo de páginas desplegado en arco una tarjeta
+protagonista al centro, las demás asomando giradas y apagadas hacia los extremos.
+
+### Los datos son medidos, el gesto es convención
+
+La misma división que en el resto del sistema:
+
+- **Medido (del lote real, por `scripts/build-galeria.py`):** el orden y las horas salen del
+  EXIF `DateTimeOriginal` (hora local con desfase `-05:00` explícito; el nombre de archivo de
+  los exportes de OneDrive va en UTC y las DSC ni llevan hora). Los duplicados se descartan por
+  **SHA-256 del contenido** el lote traía la misma toma como `DSC04053.JPG`, como
+  `20260805_165109782_iOS.jpg` y como copia «(1)»: 91 archivos, 80 fotos. La proporción 3:2 de
+  tarjetas y celdas es la nativa de la cámara del evento (7008×4672): las 76 apaisadas entran
+  enteras; las 4 verticales se recortan en el abanico y la rejilla y se ven completas en el
+  visor.
+- **Convención (declarada en la cabecera de `AbanicoFotos.tsx`):** la geometría del mazo. Grados
+  por paso, fuga en profundidad, escala y brillo son un juego de cinco constantes con nombre, no
+  literales repartidos por el CSS, para que calibrar el gesto sea tocar cinco líneas.
+
+### Tres decisiones de construcción
+
+1. **El arco es UNA rotación sobre un pivote lejano.** Cada tarjeta gira sobre
+   `transform-origin: 50% 230%`: girar sobre un punto muy por debajo del canto inferior
+   desplaza y ladea a la vez, que es lo que hace que las tarjetas barran un arco de verdad
+   como un mazo de cartas en la mano en vez de deslizarse en fila con una inclinación pegada.
+   El `rotateY` (con la `perspective` en el escenario, un solo punto de fuga para todo el mazo)
+   añade la fuga de «páginas» de la referencia. El transform lo compone el TSX y no el CSS
+   porque el arrastre lo interpola en fracciones de paso.
+2. **El ancho de la tarjeta se acota por TRES lados** (`--gt-abanico-ancho`): 54rem de techo en
+   escritorio; el ancho útil menos 3rem para que los vecinos asomen en móvil; y una resta sobre
+   `100svh` el criterio del hero para que título, cabecera y mazo quepan en la primera
+   pantalla, contando el riel de anclas. Sin el tercer término, a 1440×900 el mando quedaba
+   cortado por el pliegue (medido sobre la captura, no supuesto). El techo fue 44rem y el mando
+   vivió DEBAJO del mazo hasta el 2026-08-12: el usuario pidió más protagonismo para el abanico,
+   y la respuesta fue una **cabecera compartida** la entradilla a la izquierda y el mando
+   (hora, contador, flechas) a la derecha, en la zona que quedaba muerta, con lo que el alto
+   del mando pasó a ser del mazo y los controles quedaron SIEMPRE en la primera pantalla, porque
+   van antes del mazo y no después.
+3. **Solo se montan ±5 tarjetas** por lado: con 80 en el DOM el arrastre repintaría 80
+   transformaciones por movimiento de puntero; más allá de ±5 pasos una tarjeta queda tapada por
+   sus vecinas.
+4. **El mazo es circular** (pedido del usuario, 2026-08-12): tras la 80 viene la 1 y antes de la
+   1 está la 80 —botones, flechas, arrastre y visor—, y el abanico va SIEMPRE lleno por los dos
+   lados: en la 1, a la izquierda asoman 80, 79, 78…. La ventana se calcula por corrimiento
+   respecto del centro (`mod(indice + o)`), no partiendo la lista, y como la `key` de cada
+   tarjeta es su foto, la que sigue en pantalla tras un paso conserva su nodo y transiciona a su
+   nueva posición aunque cruce el empalme 80→1. Los botones ya no conocen el estado
+   deshabilitado: los dos sentidos siempre tienen destino.
+
+### Accesibilidad del mazo
+
+Las tarjetas laterales son atajos **solo-puntero** (saltar a esa foto) y van `aria-hidden` +
+`tabindex="-1"`: para teclado y lector ya existen los botones anterior/siguiente, las flechas
+sobre el propio carrusel y un `aria-live` que anuncia «Fotografía n de 80, tomada a las…».
+Trece paradas de tabulador que repiten lo que hacen dos botones serían ruido, no acceso. El
+auditor de `a11y-test.mjs` exime exactamente esa combinación (oculto **y** no enfocable); un
+`aria-hidden` enfocable seguiría fallando, porque es un tabulador que cae en el vacío. El visor
+hereda de `<dialog>` el foco atrapado, Escape y la devolución del foco a quien lo abrió lo que
+`MobileNav` hace a mano porque nació antes.
+
+La sombra del mazo es `--gt-sombra-lamina`, la única del sistema: el mazo es un objeto físico
+sobre el campo, el mismo papel que esa sombra ya cumple con la lámina del programa. El grano, el
+chasis (`.gt-pagina`), la hora en `--gt-acento` y los botones circulares en hairline son los del
+sistema; la galería no introduce ningún color ni radio nuevo.
+
+### El riel y las descargas
+
+La página se recorre con el **riel de anclas de la home** mismo componente, mismas formas: punto
+que se llena, tipografía de dato, generalizado a anclas POR RUTA (`anclasDe()` en
+`navegacion.ts`): «Galería de imágenes», «Descargar contenido» y «Resumen de jornada». Al
+generalizarlo se corrigió un defecto del scrollspy que la home nunca destapó: el
+IntersectionObserver solo dispara cuando una sección **cruza** su banda observada, pero la
+decisión usa otra línea (el 40 % del viewport), así que entre el último cruce y el reposo del
+scroll el riel podía quedarse marcando la sección anterior. Ahora recalcula **por scroll con
+rAF**, que dispara mientras algo se mueve, que es exactamente cuando la respuesta puede cambiar.
+
+«Descargar contenido» compone la entradilla (46ch: con 52 los botones caían a otra fila a 1440)
+y los dos botones sólidos con su **línea de dato debajo**: «80 fotografías originales · 1,3 GB»
+sale del manifiesto del empaquetador vía `GET /api/descargas`, no de un copy. Sin confirmación
+del servidor, los botones van retenidos (`--inactivo`) con el aviso de las encuestas  el patrón
+entero de `BotonSatisfaccion`, aviso en lámina incluido. La rejilla índice pasó a llamarse
+«Resumen de jornada» para leerse igual en el riel y en su título.
+
+### El pipeline
+
+`Contenido Memorias del evento/` (raíz, **ignorada por git**: ~1.5 GB de originales de 33 MP,
+personas identificables, EXIF con número de serie de cámara) → `scripts/build-galeria.py` →
+`public/img/galeria/<id>.webp` (lado mayor 1600, visor y 2x del centro) + `<id>-m.webp` (800,
+rejilla y laterales), **sin metadatos** y con la orientación horneada, más el manifiesto tipado
+`src/design/galeria.ts` (mismo patrón que `retratos.ts`: quien sabe qué fotos hay es quien las
+procesó; no puede haber 404 ni foto perdida). Los HEIC del teléfono exigen `pillow-heif` en
+`.venv-design`. Un lote nuevo **reemplaza al anterior entero**: el script vacía el destino antes
+de escribir.
+
+---
+
 ## Cómo regenerar todo
 
 ```bash
@@ -847,6 +948,10 @@ python -m venv .venv-design
 .venv-design/Scripts/python scripts/build-assets.py         # → public/img/
 .venv-design/Scripts/python scripts/escarapela-medir.py     # mide la pieza del carné → cotas y ondas
 .venv-design/Scripts/python scripts/escarapela-iconos.py    # vectoriza sus 3 iconos sólidos
+
+# La galería pide además el códec HEIC:
+.venv-design/Scripts/pip install pillow-heif
+.venv-design/Scripts/python scripts/build-galeria.py        # → public/img/galeria/ + src/design/galeria.ts
 ```
 
 Y con `npm run preview` levantado, los dos bucles de medir-y-restar el de la escarapela y el del

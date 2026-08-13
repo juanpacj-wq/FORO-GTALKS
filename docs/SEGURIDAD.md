@@ -26,6 +26,7 @@ No hay allowlist local ni roles de negocio.
 | Navegación y subrecursos, con o sin sesión | **200** todo HTML sale con la `Content-Security-Policy` (el fallback SPA es la única puerta del HTML; `express.static` va con `index: false` justo para eso) |
 | `GET /api/me` sin sesión | 401 JSON, `no-store` |
 | `GET /api/encuestas` | 200 JSON público, `no-store`, sin cookie. La URL de la encuesta de satisfacción **solo aparece cuando el reloj del servidor pasó `fecha.cierreIso`** (ver §La encuesta de satisfacción abre por reloj) |
+| `GET /api/descargas` y `GET /descargas/<rol>` | 200 público: el estado y los dos ZIP de `/galeria`, pre-armados en la estación (ver §Las descargas de /galeria). Rol fuera del manifiesto → 404 JSON |
 | Métodos que no son de lectura, cross-site | 403 (`csrfMiddleware`: `Sec-Fetch-Site` u `Origin` contra `PUBLIC_ORIGIN`) |
 | Subrecurso inexistente | 404 JSON (el fallback SPA es solo para navegaciones) |
 | Errores del callback OIDC | 302 → `/escarapela?auth=<motivo>`, que la SPA explica junto al botón |
@@ -399,6 +400,35 @@ Notas que no son obvias:
 - **HOWARD DIAZ GRANADOS CATRIN no tiene cuenta en Entra**: no puede iniciar sesión y su
   certificado es de **entrega manual** (queda anotado en la audiencia congelada, campo
   `entregaManual`).
+
+---
+
+## Las descargas de /galeria: público, pero con la doctrina del certificado
+
+La sección «Descargar contenido» de `/galeria` entrega dos ZIP las fotografías originales de la
+jornada (~1.3 GB) y las presentaciones de los ponentes. Es **contenido público**: las mismas
+fotos que la página ya enseña y el material que se proyectó ante la audiencia. No hay sesión, y
+no debe haberla. Lo que se conserva del patrón del certificado es lo que lo hace seguro:
+
+- **El servidor no compone nada.** `scripts/descargas-empaquetar.py` arma los ZIP en la estación
+  (deduplicando por SHA-256: el lote de fotos trae la misma toma con hasta tres nombres),
+  `deploy/descargas-subir.sh` los sube por ssh con checksum en las dos puntas **nunca por git**:
+  1.3 GB en un repo público, y `server/descargas.js` solo aprende el manifiesto al arrancar.
+- **Sin parámetros libres.** `GET /descargas/:rol` resuelve únicamente contra los dos roles del
+  manifiesto validados al arranque (allowlist de nombre + `resolve` dentro del directorio, las
+  mismas dos vallas de los certificados); cualquier otra cosa cae al 404 genérico. No hay
+  listados ni rutas construidas con entrada del cliente.
+- **`DESCARGAS_DIR` vacío = la función no existe; a medias = el arranque ABORTA** (manifiesto
+  ilegible, ZIP ausente o con un tamaño distinto del prometido). Cargar una subida nueva exige
+  **reiniciar** el servicio.
+- **La interfaz solo anuncia lo que el servidor confirma**: `GET /api/descargas` (público,
+  `no-store`, sin cookie) publica bytes y conteo por rol, y sin esa confirmación los botones
+  quedan retenidos con su aviso  la página nunca ofrece un enlace que va a dar 404. El peso que
+  se enseña junto a cada botón es el del manifiesto, no un copy.
+
+Lo verifica `gate-test.mjs` (coherencia anuncio↔entrega, adjunto con `Content-Disposition`,
+reanudación por rangos, rol inventado → 404, `POST` → 404) e `interactions-test.mjs` (los dos
+estados de los botones).
 
 ---
 

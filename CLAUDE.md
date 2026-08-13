@@ -78,13 +78,14 @@ src/data/foro.ts             Todo el contenido. La agenda alimenta también los 
 src/data/qr-arte.ts          El dibujo del QR. UN archivo, DOS lectores: la
                              escarapela y el correo del envío masivo
 src/design/                  tokens.css (medidos), fonts.css, base.css
-                             iconos.ts y retratos.ts son GENERADOS: no editar a mano
+                             iconos.ts, retratos.ts y galeria.ts son GENERADOS: no editar a mano
                              iconos-extra.ts es MANUAL: lo que no tiene vector en los PDF
 src/components/              Chasis y primitivas, cada una con su CSS al lado
                              LineaDelDia.tsx es el elemento firma: la jornada
                              como línea de tiempo de una sola pista, índice
                              de la agenda y resaltado cruzado con ella
-src/pages/                   Las 5 páginas
+                             AbanicoFotos.tsx es el elemento firma de /galeria
+src/pages/                   Las 6 páginas
 src/data/evento.json         Los hechos del evento. UN archivo, DOS lectores:
                              foro.ts lo importa y server/correo/ lo lee
 server/                      Identidad Entra ID + servido de dist/: app.js, auth/
@@ -116,6 +117,15 @@ python -m venv .venv-design
 .venv-design/Scripts/python scripts/upscale-photos.py       # → *@2x.webp para HiDPI
 .venv-design/Scripts/python scripts/build-retratos.py       # retratos-origen/ → public/img/ponentes/
 .venv-design/Scripts/python scripts/build-foto-hero.py      # fotos-origen/ → la foto del hero, 1x y 2x
+.venv-design/Scripts/pip install pillow-heif                # solo para la galería: los HEIC del teléfono
+.venv-design/Scripts/python scripts/build-galeria.py        # Contenido Memorias del evento/ →
+                                                            # public/img/galeria/ + src/design/galeria.ts
+.venv-design/Scripts/python scripts/descargas-empaquetar.py # los dos ZIP de «Descargar contenido»
+                                                            # → .datos/descargas/ (se suben con
+                                                            # deploy/descargas-subir.sh, NUNCA por git)
+.venv-design/Scripts/python scripts/build-respuestas.py     # RTAS PREGUNTAS ... PANELISTAS.pdf →
+                                                            # public/docs/ + public/img/respuestas/
+                                                            # + src/design/respuestas.ts
 .venv-design/Scripts/python scripts/escarapela-medir.py     # mide la pieza del carné → cotas, ondas y referencia
 .venv-design/Scripts/python scripts/escarapela-iconos.py    # vectoriza los 3 iconos sólidos del carné
 .venv-design/Scripts/python scripts/bios-verificar.py       # las bios de foro.ts siguen siendo la fuente
@@ -168,7 +178,7 @@ node scripts/envio-qr-auditar.mjs .datos/audiencia-<…>.json
 node --env-file=.env scripts/envio-qr.mjs --audiencia … --confirmar --maximo 4
 
 # Con `npm run preview` levantado, en otra terminal:
-node scripts/screenshot.mjs shots      # capturas de las 5 rutas + escarapela con sesión y dorso
+node scripts/screenshot.mjs shots      # capturas de las 6 rutas + escarapela con sesión y dorso
 node scripts/interactions-test.mjs     # anclas, scrollspy, nav móvil, rutas inválidas,
                                        # volteo del carné y ciclo de la foto
 node scripts/a11y-test.mjs             # contraste, encabezados, alt, nombres accesibles,
@@ -193,6 +203,8 @@ bash deploy/ensayo-local.sh            # paquete determinista + coreografía de 
 bash deploy/ensayo-local.sh --completo # además: compila desde el paquete, poda, y comprueba
                                        # que el server arranque podado con la identidad cerrada
 bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit está desplegado
+bash deploy/descargas-subir.sh         # sube los ZIP de «Descargar contenido» a DESCARGAS_DIR
+                                       # (ssh + sha256 + RESTART; el manifiesto carga al arrancar)
 ```
 
 ## Convenciones
@@ -388,15 +400,34 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   dos puntas se verifica con `gate-test.mjs` (frontera exacta con reloj inyectado, URL ausente en
   la respuesta cerrada, `POST` 404) e `interactions-test.mjs` (los dos estados del botón y el
   volteo sin recargar). Manual: `docs/SEGURIDAD.md` §La encuesta de satisfacción abre por reloj.
-- **La regla que separa una encuesta abierta de una que abre por reloj es tener `url` o no.** Las
-  que la traen en `ENCUESTAS` (`foro.ts`) se pintan como enlace y viajan en el bundle; la que **no**
-  la trae es la que retiene el servidor. Hoy son tres oportunidades, preguntas pendientes para
-  panelistas, y satisfacción y **la de satisfacción va SIEMPRE la última**, porque
+- **El pie de una tarjeta de `/encuestas` se reparte en TRES ramas, y el orden de las ramas
+  importa.** `resultados` abre el visor local de la pieza (ver el bullet siguiente); con `url`, es
+  un enlace que sale del sitio; sin ninguna de las dos, la URL la retiene el servidor y el botón
+  espera al reloj. Hoy son tres tarjetas las respuestas del panel (visor), oportunidades
+  (enlace) y satisfacción (reloj) y **la de satisfacción va SIEMPRE la última**, porque
   `interactions-test.mjs` la localiza con `:last-child`. Añadir una en medio obliga a mirar ese
   arnés: cuando llegó la segunda abierta, la de satisfacción pasó de ser la 2.ª a la 3.ª y los
   selectores por posición se quedaron apuntando a la tarjeta equivocada. Y el texto del botón tiene
   que empezar distinto que el de las demás: quien navega con lector de pantalla recorre la página
   saltando de enlace en enlace y solo oye su nombre.
+- **La tarjeta de preguntas para panelistas ya no es una encuesta: ANUNCIA las respuestas.** Pasado
+  el panel (2026-08-12, pedido del usuario), lleva `resultados: true` en `foro.ts`, va PRIMERA y se
+  pinta como la lámina destacada de la página celeste pleno a todo lo ancho, título a `--gt-fs-h1`,
+  botón navy invertido y etiqueta «Ya disponibles» en vez de ordinal; los ordinales 01/02 numeran
+  solo las dos encuestas por responder. Nada de eso inventó un color: celeste, navy y tinta están
+  medidos, y `.gt-lamina` hace la inversión de foco/acento/hairlines (con dos correcciones acotadas
+  en `.gt-encuesta--respuestas`, porque el azul-medio del foco da 3.07:1 sobre celeste). Ojo con la
+  DOBLE clase `.gt-encuesta.gt-encuesta--respuestas`: `base.css` queda DESPUÉS del CSS de la página
+  en el bundle y a igual especificidad `.gt-lamina` gana así se pintó blanca la primera vez, y la
+  media query de apilado la repite porque una media query no suma especificidad. **«Ver respuestas»
+  ya no redirige a ningún Forms** (2026-08-13): abre `VisorRespuestas`, un `<dialog>` con las 8
+  páginas de «RTAS PREGUNTAS PENDIENTES PANELISTAS.pdf» (raíz, pieza versionada) como IMÁGENES y la
+  descarga del PDF completo en la barra. Son imágenes y no un `<iframe>` porque la CSP
+  (`default-src 'none'`, sin `frame-src`) bloquea documentos incrustados, y aflojarla por una pieza
+  sería cambiar la política de todo el HTML; el PDF además es lo accesible para lectores de
+  pantalla. Los derivados (`public/docs/respuestas-panelistas.pdf`, `public/img/respuestas/`,
+  `src/design/respuestas.ts` GENERADO) los escribe `scripts/build-respuestas.py`; adoptar una
+  entrega nueva es reemplazar la pieza de la raíz y volver a correrlo.
 - **La jornada se anuncia partida en mañana y tarde, y el corte sale de la agenda.** La ficha del
   hero dice «8:30 a.m. – 12:00 p.m.» y «2:30 p.m. – 4:30 p.m.» en dos líneas: de extremo a extremo
   anunciaba ocho horas seguidas y se comía las dos y media de almuerzo libre. El corte es el
@@ -429,6 +460,46 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   clase). Las cédulas jamás tocan git (repo público: `*.xlsx` y `asistentes.md` ignorados); la subida va por
   `deploy/certificados-subir.sh` y exige RESTART. Manual: `docs/SEGURIDAD.md` §El certificado y
   `docs/PLAN-CERTIFICADO-WEB.md`.
+- **La galería (`/galeria`) no lista archivos: lee un manifiesto GENERADO, y las fotos del
+  evento jamás tocan git en crudo.** `Contenido Memorias del evento/` (raíz, ignorada: ~1.5 GB de
+  originales de 33 MP con EXIF de cámara) se procesa con `scripts/build-galeria.py`, que
+  **deduplica por SHA-256** el lote real traía la misma toma con tres nombres distintos, ordena
+  por `DateTimeOriginal` del EXIF (hora local con desfase `-05:00`; el nombre del archivo va en
+  UTC y engaña), hornea la orientación y escribe webp SIN metadatos más `src/design/galeria.ts`,
+  el mismo patrón que `retratos.ts`: es imposible servir un 404 y las horas de la interfaz son
+  dato medido, no copy. El HEIC exige `pillow-heif` en `.venv-design`. El elemento firma es
+  `AbanicoFotos.tsx`: el mazo en arco gira sobre un **pivote lejano** (`transform-origin` al
+  230% del alto: una sola rotación desplaza y ladea a la vez), su geometría es CONVENCIÓN
+  declarada en el TSX y el ancho de la tarjeta se acota también por **altura de ventana** para
+  que título, entradilla, mazo y mando quepan en la primera pantalla (mismo criterio que el
+  hero). Las tarjetas laterales van `aria-hidden` + `tabindex="-1"` a propósito son atajos
+  solo-puntero; el teclado ya tiene los botones y el vivo, y el auditor de a11y exime justo esa
+  combinación y nada más. El visor es un `<dialog>` nativo, donde las 4 verticales se ven enteras
+  (el abanico y la rejilla componen a 3:2, la proporción real de la cámara). **El mazo y el visor
+  son CIRCULARES**: tras la 80 viene la 1 y viceversa, el abanico va siempre lleno por los dos
+  lados (ventana por `mod(indice + o)`, key por foto para que el paso transicione aunque cruce el
+  empalme) y los botones no conocen `disabled`. Se verifica con `interactions-test.mjs` (abanico,
+  vuelta en las dos puntas, visor, rejilla) y `a11y-test.mjs`; la sombra del mazo es
+  `--gt-sombra-lamina`, no una segunda sombra. Detalle: `docs/SISTEMA-DE-DISENO.md` §La galería.
+- **/galeria lleva riel de anclas, y el riel ya no es solo de la home.** Las anclas viven POR RUTA
+  en `anclasDe()` (`navegacion.ts`); una ruta sin entrada no lleva riel. Dos consecuencias que no
+  son obvias: el **scrollspy recalcula por scroll (rAF), no por IntersectionObserver** el
+  observer solo dispara cuando una sección cruza su banda, la decisión usa otra línea (el 40 % del
+  viewport) y entre el último cruce y el reposo el riel se quedaba marcando la sección anterior;
+  en la home no pasaba por pura geometría; y el arnés de «altura de arranque» mide la distancia
+  del canto INFERIOR del header al h1, porque el header con riel es más alto y el top absoluto
+  difiere en exactamente esa fila sin que el arranque cambie.
+- **Las descargas de /galeria siguen la doctrina del certificado, sin la parte de identidad.**
+  Los dos ZIP (fotografías originales ~1.3 GB y presentaciones) se arman en la ESTACIÓN
+  (`scripts/descargas-empaquetar.py`, dedupe por SHA-256 y ZIP_STORED), se suben por ssh
+  (`deploy/descargas-subir.sh`, checksum en las dos puntas + RESTART) y **jamás tocan git**. El
+  servidor (`server/descargas.js`) aprende el manifiesto al arrancar `DESCARGAS_DIR` vacío = la
+  función no existe; a medias = ABORTA y sirve `GET /api/descargas` (estado público `no-store`) y
+  `GET /descargas/:rol` (solo los roles del manifiesto; lo demás, 404). **La interfaz solo anuncia
+  lo que el servidor confirma**: sin confirmación los botones van retenidos con su aviso, y el
+  peso junto a cada botón es el del manifiesto, no un copy. Verificación: `gate-test.mjs`
+  (coherencia anuncio↔entrega, rangos, 404) e `interactions-test.mjs` (los dos estados). Manual:
+  `docs/SEGURIDAD.md` §Las descargas de /galeria.
 - Los pendientes de contenido (sede real del evento, fotos de ponentes) se registran en
   `docs/PENDIENTES-DE-CONTENIDO.md`.
 
