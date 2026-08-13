@@ -83,10 +83,20 @@ const destinoSeguro = (p) => (RUTAS_SPA.some((r) => r.test(p)) ? p : '/');
  * una navegación a `/ponentes` recibe index.html; un `/no-existe.png` pedido por un <img>
  * recibe el 404 JSON en vez de HTML con 200. Se exige `document` a propósito: un <iframe>
  * tampoco merece el fallback.
+ *
+ * Los prefijos que se excluyen a mano son las rutas de ENTREGA, y no es una optimización: un clic
+ * en `<a download>` viaja como navegación (`Sec-Fetch-Mode: navigate`, `Dest: document`), que es
+ * indistinguible de escribir la URL en la barra. Sin esta valla, una descarga que el servidor no
+ * puede atender (paquete sin subir, rol renombrado, servidor anterior a la función) recibía el
+ * index.html con 200 y el navegador lo guardaba como «imagenes.htm»: un archivo que no abre nada
+ * y que nadie lee como un error. Ninguna de estas rutas está en RUTAS_SPA, así que lo que no
+ * exista bajo ellas es 404, nunca HTML.
  */
+const SIN_FALLBACK_SPA = ['/api/', '/descargas/'];
+
 function esNavegacion(req) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return false;
-  if (req.path.startsWith('/api/')) return false;
+  if (SIN_FALLBACK_SPA.some((p) => req.path.startsWith(p))) return false;
   const modo = req.get('sec-fetch-mode');
   if (modo) return modo === 'navigate' && req.get('sec-fetch-dest') === 'document';
   return (req.get('accept') || '').includes('text/html'); // clientes sin Sec-Fetch
@@ -441,9 +451,17 @@ export function buildAuthApp() {
     res.json(estadoDescargas());
   });
 
-  app.get('/descargas/:rol', (req, res, next) => {
+  app.get('/descargas/:rol', (req, res) => {
     const entrega = entregaDescarga(req.params.rol);
-    if (!entrega) return next(); // cae al 404 JSON genérico: rol desconocido o función apagada
+    // 404 aquí mismo, y NUNCA `next()`: delegar en el 404 genérico obligaba a la petición a
+    // atravesar el fallback SPA, y un clic en `<a download>` lo cruza como navegación. El
+    // resultado era index.html con 200 guardado como «imagenes.htm». Que la valla de
+    // `esNavegacion` también lo impida no sobra: son dos capas para el mismo fallo, y la de
+    // arriba protege además a un servidor que no tenga esta ruta.
+    if (!entrega) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(404).json({ error: 'No encontrado', codigo: 'no_encontrado' });
+    }
     // `must-revalidate` y no `immutable`: un ZIP puede resubirse con más contenido.
     res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
     // sendFile con Range implícito: un download de 1.3 GB que se corta se reanuda.

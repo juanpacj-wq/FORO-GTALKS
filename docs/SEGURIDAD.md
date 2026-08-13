@@ -425,10 +425,24 @@ no debe haberla. Lo que se conserva del patrón del certificado es lo que lo hac
   `no-store`, sin cookie) publica bytes y conteo por rol, y sin esa confirmación los botones
   quedan retenidos con su aviso  la página nunca ofrece un enlace que va a dar 404. El peso que
   se enseña junto a cada botón es el del manifiesto, no un copy.
+- **Una ruta de ENTREGA no es una ruta de la SPA, y hay que sacarla del fallback en las DOS
+  puntas.** Un clic en `<a download>` viaja con `Sec-Fetch-Mode: navigate` y `Sec-Fetch-Dest:
+  document`: para el servidor es indistinguible de escribir la URL en la barra. Mientras
+  `/descargas/:rol` delegó su caso «no existe» en `next()`, el fallback SPA lo recogía y
+  contestaba `index.html` con **200**; el navegador, sin `Content-Disposition` y con `text/html`,
+  lo guardaba con el nombre del rol y la extensión del tipo: **`imagenes.htm`**. Un archivo que no
+  abre nada y que no se parece a un error por ningún lado. Hoy la ruta responde 404 ella misma y
+  además `/descargas/` está fuera de `esNavegacion()` junto a `/api/`, así que ni un servidor que
+  no tenga esta ruta puede devolver HTML ahí. La segunda punta es el entorno de desarrollo:
+  `vite.config.ts` proxia `/descargas/` igual que `/api`, porque si no `npm run dev` confirma los
+  paquetes por el proxy (botones activos, pesos reales) y luego atiende la descarga con su propio
+  fallback. Que la mitad de la función vaya por el proxy y la otra mitad no es lo que hace que
+  este fallo no parezca un fallo.
 
 Lo verifica `gate-test.mjs` (coherencia anuncio↔entrega, adjunto con `Content-Disposition`,
-reanudación por rangos, rol inventado → 404, `POST` → 404) e `interactions-test.mjs` (los dos
-estados de los botones).
+reanudación por rangos, `POST` → 404, y el 404 de lo inexistente comprobado **navegando**, que es
+como llega el clic: pedirlo «a secas», sin `accept`, esquiva el fallback y por ahí el fallo no se
+ve) e `interactions-test.mjs` (los dos estados de los botones).
 
 ---
 

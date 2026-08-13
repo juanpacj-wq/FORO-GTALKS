@@ -272,7 +272,11 @@ console.log('\nDescargas de /galeria → estado público, entrega coherente')
         Number(anunciado.bytes) > 0 && Number(anunciado.elementos) > 0,
         JSON.stringify(anunciado),
       )
-      const zip = await pedir(`/descargas/${rol}`, { method: 'HEAD' })
+      // Con NAVEGA a propósito: un clic en `<a download>` NO es un subrecurso, viaja con las
+      // mismas cabeceras que escribir la URL en la barra. Pedir esto «a secas» (sin `accept`)
+      // era el punto ciego que dejó pasar el fallo: por ese camino `esNavegacion()` da falso y
+      // el 404 salía por una puerta que un navegador nunca toca.
+      const zip = await pedir(`/descargas/${rol}`, { method: 'HEAD', headers: NAVEGA })
       check(
         `y /descargas/${rol} entrega el ZIP como adjunto`,
         zip.status === 200 &&
@@ -286,13 +290,23 @@ console.log('\nDescargas de /galeria → estado público, entrega coherente')
         zip.headers['accept-ranges'] || '(sin accept-ranges)',
       )
     } else {
-      const zip = await pedir(`/descargas/${rol}`, { method: 'HEAD' })
+      const zip = await pedir(`/descargas/${rol}`, { method: 'HEAD', headers: NAVEGA })
       check(`«${rol}» no anunciado: su descarga no existe (404)`, zip.status === 404, String(zip.status))
     }
   }
 
-  const inventado = await pedir('/descargas/otra-cosa', { method: 'HEAD' })
-  check('un rol inventado cae al 404 genérico', inventado.status === 404, String(inventado.status))
+  // Lo que no existe bajo /descargas/ es 404 JSON, y esto se comprueba NAVEGANDO porque así es
+  // como llega el clic. Un 200 con `text/html` aquí es el fallo entero: el navegador se guarda el
+  // index.html con el nombre del rol («imagenes.htm»), sin nada que parezca un error.
+  for (const ruta of ['/descargas/otra-cosa', '/descargas/imagenes/extra', '/descargas/']) {
+    const r = await pedir(ruta, { headers: NAVEGA })
+    const tipo = r.headers['content-type'] || ''
+    check(
+      `${ruta} navegado NO devuelve la SPA`,
+      r.status === 404 && !tipo.includes('text/html'),
+      `${r.status} · ${tipo || '(sin tipo)'}`,
+    )
+  }
 
   const post = await pedir('/api/descargas', { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } })
   check('POST /api/descargas no existe', post.status === 404, String(post.status))

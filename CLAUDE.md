@@ -497,9 +497,18 @@ bash deploy/descargas-subir.sh         # sube los ZIP de «Descargar contenido»
   función no existe; a medias = ABORTA y sirve `GET /api/descargas` (estado público `no-store`) y
   `GET /descargas/:rol` (solo los roles del manifiesto; lo demás, 404). **La interfaz solo anuncia
   lo que el servidor confirma**: sin confirmación los botones van retenidos con su aviso, y el
-  peso junto a cada botón es el del manifiesto, no un copy. Verificación: `gate-test.mjs`
-  (coherencia anuncio↔entrega, rangos, 404) e `interactions-test.mjs` (los dos estados). Manual:
-  `docs/SEGURIDAD.md` §Las descargas de /galeria.
+  peso junto a cada botón es el del manifiesto, no un copy. **Y una ruta de ENTREGA no es una ruta
+  de la SPA: hay que sacarla del fallback en las DOS puntas.** Un clic en `<a download>` es una
+  NAVEGACIÓN (`Sec-Fetch-Mode: navigate`, `Dest: document`), así que el fallback lo daba por bueno
+  y devolvía `index.html` con 200, que el navegador guardaba como **`imagenes.htm`**: un archivo
+  que no abre nada y que no se parece a un error. Por eso `/descargas/:rol` contesta 404 él mismo
+  (nunca `next()`), `/descargas/` está fuera de `esNavegacion()` junto a `/api/`, y
+  `vite.config.ts` lo proxia igual que `/api`  si no, `npm run dev` confirma los paquetes por el
+  proxy y luego atiende la descarga con el fallback de Vite, que es exactamente cómo apareció.
+  Verificación: `gate-test.mjs` (coherencia anuncio↔entrega, rangos, y el 404 comprobado
+  NAVEGANDO: pedirlo sin `accept` esquiva el fallback y por ahí el fallo no se ve) e
+  `interactions-test.mjs` (los dos estados). Manual: `docs/SEGURIDAD.md` §Las descargas de
+  /galeria.
 - Los pendientes de contenido (sede real del evento, fotos de ponentes) se registran en
   `docs/PENDIENTES-DE-CONTENIDO.md`.
 
