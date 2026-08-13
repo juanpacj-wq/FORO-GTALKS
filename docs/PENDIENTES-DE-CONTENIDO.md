@@ -103,11 +103,18 @@ El botón retenido de `/certificado` (quien entra sin asistencia registrada) rem
 del sitio, pero el **canal** está por confirmar con ella: ¿correo, Teams, o el teléfono del pie?
 El texto vive en `AVISO_SIN_ASISTENCIA` de `src/pages/CertificadoPage.tsx`.
 
-### El certificado de Howard es de entrega manual
+### ~~El certificado de Howard es de entrega manual~~ RESUELTO el 2026-08-13
 
-HOWARD DIAZ GRANADOS CATRIN (C.C. 1.140.885.324) asistió pero no tiene cuenta en Entra: no puede
-iniciar sesión ni descargar. Queda anotado en la audiencia congelada (`entregaManual`); su PDF
-hay que producirlo aparte y hacérselo llegar por otra vía.
+Sí tenía cuenta: `choward@gecelca.com.co`, «Catrin Howard Diazgranados», y encima ya estaba en el
+grupo del foro. Lo que no existía era el NOMBRE con el que se le buscó: el listado de asistencia
+partió en dos («HOWARD DIAZ GRANADOS CATRIN») un apellido que el directorio guarda junto
+(«Diazgranados»), y el resolvedor exige coincidencia exacta de palabras.
+
+La lección, que vale para la próxima lista: **un «cero coincidencias» no prueba que alguien no
+tenga cuenta, solo que no la tiene con esa grafía.** Antes de mandar a nadie a entrega manual hay
+que buscarlo por un apellido suelto. Corregido en `SIN_QR` y en el listado de planta con el mismo
+patrón que ya se había usado para KOOP/KOPP; la audiencia pasó de 155 a **156** y `entregaManual`
+quedó vacío.
 
 Todo microcopy **nuevo** de la interfaz (botones, estados vacíos, mensajes de error) va en
 español de Colombia con tuteo.

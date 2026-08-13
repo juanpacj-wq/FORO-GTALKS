@@ -48,8 +48,9 @@ const opcion = (n, d) => {
   const i = argv.indexOf(n)
   return i === -1 ? d : argv[i + 1]
 }
-// 156 asistentes menos Howard (sin cuenta en Entra → entrega manual) = 155 descargables.
-const esperados = Number(opcion('--esperados', '155'))
+// 156 asistentes, todos con cuenta en Entra desde que se corrigió la grafía de Howard (ver
+// SIN_CUENTA) = 156 descargables. Era 155 hasta el 2026-08-13.
+const esperados = Number(opcion('--esperados', '156'))
 const rutaXlsx = path.resolve(RAIZ, opcion('--archivo', 'ASISTENCIA FORO.xlsx'))
 const rutaPlanta = path.resolve(RAIZ, opcion('--planta', '.datos/sin-qr-2026-08-12.txt'))
 
@@ -66,7 +67,10 @@ function abortar(mensaje) {
 // el directorio  el cargo y la gerencia de la fila (Analista de Sistemas de Gestión) son
 // exactamente los de Kenneth Kopp Sierra (kkopp@), así que la errata es del listado.
 const SIN_QR = [
-  'HOWARD DIAZ GRANADOS CATRIN',
+  // «Diazgranados» va JUNTO, como lo guarda el directorio: el listado lo partió en dos («DIAZ
+  // GRANADOS») y por eso la comprobación del 2026-08-10 no lo encontró. Es la misma corrección
+  // de grafía que KOPP, y va también en el listado de planta para que la cédula siga casando.
+  'HOWARD DIAZGRANADOS CATRIN',
   'LOPEZ HINCAPIE ALEJANDRO JOSE',
   'AGAMEZ CALDERON DANILO',
   'WEHDEKING ARCIERI ERICK',
@@ -94,10 +98,17 @@ const SIN_QR = [
 
 // Quien se sabe SIN cuenta en Entra no bloquea el congelado: no puede iniciar sesión, así que su
 // certificado se entrega a mano. Queda registrado en el JSON bajo `entregaManual` para que nadie
-// lo relea como olvido. Comprobado contra el directorio el 2026-08-10: cero coincidencias.
-const SIN_CUENTA = new Set([
-  'HOWARD DIAZ GRANADOS CATRIN',
-])
+// lo relea como olvido.
+//
+// Hoy está VACÍA, y por qué se vació merece quedar escrito. Aquí vivió «HOWARD DIAZ GRANADOS
+// CATRIN» desde el 2026-08-10, con la nota «comprobado contra el directorio: cero coincidencias».
+// La cuenta existía  `choward@`, «Catrin Howard Diazgranados», y encima ya estaba en el grupo del
+// foro: lo que no existía era ese NOMBRE, porque el listado partió en dos un apellido que Entra
+// guarda junto. Un «cero coincidencias» no prueba que alguien no tenga cuenta; prueba que no la
+// tiene con esa grafía. Antes de mandar a nadie a entrega manual hay que buscarlo por un apellido
+// suelto, no por el nombre entero. Corregido el 2026-08-13, con el sitio ya desplegado y sus 155
+// certificados subidos: por eso hubo que regenerar y volver a subir el lote entero.
+const SIN_CUENTA = new Set([])
 
 // ── Excepciones del ORDEN del nombre ─────────────────────────────────────────
 // Cuando givenName/surname de Entra no permiten particionar el NOMBRE del Excel sin ambigüedad,

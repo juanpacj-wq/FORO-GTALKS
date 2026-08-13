@@ -58,6 +58,14 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from fontTools.ttLib import TTFont
 
+# La consola de Windows abre en cp1252 y la línea de cierre lleva «✔». Sin esto, el generador
+# escribía los 156 PDF y el manifiesto, y ACTO SEGUIDO reventaba con UnicodeEncodeError al
+# anunciarlo: una corrida correcta que termina en traza se lee como una corrida fallida, y lo
+# siguiente que hace quien la ve es volver a lanzarla. Es la tercera vez que este proyecto tropieza
+# con lo mismo (build-retratos.py, build-galeria.py y el auditor de certificados).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 RAIZ = Path(__file__).resolve().parent.parent
 PIEZA = RAIZ / 'Certificado de participación.png'
 FUENTE = RAIZ / 'fuentes-origen' / 'Poppins-Regular.ttf'

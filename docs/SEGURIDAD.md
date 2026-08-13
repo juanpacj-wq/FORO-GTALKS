@@ -397,9 +397,13 @@ Notas que no son obvias:
   empaqueta con `git archive`. La subida de los PDF va por `deploy/certificados-subir.sh` (tar
   por stdin de ssh + sha256), nunca por git.
 - **Cargar el manifiesto exige reiniciar el servicio** tras cada subida: el mapa vive en memoria.
-- **HOWARD DIAZ GRANADOS CATRIN no tiene cuenta en Entra**: no puede iniciar sesión y su
-  certificado es de **entrega manual** (queda anotado en la audiencia congelada, campo
-  `entregaManual`).
+- **`entregaManual` está hoy vacío, y conviene saber por qué existe.** Ahí vivió «HOWARD DIAZ
+  GRANADOS CATRIN» del 10 al 13 de agosto, dado por «sin cuenta en Entra». Sí la tenía
+  (`choward@`, «Catrin Howard Diazgranados») y hasta estaba en el grupo del foro: lo que no
+  existía era ese nombre, porque el listado partió en dos un apellido que el directorio guarda
+  junto. **Un «cero coincidencias» del resolvedor no prueba que alguien no tenga cuenta, solo que
+  no la tiene con esa grafía**; antes de mandar a nadie a entrega manual hay que buscarlo por un
+  apellido suelto. La audiencia pasó de 155 a 156.
 
 ---
 

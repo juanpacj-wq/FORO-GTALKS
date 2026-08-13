@@ -446,8 +446,8 @@ bash deploy/descargas-subir.sh         # sube los ZIP que descarga /galeria a DE
 - **El certificado de participación se descarga de `/certificado`, y el servidor no compone
   ninguno.** Los PDF (nombre + cédula sobre la pieza `Certificado de participación.png`) se
   generan y verifican en la ESTACIÓN con el bucle
-  `certificados-audiencia.mjs` (congela 155 con oid  134 el 10, ampliada el 12 con los 21
-  sin-QR de `asistentes.md`; se revisa A MANO) →
+  `certificados-audiencia.mjs` (congela 156 con oid  134 el 10, ampliada el 12 con los 21
+  sin-QR de `asistentes.md`, y 156 el 13 al aparecer la cuenta de Howard; se revisa A MANO) →
   `certificados-generar.py` (texto vectorial en Poppins Regular decisión del usuario tras
   descartar 13 candidatas con `certificado-fuente.py`; las cotas salen de «C.C:», el único
   texto-sobre-raya de la pieza) → `certificados-auditar.py` (la segunda opinión: capa de texto
@@ -460,6 +460,17 @@ bash deploy/descargas-subir.sh         # sube los ZIP que descarga /galeria a DE
   clase). Las cédulas jamás tocan git (repo público: `*.xlsx` y `asistentes.md` ignorados); la subida va por
   `deploy/certificados-subir.sh` y exige RESTART. Manual: `docs/SEGURIDAD.md` §El certificado y
   `docs/PLAN-CERTIFICADO-WEB.md`.
+- **Un «cero coincidencias» del resolvedor de nombres NO prueba que alguien no tenga cuenta:
+  prueba que no la tiene con esa grafía.** El emparejamiento contra Entra es por conjunto exacto
+  de palabras, así que un apellido que el listado parte en dos y el directorio guarda junto
+  («DIAZ GRANADOS» contra «Diazgranados») no casa por ningún camino, ni siquiera por el de
+  contención. Que falle cerrado es lo correcto lo que NO puede fallar es lo que se hace después:
+  a Howard se le dio por «sin cuenta en Entra» y se le mandó a `entregaManual`, cuando la tenía y
+  hasta estaba en el grupo del foro. Antes de dar a alguien por inexistente hay que buscarlo por
+  **un apellido suelto**, no por el nombre entero, y la corrección va donde ya está el precedente
+  de KOOP/KOPP: la grafía del directorio en `SIN_QR` **y** en el listado de planta, que es de
+  donde sale la cédula. Cuesta poco encontrarlo y caro no hacerlo: se descubrió con los 155
+  certificados ya subidos y hubo que regenerar y volver a subir el lote entero.
 - **La galería (`/galeria`) no lista archivos: lee un manifiesto GENERADO, y las fotos del
   evento jamás tocan git en crudo.** La carpeta del lote (raíz, ignorada: ~1.5 GB de originales
   de 33 MP con EXIF de cámara; **el nombre se busca entre los `NOMBRES_ORIGEN` de

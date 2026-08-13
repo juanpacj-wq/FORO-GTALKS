@@ -1,11 +1,11 @@
 # El certificado de participación se descarga de la web, cada quien el suyo
 
-> ## Estado: CONSTRUIDO el 2026-08-10 · audiencia AMPLIADA a 155 el 2026-08-12 · pendiente el despliegue por etapas
+> ## Estado: CONSTRUIDO el 2026-08-10 · ampliada a 155 el 2026-08-12 · DESPLEGADO y ampliada a 156 el 2026-08-13
 >
 > | Comprobación | Resultado |
 > |---|---|
-> | Audiencia congelada | **155 personas** (Hoja1 + 23 sin-QR con cuenta; Howard = entrega manual) |
-> | PDFs generados y auto-chequeados | 155 de 155 |
+> | Audiencia congelada | **156 personas** (Hoja1 + 24 sin-QR; `entregaManual` vacío desde que apareció la cuenta de Howard) |
+> | PDFs generados y auto-chequeados | 156 de 156 |
 > | Auditoría independiente (archivo ↔ contenido ↔ fuente) | en verde; probada con sabotaje (2 PDF cruzados → rojo por 2 vías) |
 > | `certificados-server-test.mjs` | 21 comprobaciones en verde (apagado, a medias, 5 manifiestos hostiles) |
 > | `sesion-test.mjs` (estados de la página) | en verde; de aquí salió el fallo real de especificidad de `--suprimido` |
