@@ -25,6 +25,16 @@ from pathlib import Path
 
 import fitz  # PyMuPDF
 
+# La consola de Windows abre en cp1252 y la línea de veredicto lleva «✔»/«✗».
+# Sin esto, el auditor reventaba con UnicodeEncodeError JUSTO en esa línea:
+# imprimía sus diez comprobaciones en verde y luego salía con traza y con código
+# 1, es decir, en verde decía «no se sube nada». Un portero que siempre dice que
+# no es un portero al que se acaba ignorando, y ese es el fallo peligroso: el
+# día que la auditoría falle de verdad, la traza se lee igual que las otras
+# veces. Es la misma lección de build-retratos.py y build-galeria.py.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 RAIZ = Path(__file__).resolve().parent.parent
 DIR = RAIZ / '.datos' / 'certificados'
 
