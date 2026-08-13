@@ -45,8 +45,8 @@ export interface Ponente {
    * de la fuente, donde deja de presentar a la persona y empieza a contar su
    * trayectoria, y lo único que cambia es que un espacio pasa a ser un salto
    * de párrafo: ni una letra más, ni una menos. Hoy lo necesitan tres fichas
-   * —Karen Henríquez, Ángel Hernández y Erick Wehdeking, esta última entera en
-   * un bloque de 849 pulsaciones—; las otras ocho llegan ya repartidas.
+   * Karen Henríquez, Ángel Hernández y Erick Wehdeking, esta última entera en
+   * un bloque de 849 pulsaciones; las otras ocho llegan ya repartidas.
    *
    * La invariante `bio.join(' ') === los párrafos de la fuente` la comprueba
    * `scripts/bios-verificar.py`, que además falla si alguna bio se queda en un
@@ -54,7 +54,7 @@ export interface Ponente {
    * es opcional: es lo único que distingue un corte de una errata.
    *
    * El campo sigue siendo opcional aunque hoy la tengan las once: quien no la
-   * tenga no pinta la sección —ni cartel de «no disponible» ni caja vacía—, y
+   * tenga no pinta la sección ni cartel de «no disponible» ni caja vacía, y
    * esa es la red que permitió publicar el sitio con diez de once. Se mantiene
    * porque el material llega por entregas y una ficha nueva puede volver a
    * llegar sin texto.
@@ -77,7 +77,7 @@ export const PONENTES = [
     cargo: 'Presidente de GECELCA',
     // Su ficha llegó al final del documento, en un bloque único y con el
     // encabezado en otro formato («11. Erick Wehdeking Arcieri», sin cargo).
-    // El cargo se queda como estaba —lo dicen la agenda y el propio texto—, y
+    // El cargo se queda como estaba lo dicen la agenda y el propio texto, y
     // el bloque va partido en tres, como los demás.
     bio: [
       'Administrador de Empresas, especialista en Finanzas y con estudios de MBA. Cuenta con ' +
@@ -457,7 +457,7 @@ export interface Encuesta {
    * Formulario de destino. Sale del sitio: se abre en una pestaña nueva.
    *
    * Es opcional porque no toda encuesta lo trae de fábrica: la de satisfacción
-   * abre por reloj cuando el evento cierra— y su URL la RETIENE el servidor
+   * abre por reloj cuando el evento cierra y su URL la RETIENE el servidor
    * (`server/encuestas.js`) hasta esa hora, para que no viaje en el bundle
    * público ni dependa del reloj de quien mira. Sin `url` aquí, el botón se
    * pinta deshabilitado con su aviso y `useEncuestaSatisfaccion` pregunta por
@@ -500,8 +500,8 @@ export const ENCUESTAS: readonly Encuesta[] = [
     // saltando de enlace en enlace, oyendo el principio de cada uno.
     accion: 'Enviar mi pregunta',
     // Abierta SIEMPRE: se responde después del panel, pero no hay nada que
-    // retener —a diferencia de la de satisfacción, esta no pregunta por la
-    // experiencia del evento, así que una respuesta temprana no la contamina—.
+    // retener a diferencia de la de satisfacción, esta no pregunta por la
+    // experiencia del evento, así que una respuesta temprana no la contamina.
     // Por eso la URL sí viaja en el bundle, como la de oportunidades.
     url: 'https://forms.cloud.microsoft/r/t2uUak9Vzu',
   },
@@ -576,7 +576,7 @@ export function anclaDe(bloque: Bloque): string {
  *
  * ⚠ Un `view-transition-name` debe ser ÚNICO en el documento. Si dos elementos
  * visibles lo comparten, el navegador descarta la transición entera. Por eso
- * la agendadonde la misma persona puede salir dos veces— no lo declara: en
+ * la agendadonde la misma persona puede salir dos veces no lo declara: en
  * la home solo lo lleva la fila del listado, que sale una vez por persona.
  */
 export function transicionRetrato(slug: string): string {
@@ -601,8 +601,8 @@ const CORTE_MINIMO = 60
  * ocho horas seguidas y se comía las dos y media de almuerzo libre.
  *
  * Sale de la agenda y no está escrita a mano, igual que `JORNADA`: el corte es
- * el bloque logístico más largo del día —hoy «Almuerzo Libre», 2 h 30, frente a
- * los 20 min de los dos coffee breaks—, así que si el programa se reordena o el
+ * el bloque logístico más largo del día hoy «Almuerzo Libre», 2 h 30, frente a
+ * los 20 min de los dos coffee breaks, así que si el programa se reordena o el
  * almuerzo se mueve, los dos tramos se mueven con él.
  *
  * Si algún día no hubiera un descanso largo, queda un solo tramo: la jornada
@@ -637,7 +637,7 @@ export type Intervencion = {
  * un papel sin etiqueta salía crudo por un `?? papel` de respaldo.
  *
  * Las cuatro etiquetas son neutras a propósito. «Modera»el verbo, que además
- * es el rótulo que ya usa la agenda— evita tener que deducir el género de la
+ * es el rótulo que ya usa la agenda evita tener que deducir el género de la
  * persona a partir de su nombre para elegir entre «moderador» y «moderadora».
  */
 export const ETIQUETA_PAPEL: Record<Intervencion['papel'], string> = {
@@ -680,7 +680,7 @@ export function intervencionesDe(slug: string): Intervencion[] {
  * quedan el nombre y el cargo, que es lo que dice de qué va.
  *
  * Va por slug y no por papel a propósito. Filtrar «a cargo» sería hoy lo mismo
- * —solo Erick tiene hitos con ponente— pero mañana escondería sin avisar a
+ * solo Erick tiene hitos con ponente pero mañana escondería sin avisar a
  * quien herede el papel. La excepción es exactamente la que se pidió, y el
  * `satisfies` la ata a un slug que exista: una errata no compila.
  */
@@ -694,8 +694,8 @@ const SIN_RESUMEN = ['erick-wehdeking-arcieri'] as const satisfies readonly Pone
  * Los papeles repetidos se agrupan en vez de repetirse: quien abre y cierra la
  * jornada sale como «A cargo 9:00 a.m. y 4:10 p.m.», no dos veces «A cargo».
  *
- * Devuelve `''` para quien esté en `SIN_RESUMEN` —y también para quien no
- * aparezca en la agenda—, así que quien la pinte tiene que contar con la cadena
+ * Devuelve `''` para quien esté en `SIN_RESUMEN` y también para quien no
+ * aparezca en la agenda, así que quien la pinte tiene que contar con la cadena
  * vacía y no envolverla a ciegas en su etiqueta.
  *
  * Vive aquí y no en el componente porque se compone de tres piezas que ya

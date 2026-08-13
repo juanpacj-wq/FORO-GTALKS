@@ -68,7 +68,7 @@
     grid-template-rows: auto auto 1fr;
     /* El título ENTRA en la rejilla, y esto es lo que cierra el hueco de arriba: la pieza cruza
        también su fila, así que su canto superior asienta en el del título en vez de 106px más
-       abajo. Los dos huecos que quedaban banda muerta sobre el carné y bajo el texto— son el
+       abajo. Los dos huecos que quedaban banda muerta sobre el carné y bajo el texto son el
        mismo sobrante, y subir la pieza se los come a la vez. El precio es que el riel del
        título muere en el canto del carné y no en el del contenedor, y es un precio a favor:
        la línea conduce a la pieza en vez de pasarle por encima. */
@@ -365,7 +365,7 @@
 /* Un RECIBO, no un aviso: el correo ya salió y esto lo constata. Llevaba el mismo filete de
  * acento a la izquierda que el aviso del QR y por el mismo motivo se ha ido: no codificaba
  * nada, solo pintaba. En su lugar, la marca de trazo que dice cuál de los dos desenlaces es
- * —visto bueno o aviso— y la frase al lado, sin caja. Sigue distinguiéndose de `__nota` (la de
+ * visto bueno o aviso y la frase al lado, sin caja. Sigue distinguiéndose de `__nota` (la de
  * la foto) por llevar marca y por el color del texto, que es el pleno y no el suave.
  *
  * El estado lo decide el servidor: cuando no hay nada confirmado, esta línea no existe. */

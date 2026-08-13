@@ -39,11 +39,11 @@ formas más la caja de los textos. Sirven para distinguir un fondo de un acento.
 Las tres piezas son verticales de 612 pt sobre papel blanco, con el navy y el celeste como
 bandas. Trasladado tal cual, eso da una página blanca con una franja azul arriba: correcta y
 olvidable. La traducción a pantalla invierte la relación**el campo es oscuro y el papel es la
-excepción**— y para eso hicieron falta cuatro valores más.
+excepción** y para eso hicieron falta cuatro valores más.
 
 Ninguno es un color nuevo: **todos son mezclas declaradas de los medidos**, escritas con
 `color-mix()` en `tokens.css`, así que la regla del proyecto se mantienecada valor o está
-medido, o es una mezcla trazable de dos que sí lo están—.
+medido, o es una mezcla trazable de dos que sí lo están.
 
 | Token | Definición | Para qué |
 |---|---|---|
@@ -55,7 +55,7 @@ medido, o es una mezcla trazable de dos que sí lo están—.
 Sobre ese campo hay **dos superficies y nada más**: la lámina clara (`.gt-lamina`, el papel de la
 pieza, donde vive el programa) y el plano navy (la caja destacada, los estados vacíos). La
 separación entre elementos se hace con **hairlines de 1 px**, que es lo que hacen las piezas84
-de sus 87 trazos son de 1 pt—, no con sombras. Hay **una sola sombra en todo el sitio**: la que
+de sus 87 trazos son de 1 pt, no con sombras. Hay **una sola sombra en todo el sitio**: la que
 levanta la lámina del programa sobre el campo.
 
 El grano (`--gt-grano`, ruido SVG en línea) va sobre los campos oscuros al 5%. Un plano digital
@@ -66,14 +66,14 @@ todo esto, sin pedir un solo byte a la red.
 
 `LineaDelDia.tsx` dibuja la jornada como una línea de tiempo **de una sola pista**: el ancho de
 cada tramo es su duración realel almuerzo de 2 h 30 ocupa cinco veces lo que una ponencia de
-30 min— y el alto es constante para todos.
+30 min y el alto es constante para todos.
 
 Hubo antes una versión en barras donde el alto codificaba «intensidad» (cuánta gente hay en
 escena). **Se descartó porque ese dato no existe**: en la agenda de un día lo único real es
 cuándo empieza cada cosa y cuánto dura. Una segunda magnitud inventada obliga a leer el gráfico
 dos veces y compite con la que sí importa. El tipo de bloque se distingue ahora por tratamiento
-—plano celeste el panel, plano atenuado la ponencia, plano oscuro el hito, trama diagonal la
-pausa—, así que la comparación de duraciones queda limpia.
+plano celeste el panel, plano atenuado la ponencia, plano oscuro el hito, trama diagonal la
+pausa, así que la comparación de duraciones queda limpia.
 
 Tres cosas que lo hacen algo que se recorre y no solo se mira:
 
@@ -93,7 +93,7 @@ llegar. Los datos salen de `AGENDA`, así que la línea se redibuja sola si camb
 
 Las tres fotos vienen incrustadas en los PDF a baja resolución (456×652 la mayor) y con una
 dominante naranja de atardecer que pelea con el celeste de la marca. El duotono navy→celeste de
-`PhotoFrame`gris en `screen` sobre el navy, celeste en `multiply` encima— resuelve las dos cosas
+`PhotoFrame`gris en `screen` sobre el navy, celeste en `multiply` encima resuelve las dos cosas
 a la vez: unifica la paleta y disimula la falta de detalle. La foto pasa a leerse como decisión
 gráfica y no como un JPG pequeño estirado. Eso **no cierra el pendiente #4**: el original en alta
 sigue haciendo falta.
@@ -101,7 +101,7 @@ sigue haciendo falta.
 ### Retratos: el mismo razonamiento, bajado de intensidad… y luego apagado
 
 Los retratos de los ponentes plantean el mismo problema que las fotos del PDFllegan de fuentes
-distintas: fondo de estudio, fondo de oficina, recortes de una foto de grupo— y ese desorden es lo
+distintas: fondo de estudio, fondo de oficina, recortes de una foto de grupo y ese desorden es lo
 que hace que una página de ponentes se vea improvisada. Pero teñir de celeste la cara de una
 persona identificable es otra cosa, así que el duotono no se reutiliza tal cual: hay una tercera
 variante, `tratamiento="retrato"`.
@@ -130,9 +130,9 @@ PDF es una decisión gráfica sobre un rostro identificable se lee como algo imp
 ponente es un dato de la persona, no una superficie de la marca. El desorden de fondos que el
 tinte venía a tapar se resolvió antes, en el encuadre y el recorte de `build-retratos.py`.
 
-**La maquinaria se conserva entera** —el `filter`, el navy en `color` y el realce celeste siguen
+**La maquinaria se conserva entera** el `filter`, el navy en `color` y el realce celeste siguen
 declarados en `PhotoFrame.css` y `Monogram.css`, y el hover del monograma sigue expresado como una
-fracción del token—, así que volver a unificar la paleta es devolverles valor a esas tres líneas y
+fracción del token, así que volver a unificar la paleta es devolverles valor a esas tres líneas y
 nada más. Con los tres en `0`, las dos capas de fusión no pintan nada y el filtro se reduce a su
 `contrast(1.04)`.
 
@@ -148,7 +148,7 @@ contraste sin que nadie lo note.
 
 ### La ficha de ponente: dos columnas que empiezan y terminan a la vez
 
-El perfil es una rejilla de dos columnasel retrato y todo lo demás— y **el retrato se estira al
+El perfil es una rejilla de dos columnasel retrato y todo lo demás y **el retrato se estira al
 alto exacto de la columna de texto**, no al revés. Es la decisión que ordena la página: las dos
 columnas comparten la línea de arriba y la de abajo, así que no queda ni media página vacía a la
 derecha de la prosa ni una franja muerta bajo la foto.
@@ -165,7 +165,7 @@ De ahí salen dos consecuencias que conviene no revertir:
 **La placa.** Mientras no llegue la foto, el hueco no lo ocupa un monograma pequeño sino una placa
 que mide lo mismo que el futuro retrato: misma columna, mismo alto, misma forma en «hoja» y el
 mismo contorno desplazado, con las iniciales a tamaño de titular. Así el día que llegue la foto la
-maqueta no se muevelo que hay es lo que habrá—, y mientras tanto la ficha no se lee como una
+maqueta no se muevelo que hay es lo que habrá, y mientras tanto la ficha no se lee como una
 plantilla a la que le falta un trozo. Es el mismo criterio que convirtió el numeral «1» y el
 wordmark en grafismo: a esa escala unas iniciales dejan de ser un avatar por defecto.
 
@@ -190,7 +190,7 @@ componentes distintos y tienen que coincidir carácter a carácter.
 Hay una condición que conviene no olvidar: **un `view-transition-name` debe ser único en el
 documento**; si dos elementos visibles lo comparten, el navegador descarta la transición entera.
 En la home la misma persona sale en el listado **y** dentro de la agenday en la agenda puede
-salir dos veces, como ponente y como panelista—, así que el nombre lo declara solo `SpeakerCard`,
+salir dos veces, como ponente y como panelista, así que el nombre lo declara solo `SpeakerCard`,
 que aparece una vez por persona. `AgendaTimeline` no lo declara a propósito.
 
 Se apaga entero con `prefers-reduced-motion: reduce`. No basta con no animar la raíz: un elemento
@@ -203,7 +203,7 @@ Convención, no medición. Salidas exponenciales sin rebote (`--gt-ease`), porqu
 institucional y no juguetón. Y una regla dura: **no hay revelados por scroll en el contenido**.
 Una animación que esconde texto hasta que el navegador la dispara es una sección en blanco
 esperando a fallaren una pestaña de fondo, en una captura de pantalla, en un renderizador sin
-soporte—. Lo único que depende del scroll es el plano del header, que no oculta nada. La entrada
+soporte. Lo único que depende del scroll es el plano del header, que no oculta nada. La entrada
 del hero es una sola secuencia al cargar, de 700 ms, y `prefers-reduced-motion` la apaga entera.
 
 ### Tres cosas que solo se supieron midiendo
@@ -242,7 +242,7 @@ background: color-mix(in srgb, var(--gt-celeste) 50%, var(--gt-carta));
 | **Museo Slab 900** | solo el wordmark «G-TALKS» | licenciada (exljbris) | no se usa: es un logotipo |
 
 Las dos licenciadas aparecen **únicamente en elementos de marca**, nunca en texto corriente.
-En vez de buscarles una sustituta geométrica aproximadaque es lo que contemplaba el plan—
+En vez de buscarles una sustituta geométrica aproximadaque es lo que contemplaba el plan
 se resuelven como asset gráfico: el numeral y el wordmark son dibujo, no texto. Así el sitio
 no depende de ninguna fuente licenciada ni de una imitación.
 
@@ -309,7 +309,7 @@ muletilla es lo que hace que una página se lea como plantilla.
 ### El lockup del foro: una pieza, no cuatro elementos
 
 El bloque del heroel numeral «1», «Foro: / Energía / **en Acción**», la regla blanca y «Retos y
-oportunidades»— es el lockup de la marca del evento, y en las piezas es **un solo dibujo**. Lo que
+oportunidades» es el lockup de la marca del evento, y en las piezas es **un solo dibujo**. Lo que
 lo delata es la regla: no es un separador decorativo, es la **prolongación del serif inferior del
 «1»** (Bely Display trae ese serif dentro del propio glifo), y las dos tienen exactamente el mismo
 grosor y la misma cota. Compuesto como cuatro elementos apilados con márgenes del sistema, no se
@@ -347,7 +347,7 @@ tomando el cuerpo del titular (39.1 pt) como unidad:
   desplazamientos negativos del CSS, que llevan ese 50.9 % a su sitio. El asset lo genera
   `build-assets.py` y no se toca a mano.
 - **La regla va como caja (`::before` con `height`), no como `border-top`.** El grosor es 0.061 del
-  cuerpo5.26 px con el titular a 86 px— y un borde fraccionario lo redondea el navegador a un
+  cuerpo5.26 px con el titular a 86 px y un borde fraccionario lo redondea el navegador a un
   entero, que deja un escalón visible justo donde la regla se junta con el serif del «1». Un `height`
   sí conserva el subpíxel.
 
@@ -379,13 +379,13 @@ con `1 pt = 1.3333 px` (el tamaño que tendría la pieza rasterizada a 96 dpi).
 **El radio asimétrico del marco de foto está confirmado por medición**, no deducido a ojo:
 101.9 pt en la esquina superior-izquierda y en la inferior-derecha, **0 en las otras dos**. Es la
 forma en «hoja» característica del sistema. No va como un token de radio completo porque cada uso
-tiene que acotarlo al tamaño real de su caja136 px se comerían un monograma de 44 px—: cada
+tiene que acotarlo al tamaño real de su caja136 px se comerían un monograma de 44 px: cada
 componente la construye a partir de `--gt-radio-foto`.
 
 Los arcos que separan bandas son paths de 633×700 pt con radios de 144.7 y 163.8 pt arriba y
 recto abajo: no son medias circunferencias. Medida la forma, un `border-radius` en porcentaje la
 reproduce exacta y sin el problema del SVG estiradocon `preserveAspectRatio="none"` las curvas
-se deforman al cambiar el ancho—, así que `ArcDivider` es un `div` y no un SVG. Se conserva el
+se deforman al cambiar el ancho, así que `ArcDivider` es un `div` y no un SVG. Se conserva el
 nombre del componente.
 
 La forma en «hoja» del marco de foto se reutiliza en todo lo que es una superficie del sistema:
@@ -396,7 +396,7 @@ como la misma familia.
 Las tarjetas de encuestas son el único sitio donde la hoja va **espejada**: la segunda lleva los
 radios en las esquinas contrarias, igual que el par de fotos de la home (una `izq`, otra `der`).
 Con las dos iguales, un par de tarjetas gemelas se lee como una rejilla de relleno; espejadas se
-miran, y en móvilapiladas— la alternancia sigue leyéndose como un par y no como una lista
+miran, y en móvilapiladas la alternancia sigue leyéndose como un par y no como una lista
 larga.
 
 ---
@@ -478,15 +478,15 @@ Generados con `scripts/build-assets.py` a partir de `design-extract/`.
 | `public/img/ponentes/<slug>*.webp` | `scripts/build-retratos.py` sobre `retratos-origen/` | retrato atenuado por CSS |
 
 Los retratos son la única familia de assets que **no** sale de los PDF. Van en cuatro derivados por
-persona4:5 a 440×550 y 880×1100 para la cabecera del perfil, 1:1 a 96 y 192 px para las filas—
+persona4:5 a 440×550 y 880×1100 para la cabecera del perfil, 1:1 a 96 y 192 px para las filas
 
 **El cuadrado no es el vertical reducido, y esto se supo con la primera foto real.** Un retrato
 corporativo es un plano medio: recortado solo a proporción, a 96 px la cara acaba midiendo veinte
 píxeles y no se reconoce ni en el índice ni en el programa. Por eso el derivado cuadrado se acerca
-—`ZOOM_CUADRADO = 0.70` del lado menor, centrado en el 34% del alto—, que en un plano medio deja
+`ZOOM_CUADRADO = 0.70` del lado menor, centrado en el 34% del alto, que en un plano medio deja
 cabeza y hombros. El vertical va a zoom 1.0: ahí la foto se ve grande y conviene respetar el
 encuadre del fotógrafo. Lo que el defecto no acierteuna foto descentrada, o un primer plano ya
-cerrado al que el 70% le cortaría la barbilla— se corrige por persona en el diccionario `ENCUADRE`
+cerrado al que el 70% le cortaría la barbilla se corrige por persona en el diccionario `ENCUADRE`
 del script, para que quede escrito en el repo y no en la memoria de quien procesó el lote.
 
 y el script escribe además `src/design/retratos.ts`, un manifiesto tipado con lo que de verdad
@@ -509,14 +509,14 @@ versiona**: no es material sensible como los retratos y sin él esto no se vuelv
 El «2x» es el original tal cual, 1.39× el 1x y no 2×, porque eso es todo lo que trae la foto. El
 descriptor solo decide qué archivo baja el navegador, y bajo el duotono la diferencia no se ve.
 Ampliar con Lanczos hasta 1792 pxlo que se hace con las fotos de los PDF, que no tienen otra
-salida— aquí solo pesaría más sin añadir un detalle que no existe.
+salida aquí solo pesaría más sin añadir un detalle que no existe.
 
 **El marco del hero no se mide por proporción.** Es el mismo criterio de la ficha de ponente: manda
 el layout, no un `aspect-ratio` que llega por props.
 
 - **El ancho es una resta.** La rejilla es `var(--gt-hero-columna) minmax(0, 1fr)`: la columna de
   texto mide exactamente lo que va a usarel mismo ancho al que ya está atado el cuerpo del
-  lockup— y la foto se lleva todo lo demás. Antes eran dos anchos independientes (`1fr` para el
+  lockup y la foto se lleva todo lo demás. Antes eran dos anchos independientes (`1fr` para el
   texto y un `clamp` para la foto) y la primera columna crecía más allá de su `max-width`: ese
   sobrante quedaba como una franja vacía entre el titular y la foto que a 1920 pasaba de 340 px.
   Ahora desaparece por construcción y no por tanteo.
@@ -526,10 +526,10 @@ el layout, no un `aspect-ratio` que llega por props.
   terminan a la vez, igual que en la ficha de ponente: el titular arranca en la misma línea que el
   canto de la foto y la ficha cierra en la de su base, en **todos** los anchos. Con un alto propio
   la foto se descolgaba en cuanto el texto era más largo que ellaa 1280 arrancaba 52 px por
-  debajo—, que es la banda muerta de antes en pequeño.
+  debajo, que es la banda muerta de antes en pequeño.
 - **Los dos topes del `clamp` salen de una resta por cada extremo.** Por arriba, lo que queda de la
   ventana tras el header, el aire de encima y el arcopor eso entre 900 y 1080 px de alto el arco
-  cierra justo en el pliegue—. Por abajo, el alto de la columna de texto: cuanto más se pasa la foto
+  cierra justo en el pliegue. Por abajo, el alto de la columna de texto: cuanto más se pasa la foto
   de ese alto, más sobrante hay que repartir dentro del texto. Con `72vh` y `46rem` ese sobrante
   llegaba a 109 px a 1080, un hueco perfectamente visible entre la entradilla y la ficha; con `68vh`
   no pasa de 50 px en ninguna ventana, y por debajo de 1000 px de alto manda el texto y no sobra
@@ -547,7 +547,7 @@ el layout, no un `aspect-ratio` que llega por props.
 **Y el hero ya no reserva sitio para el header.** Su `padding-top` era `clamp(7rem, 15vh, 10.5rem)`,
 heredado de cuando el header era fijo y el contenido tenía que arrancar por debajo de él. Hoy es
 `sticky`: ocupa sus 115 px en el flujo y el hero empieza justo debajo, así que esa reserva era aire
-sobre aire162 px de banda muerta a 1080, entre el riel de anclas y el titular—. Queda
+sobre aire162 px de banda muerta a 1080, entre el riel de anclas y el titular. Queda
 `clamp(1.75rem, 3.5vh, 3rem)`, que es solo la separación. Si el header vuelve a salirse del flujo,
 se compensa allí y no aquí.
 
@@ -563,7 +563,7 @@ fondo.
 
 Un SVG cargado con `<img src="icono.svg">` es un documento aparte: su `currentColor` **no** hereda
 el `color` de la página, se resuelve a negro. Eso hacía que el numeral «1» saliera negro sobre la
-banda navyinvisible— y que los íconos de las píldoras salieran negros en vez de navy.
+banda navyinvisible y que los íconos de las píldoras salieran negros en vez de navy.
 
 La solución es `Icono.tsx`: el símbolo va como `mask-image` de un `<span>` cuyo `background-color`
 es `currentColor`. Así hereda el color de verdad. Como una máscara no aporta tamaño intrínseco, el
@@ -628,7 +628,7 @@ que no queden Δ.
    núcleo** de cada masa en vez de promediar una ventana: con cuotas del 99 % sobre superficies
    planas, son decisiones y no ruido de compresión. Promediar mentía justo donde importa el
    anillo del retrato «medía» `#0D1E42` siendo `#1C2C4E`, y el cargo «medía» `#303030` siendo
-   negro puro—, porque sobre un trazo de 4px media ventana es antialias.
+   negro puro, porque sobre un trazo de 4px media ventana es antialias.
 4. **El pie pasa a DOS RENGLONES apilados**, con su icono cada uno, en vez de una fila con
    separador. No es un cambio de estilo: cambia el DOM.
 
@@ -805,7 +805,7 @@ la pieza trae la foto a color natural.
 
 El carné manda dentro de sus cuatro cantos, pero la página que lo rodea es del sistema, y su
 maquetación **no** es la del resto de páginas interiores. `EscarapelaPage` es un díptico de tres
-áreas —`discurso`, `pieza` y `acciones`— porque el carné mide 27.5 rem de ancho por ~670 px de
+áreas `discurso`, `pieza` y `acciones` porque el carné mide 27.5 rem de ancho por ~670 px de
 alto, y eso rompe el chasis de una columna de `.gt-pagina`:
 
 - **Apilado, no cabía.** Con el título, la entradilla y el carné en columna, a 1920×1028 la pieza
@@ -814,8 +814,8 @@ alto, y eso rompe el chasis de una columna de `.gt-pagina`:
   primera pantalla.
 - **La reserva de arriba era aire sobre aire.** `.gt-pagina` abría con `clamp(7rem, 14vh, 9.5rem)`,
   heredado de cuando el header era `position: fixed`. Hoy es `sticky` y ya ocupa su sitio en el
-  flujo, así que esos 144 px eran banda muerta —el mismo defecto, y el mismo recorte, que ya se
-  hizo en `.gt-hero` (ver §La foto del hero)—. El recorte (`clamp(2.5rem, 6vh, 4.5rem)`) nació
+  flujo, así que esos 144 px eran banda muerta el mismo defecto, y el mismo recorte, que ya se
+  hizo en `.gt-hero` (ver §La foto del hero). El recorte (`clamp(2.5rem, 6vh, 4.5rem)`) nació
   acotado a `.gt-pagina--escarapela` y el 2026-08-12 el usuario pidió la misma altura de arranque
   para todas las páginas: hoy vive en el CHASIS (`.gt-pagina`, PonentesPage.css), ninguna página
   lo redefine, y `interactions-test.mjs` mide que los cuatro `h1` arranquen a la misma altura.
@@ -825,7 +825,7 @@ alto, y eso rompe el chasis de una columna de `.gt-pagina`:
 - **La fila de acciones es `1fr`, no `auto`.** La pieza cruza las dos filas; con las dos
   automáticas, el reparto de su sobrante despegaba el botón del texto al que pertenece.
 - **Los controles de foto van con el texto, no bajo el carné.** Debajo de la pieza caían justo en
-  el canto de la ventana —el botón que hay que pulsar, medio cortado—. En la columna izquierda,
+  el canto de la ventana el botón que hay que pulsar, medio cortado. En la columna izquierda,
   «Iniciar sesión con Microsoft» y «Subir foto» ocupan el mismo sitio en los dos estados.
 - **Por debajo de 64 rem** la misma plantilla da una columna y cambia el orden a discurso → pieza
   → acciones, para que el carné no quede detrás de sus propios controles.

@@ -71,7 +71,7 @@ real, un solo destino, y auditoría exigible.
 
 `manifest.py deploy-lock --session <id>` toma un lock **global**vive en
 `sitio/pages-manifest.json` aunque la campaña activa use otro manifiesto, porque *un servidor =
-un solo dominio de lock*— con **TTL de 30 minutos**: un lock más viejo se considera huérfano y
+un solo dominio de lock* con **TTL de 30 minutos**: un lock más viejo se considera huérfano y
 se roba, para que una sesión que murió a media faena no bloquee a todas las demás para siempre.
 Cada mutación del manifiesto se **commitea de inmediato**, con reintentos ante `index.lock` de
 git: el historial es la traza de quién tuvo el lock y cuándo.

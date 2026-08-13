@@ -46,7 +46,7 @@ export const PESO_MAX_MENSAJE_BYTES = 3.5 * 1024 * 1024;
  * Comprueba que la suma de los adjuntos cabe en una petición de `sendMail`.
  *
  * @param {{contentBytes: string}[]} adjuntos  ya en base64
- * @throws si no cabe — fallo cerrado: mejor no enviar que enviar 163 mensajes que rebotan.
+ * @throws si no cabe  fallo cerrado: mejor no enviar que enviar 163 mensajes que rebotan.
  */
 export function exigirQueQuepa(adjuntos) {
   const base64 = adjuntos.reduce((suma, a) => suma + (a.contentBytes?.length || 0), 0);

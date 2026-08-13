@@ -11,7 +11,7 @@ import './EscarapelaPage.css'
  * La marca de un QR, construida con EL MISMO PATRÓN DE POSICIÓN que el QR de verdad.
  *
  * No es un icono de catálogo y por eso no pasa por `Icono.tsx`: el marcador respeta el
- * 1:1:3:1:1 canónico —anillo de un módulo, claro de uno, núcleo de 3×3— que es exactamente lo
+ * 1:1:3:1:1 canónico anillo de un módulo, claro de uno, núcleo de 3×3 que es exactamente lo
  * que `Escarapela.tsx` dibuja en el dorso, con su mismo radio proporcional. La regla del sistema
  * («los símbolos monocromos van con Icono») existe para que un SVG no pierda `currentColor` al
  * cargarse por `img`; aquí va inline, que lo hereda por definición.
@@ -133,7 +133,7 @@ function MarcaAviso() {
  *
  * El correo de inscripción se ANUNCIA, no se decide, aquí: lo manda el servidor en el primer
  * inicio de sesión y su desenlace viaja en `/api/me`. Esta página solo pinta lo que el servidor
- * confirma nunca supone que salió—, y por eso `pendiente` y `no_aplica` no dicen nada.
+ * confirma nunca supone que salió, y por eso `pendiente` y `no_aplica` no dicen nada.
  */
 export default function EscarapelaPage() {
   const sesion = useSesion()
@@ -222,7 +222,7 @@ export default function EscarapelaPage() {
             </p>
 
             {/* El aviso del QR. Vale en los dos estados el dorso registra el ingreso se haya
-                entrado hace un minuto o el día del foro—, pero solo es PULSABLE cuando hay
+                entrado hace un minuto o el día del foro, pero solo es PULSABLE cuando hay
                 carné que voltear: un control que no puede actuar no se ofrece. Con sesión, en
                 vez de contar que el QR está detrás, lo enseña. */}
             {sesion.estado === 'dentro' ? (

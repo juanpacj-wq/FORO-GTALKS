@@ -17,7 +17,7 @@ Tres cosas que no son obvias y mandan sobre todo lo demás:
 
 1. **Esta pieza va A SANGRE: el carné ES el lienzo.** La anterior (`Escarapela.png`) era un
    export con margen y sombra, y el carné ocupaba 931×1429 dentro de sus 1024×1536 de eso
-   salía la proporción 1024/1571—. Aquí no hay margen: 1080×1648 de borde a borde, y las cuatro
+   salía la proporción 1024/1571. Aquí no hay margen: 1080×1648 de borde a borde, y las cuatro
    esquinas son cuadradas. `rect_carne()` lo **comprueba** en vez de darlo por hecho, para que
    un export futuro con margen no pase inadvertido.
 2. **Las cotas se miden sobre el carné YA normalizado** a 1024 de ancho, no sobre la pieza. Así
@@ -105,7 +105,7 @@ class Lienzo:
 
         `min_fila` es el mínimo de aciertos que ha de tener una FILA para contar, y `min_col`
         el mínimo de una COLUMNA. Van por separado a propósito: una regla de 4 px de alto tiene
-        cientos de aciertos por fila y solo 4 por columnay un separador vertical, al revés—,
+        cientos de aciertos por fila y solo 4 por columnay un separador vertical, al revés,
         así que un único umbral borraba una de las dos.
         """
         filas, cols = self.perfil(x0, x1, y0, y1, pred)
@@ -144,7 +144,7 @@ class Lienzo:
         """La barrita vertical: un bloque estrecho y alto, aislado de todo lo demás.
 
         Buscarla por posición era frágil (el icono de al lado también tiene columnas altas);
-        buscarla por formaestrecha Y más alta que cualquier letra— la encuentra sola.
+        buscarla por formaestrecha Y más alta que cualquier letra la encuentra sola.
         """
         for b in self.bloques(x0, x1, y0, y1, pred, hueco=6):
             if b["ancho"] <= max_ancho and b["alto_max"] >= min_alto:
@@ -186,7 +186,7 @@ class Lienzo:
     def dominante(self, x0, x1, y0, y1, pred) -> tuple[str, float]:
         """El color EXACTO más repetido entre los píxeles que cumplen `pred`, y su cuota.
 
-        Promediar una ventana era suficiente para una masa plana y grandeel telón—, pero
+        Promediar una ventana era suficiente para una masa plana y grandeel telón, pero
         miente en todo lo demás: sobre un trazo de 4 px o sobre una letra, la mitad de la
         ventana es antialias y el promedio sale a medio camino entre la tinta y el papel. Así
         el anillo del retrato «medía» #0D1E42 cuando su núcleo es exactamente el navy de la
@@ -201,7 +201,7 @@ class Lienzo:
         c = Counter(self.px[x, y] for x in range(x0, x1) for y in range(y0, y1)
                     if pred(x, y))
         if not c:
-            return "—", 0.0
+            return "", 0.0
         (r, g, b), n = c.most_common(1)[0]
         return "#%02X%02X%02X" % (r, g, b), round(100 * n / sum(c.values()), 1)
 
@@ -243,7 +243,7 @@ def _renglon_pie(li: Lienzo, c: dict, clave: str, ventana: tuple) -> None:
     """Icono, rótulo y valor de un renglón del pie.
 
     Los dos renglones se miden con el mismo código: primero la caja entera, luego los bloques
-    de columnas separados por huecos el primero es el icono, y el resto, el texto—. La banda
+    de columnas separados por huecos el primero es el icono, y el resto, el texto. La banda
     de versales se toma SOLO sobre el texto: con el icono dentro de la ventana, el corte por
     fracción de tinta lo decidía él y no las letras.
     """
@@ -311,7 +311,7 @@ def medir_elementos(li: Lienzo) -> dict:
         xs = c["pildora_sep"]["x"] if c["pildora_sep"] else p["x"] + p["ancho"] // 3
         c["pildora_icono"] = li.caja(p["x"], xs - 4, p["y"], p["y2"], li.es_celeste, 2, 2)
         # El rótulo se busca en el TRAMO RECTO de la píldora: desde el separador hasta un radio
-        # antes del canto derecho. El canto es antialias contra el papelo sea claro— y la
+        # antes del canto derecho. El canto es antialias contra el papelo sea claro y la
         # caja del texto blanco se estiraba hasta él; y en el casquete redondeado ese canto se
         # mete hacia dentro, así que un recorte fijo de unos pocos px no bastaba.
         xt = c["pildora_sep"]["x2"] if c["pildora_sep"] else xs
@@ -436,7 +436,7 @@ def curvas_carne(li: Lienzo, paso: int = 3) -> dict:
     """Los tres bordes curvos de un carné normalizado, muestreados columna a columna.
 
     El borde del navy se busca por el COLOR DE LO QUE VIENE DEBAJOel primer píxel celeste de
-    la columna—, no por «donde se acaba el navy». Buscar el final del navy obligaba a distinguir
+    la columna, no por «donde se acaba el navy». Buscar el final del navy obligaba a distinguir
     el borde de verdad de los huecos que abre el texto blanco del lockup, y por abajo el anillo
     del retrato entra en juego. Celeste, por debajo de `suelo_telon(x)`, solo hay en la banda.
     """
@@ -667,7 +667,7 @@ def paleta(li: Lienzo, rc: dict, k: float, cajas: dict, retrato: dict) -> dict[s
 
 
 def cqw(v: float | None) -> str:
-    return "—" if v is None else f"{v / 10.24:.2f}"
+    return "" if v is None else f"{v / 10.24:.2f}"
 
 
 def main() -> None:

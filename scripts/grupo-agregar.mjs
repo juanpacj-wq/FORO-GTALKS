@@ -11,7 +11,7 @@
 // aquí: quien entra al grupo recibe un correo con un QR **personal**, así que meter al Juan
 // equivocado no es un error de membresía, es un código de asistencia en manos de otra persona.
 //
-// Permiso: `GroupMember.ReadWrite.All` de APLICACIÓN con consentimiento de administrador — el
+// Permiso: `GroupMember.ReadWrite.All` de APLICACIÓN con consentimiento de administrador  el
 // que ya está concedido a la App Registration del login (§0.1 de `docs/PLAN-ENVIO-QR.md`).
 //
 // ── Las cuatro garantías ─────────────────────────────────────────────────────
@@ -24,7 +24,7 @@
 //   3. **Es idempotente.** Quien ya está en el grupo se salta. Un `POST` repetido devuelve un 400
 //      que aquí se lee y se traduce, no se propaga como fallo.
 //   4. **Se verifica LISTANDO.** `GET /groups/{id}/members/{oid}/$ref` devuelve 404 aunque la
-//      persona sí esté — el detalle que costó una confusión el 2026-08-04. La comprobación buena
+//      persona sí esté  el detalle que costó una confusión el 2026-08-04. La comprobación buena
 //      es volver a traer los miembros y buscar ahí, que es lo que se hace al final.
 
 import fs from 'node:fs'
@@ -270,7 +270,7 @@ for (const r of porAnadir) {
     continue
   }
   errores.push({ correo: r.correo, status: respuesta.status, codigo, mensaje })
-  console.log(`  ✗  ${r.correo} — Graph ${respuesta.status} (${codigo})`)
+  console.log(`  ✗  ${r.correo}  Graph ${respuesta.status} (${codigo})`)
 }
 
 // ── Verificar LISTANDO, que es la única comprobación que sirve ───────────────

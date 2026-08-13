@@ -16,7 +16,7 @@ import './AgendaTimeline.css'
  *
  * La caja pequeña es `Monogram` y no un cuadro propio: antes el programa
  * reimplementaba la forma en «hoja» por su cuenta, así que las fotos habrían
- * llegado al listado y al perfil y aquídonde el visitante pasa más tiempo—
+ * llegado al listado y al perfil y aquídonde el visitante pasa más tiempo
  * se habrían quedado las iniciales.
  *
  * No lleva `transicion`: la misma persona puede salir dos veces en la agenda

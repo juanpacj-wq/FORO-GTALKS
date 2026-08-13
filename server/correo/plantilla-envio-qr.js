@@ -59,8 +59,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  *
  * La vieja no se borra ni se sobrescribe: el envío del día del foro tenía que decir «hoy», pero
  * reemplazar el archivo haría que el repo afirmara que aquellas 169 recibieron algo que no
- * recibieron, y ningún arnés lo gritaría —`envio-qr-test.mjs` compara el adjunto contra el
- * ARCHIVO, no contra los bytes históricos—. Es la misma razón por la que este correo nunca
+ * recibieron, y ningún arnés lo gritaría `envio-qr-test.mjs` compara el adjunto contra el
+ * ARCHIVO, no contra los bytes históricos. Es la misma razón por la que este correo nunca
  * compartió pieza con el de inscripción.
  */
 const RUTA_PIEZA = path.resolve(__dirname, '..', '..', 'imagen correo qr hoy.png');
@@ -83,7 +83,7 @@ const LADO_QR_CSS = 270;
  *
  * ⚠ **Este asunto CADUCA, y no caduca solo: caduca con la pieza.** Decía «MAÑANA» y salió así el
  * 2026-08-04, la víspera. El 5, para los rezagados que entraron al grupo esa misma mañana, citarlos
- * para mañana era falso, así que pasó a «HOY» — y con él el titular de la pieza, porque el asunto
+ * para mañana era falso, así que pasó a «HOY»  y con él el titular de la pieza, porque el asunto
  * y la imagen dicen lo mismo y cambiar uno solo deja el mensaje contradiciéndose. Si este envío
  * vuelve a correrse otro día, se cambian **los dos**: aquí y con
  * `scripts/pieza-correo-hoy.py`. `envio-qr-test.mjs` exige que el asunto y la pieza concuerden.

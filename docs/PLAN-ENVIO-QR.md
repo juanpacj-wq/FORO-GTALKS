@@ -5,7 +5,7 @@
 > **165 de 165 enviados, cero fallos.** Corrida de 20 minutos desde `admapps365@gecelca.com.co`,
 > con la pieza definitiva (`imagen correo qr.png`) y el asunto entregado por Comunicaciones.
 >
-> Después llegaron rezagados en tandas —hasta 169 el mismo día 4, y **11 más la mañana del 5**—,
+> Después llegaron rezagados en tandas hasta 169 el mismo día 4, y **11 más la mañana del 5**,
 > cada tanda en modo `lista` sobre el mismo libro, que es lo que impide que nadie reciba dos. El
 > día 5 el correo tuvo que cambiar: decía «mañana» y el foro era ese día. Ver
 > §El correo caducaba, y caducaba por dos sitios.
@@ -19,7 +19,7 @@
 > | Direcciones guardadas en el libro | ninguna (minimización) |
 > | Auditoría independiente de los 165 PNG | 165 códigos distintos, 0 cruzados, 0 ilegibles, 0 huérfanos, todos con la jornada de la mañana |
 >
-> Incidencias: **dos parones** de 85 s y 371 s durante la rasterización, sin consecuencia — ni un
+> Incidencias: **dos parones** de 85 s y 371 s durante la rasterización, sin consecuencia  ni un
 > reintento de Graph, ni un 429, ni un reintento de rasterizado. La mediana entre mensajes fue de
 > **5 s**; el ritmo global, 8 msg/min.
 >
@@ -39,7 +39,7 @@ solo ve quien **inicia sesión** en `/escarapela`. Quien no entrara al sitio ant
 llegaba al foro sin su código, y el registro en la Power App de capacitaciones depende de él.
 
 El correo de inscripción (`server/correo/`) no cerraba ese hueco: sale **en el primer login**, así
-que solo lo recibe quien ya entró. Faltaba el camino inverso — llegarle a la persona **antes** de
+que solo lo recibe quien ya entró. Faltaba el camino inverso  llegarle a la persona **antes** de
 que entre, con su código ya en la mano.
 
 Esto es un **script de una sola corrida** que le manda a los invitados del grupo
@@ -72,22 +72,22 @@ vuelve a salir, se haya inscrito o no.
 
 ---
 
-## Fase 0 — Lo que no es código, y bloquea
+## Fase 0  Lo que no es código, y bloquea
 
 ### 0.1 RESUELTO (2026-08-03), pero con más permiso del pedido
 
-Se pidió `GroupMember.Read.All` de aplicación — el mínimo que lee `/groups/{id}/members`. Lo
+Se pidió `GroupMember.Read.All` de aplicación  el mínimo que lee `/groups/{id}/members`. Lo
 concedido fue **`GroupMember.ReadWrite.All` y `Group.ReadWrite.All`**, ambos con consentimiento de
 administrador. Funciona (leer es un subconjunto de escribir) y el script **solo hace `GET`**, pero
-conviene saber lo que quedó abierto: la App Registration del login —la misma que ya podía **enviar
-correo como cualquier buzón**— ahora puede además **crear, modificar y eliminar grupos y
+conviene saber lo que quedó abierto: la App Registration del login la misma que ya podía **enviar
+correo como cualquier buzón** ahora puede además **crear, modificar y eliminar grupos y
 membresías de todo el tenant**.
 
 **Recomendación: bajar los dos a `Group.Read.All` / `GroupMember.Read.All`**, o retirarlos cuando
 el envío termine (`docs/SEGURIDAD.md` §Ciclo anual). No bloquea nada: el script funciona igual con
 los de solo lectura.
 
-Los permisos de aplicación de Graph son de **tenant** y no se pueden acotar a un solo grupo — ni
+Los permisos de aplicación de Graph son de **tenant** y no se pueden acotar a un solo grupo  ni
 con RBAC de Entra, ni con unidades administrativas, ni con RSC, que es de Teams. Queda como riesgo
 aceptado en `docs/SEGURIDAD.md`.
 
@@ -95,7 +95,7 @@ aceptado en `docs/SEGURIDAD.md`.
 
 `admapps365@gecelca.com.co` tiene que existir y tener licencia de Exchange Online: `Mail.Send` de
 aplicación no crea buzones. Las copias quedan en sus Enviados (`saveToSentItems: true`), que es la
-evidencia de auditoría — y también ~200 MB de cuota, que conviene comprobar antes.
+evidencia de auditoría  y también ~200 MB de cuota, que conviene comprobar antes.
 
 ### 0.3 PENDIENTE: la pieza gráfica
 
@@ -104,19 +104,19 @@ evidencia de auditoría — y también ~200 MB de cuota, que conviene comprobar 
 
 **El envío a `todos` con la pieza provisional ABORTA.** Un aviso en consola se lee y se olvida, y
 el error que evita no tiene vuelta atrás: 163 personas con el arte equivocado y un libro que dice
-`enviado`. Las pruebas en modo `lista` sí salen con la provisional —para verificar renderizado y
-escaneo, el arte da igual—, y la escotilla es `--con-pieza-provisional` para quien de verdad la
+`enviado`. Las pruebas en modo `lista` sí salen con la provisional para verificar renderizado y
+escaneo, el arte da igual, y la escotilla es `--con-pieza-provisional` para quien de verdad la
 quiera.
 
 **Adoptar el arte definitivo:**
 
 1. Dejar el archivo como `imagen correo qr.png` en la raíz y commitearlo.
-2. `node scripts/envio-qr-test.mjs` — exige que los bytes del adjunto sean los del archivo.
+2. `node scripts/envio-qr-test.mjs`  exige que los bytes del adjunto sean los del archivo.
 3. Comprobar en la cabecera de la siguiente corrida que ya **no** dice `⚠ PROVISIONAL`.
 
 ---
 
-## Fase 1 — Un solo dibujo del QR, dos lectores ✔
+## Fase 1  Un solo dibujo del QR, dos lectores ✔
 
 El arte vivía dentro de `src/components/Escarapela.tsx`. Salió a **`src/data/qr-arte.ts`**, que no
 toca el DOM (lo carga Node) ni el disco (lo empaqueta Vite): `svgQrAutonomo` recibe la marca «G»
@@ -132,10 +132,10 @@ cae en una fracción de píxel distinta, el antialias los muerde desigual y **ZX
 código**. Medido, no supuesto: a 600, 1200, 1620 y 2400 px decodificaba, y justo a 810 no.
 Redondeando el aire a media unidad el panel mide 90 módulos exactos, y `svgQrAutonomo` ajusta el
 lado pedido al múltiplo más cercano en vez de obedecerlo a ciegas. El defecto es **1080 px**: 12
-píxeles por módulo, y 4:1 exacto contra los 270 px con los que se muestra — Outlook usa el motor de
+píxeles por módulo, y 4:1 exacto contra los 270 px con los que se muestra  Outlook usa el motor de
 Word y las razones feas producen moiré.
 
-## Fase 2 — La audiencia se congela ✔
+## Fase 2  La audiencia se congela ✔
 
 `scripts/envio-qr-audiencia.mjs` lee el grupo **una vez** y escribe
 `.datos/audiencia-<fecha>-<grupo>.json`, que **nunca se sobrescribe** (`--salida` lo cambia). El
@@ -145,7 +145,7 @@ mandar correo son dos privilegios distintos, y así lo que se manda es exactamen
 revisó.
 
 **Corrida del 2026-08-03 contra el grupo real:** 163/163, sin `oid` ni alias repetidos, cero
-anomalías, y los **163 alias salen del atributo `mail`** — ni un solo invitado B2B, ninguna
+anomalías, y los **163 alias salen del atributo `mail`**  ni un solo invitado B2B, ninguna
 discrepancia entre el alias del `mail` y el del UPN, ningún alias con mayúsculas ni con punto, y un
 único dominio (`gecelca.com.co`). El riesgo que más preocupaba en la §0.2 del diseño no se
 materializó.
@@ -161,15 +161,15 @@ materializó.
 **Desde el 2026-08-05 esto no se hace a mano.** Dos scripts nuevos, porque las tres veces que se
 añadió gente el riesgo fue el mismo y el `POST` suelto no lo cubría:
 
-- **`scripts/personas-resolver.mjs`** — de NOMBRES a direcciones. Las listas llegan como
+- **`scripts/personas-resolver.mjs`**  de NOMBRES a direcciones. Las listas llegan como
   «APELLIDOS NOMBRES» y el directorio guarda «Nombres Apellidos»; traducir eso a mano es donde se
   cuela el error. Compara conjuntos de palabras normalizadas contra las 1749 cuentas del dominio,
   exige **una sola** coincidencia exacta y, si no la hay, **no escribe el archivo de direcciones** y
   enseña los candidatos. De 14 nombres, 5 no casaron solos y los resolvió un humano mirando que el
   candidato fuera único (un solo «Yerena», una sola «Catrin», un solo «Renato» entre 14 «Reyes»).
-- **`scripts/grupo-agregar.mjs`** — el alta. Resuelve **todas** las direcciones antes de escribir
+- **`scripts/grupo-agregar.mjs`**  el alta. Resuelve **todas** las direcciones antes de escribir
   ninguna (media lista dentro es peor que ninguna), enseña nombre + `mail` + UPN + alias del QR de
-  cada persona, es idempotente con quien ya está, y **verifica listando** los miembros al final —
+  cada persona, es idempotente con quien ya está, y **verifica listando** los miembros al final 
   no con `GET /members/{oid}/$ref`, que devuelve 404 aunque la persona sí esté.
 
 > Ojo con la comprobación: `GET /groups/{id}/members/{oid}/$ref` devuelve **404 aunque la persona
@@ -191,24 +191,24 @@ directa. Se mira con `GET /servicePrincipals?$filter=appId eq '{M365_CLIENT_ID}'
 
 **`--mas-correo <dirección>`** (repetible) añade a alguien que **no** está en el grupo pero debe
 recibir el correo. Se resuelve contra Graph igual que los del grupo, así que entra al archivo con
-su `oid` y su nombre reales — no es una edición a mano del JSON. Si ya venía en el grupo, no se
+su `oid` y su nombre reales  no es una edición a mano del JSON. Si ya venía en el grupo, no se
 duplica. El conteo de `--esperados` se comprueba **sobre el grupo**, no sobre el total, para que un
 cambio silencioso de membresía siga gritando.
 
 Detalles que no son obvios:
 
 - La consulta va a `/groups/{id}/members/**microsoft.graph.user**`. Sin el casteo, `/members`
-  devuelve objetos de directorio mezclados —un grupo anidado, un principal de servicio— que no
+  devuelve objetos de directorio mezclados un grupo anidado, un principal de servicio que no
   tienen `mail` ni `userPrincipalName`, y el script produciría un `USUARIO` vacío sin enterarse.
 - El `@odata.nextLink` se sigue **tal cual**: lleva un `$skiptoken` que ya codifica la proyección.
 - **El alias sale de `mail || userPrincipalName`**, que es la réplica de lo que hace `/api/me`
   (`email = claims.email || upn`) y por tanto de lo que pinta la escarapela de esa persona.
 - La auditoría es de fallo cerrado: conteo esperado, `oid` y alias **únicos** (dos alias iguales
   son dos QR idénticos), alias con `#EXT#`, cuentas deshabilitadas, alias con mayúsculas, y
-  **discrepancias entre el alias del `mail` y el del UPN** — esa persona recibiría un código
+  **discrepancias entre el alias del `mail` y el del UPN**  esa persona recibiría un código
   distinto al de su propia escarapela. Los anómalos no se envían sin revisión.
 
-## Fase 3 — El envío ✔
+## Fase 3  El envío ✔
 
 `scripts/envio-qr.mjs` (CLI) + `scripts/envio-qr-nucleo.mjs` (el bucle, con las dependencias
 inyectadas para poder ejercerlo con un Graph falso).
@@ -235,7 +235,7 @@ Pero el correo enlaza a `PUBLIC_ORIGIN + /escarapela`, así que un envío masivo
 `.env` a secas le manda a 165 personas un «Abre tu escarapela digital» que apunta **al portátil de
 quien lo envió**.
 
-No lo delata nada: ni el asunto, ni la pieza, ni el QR —que no depende del origen—. Solo se
+No lo delata nada: ni el asunto, ni la pieza, ni el QR que no depende del origen. Solo se
 descubre cuando alguien toca el enlace. Se detectó el **2026-08-04**, minutos antes de la corrida
 real, y **las ocho pruebas anteriores salieron con enlaces a `localhost`**.
 
@@ -249,7 +249,7 @@ PUBLIC_ORIGIN=https://cdp.gecelca.com.co node --env-file=.env scripts/envio-qr.m
 
 > **El dominio es `cdp.gecelca.com.co`**, confirmado por el usuario y comprobado en vivo: responde
 > 200 con su CSP en `/` y `/escarapela`, y 401 en `/api/me`. `deploy/deploy.env` todavía dice
-> `gtalks.gecelca.com.co`, que **ni siquiera resuelve** — ese valor está obsoleto y engaña.
+> `gtalks.gecelca.com.co`, que **ni siquiera resuelve**  ese valor está obsoleto y engaña.
 >
 > Ojo al comprobarlo con `curl`: `/` devuelve **404** si no se mandan las cabeceras `Sec-Fetch-*`.
 > No es un fallo, es el diseño (`server/app.js` distingue navegación de subrecurso). Hay que
@@ -262,13 +262,13 @@ pieza, «¡Mañana tenemos una importante cita!». Correcto el 4; el 5, para los
 grupo esa misma mañana, los citaba para el día siguiente cuando el foro era ese.
 
 Lo que no es obvio: **son dos sitios y hay que cambiar los dos**. Corregir solo el asunto deja el
-mensaje contradiciéndose consigo mismo —en la bandeja «HOY», y al abrirlo «¡Mañana…» en letra de
-36 px—, y corregir solo la pieza deja la mentira en lo único que se lee sin abrir. Por eso:
+mensaje contradiciéndose consigo mismo en la bandeja «HOY», y al abrirlo «¡Mañana…» en letra de
+36 px, y corregir solo la pieza deja la mentira en lo único que se lee sin abrir. Por eso:
 
 - El asunto vive en `server/correo/plantilla-envio-qr.js`.
 - El titular de la pieza lo reescribe **`scripts/pieza-correo-hoy.py`**, que no es un retoque a
-  mano: entra la pieza original y sale la variante, reproducible. Solo sintetiza «Hoy» —el «¡» y
-  el «tenemos» son los píxeles originales, recortados y desplazados—, la fuente no se adivina
+  mano: entra la pieza original y sale la variante, reproducible. Solo sintetiza «Hoy» el «¡» y
+  el «tenemos» son los píxeles originales, recortados y desplazados, la fuente no se adivina
   sino que se ajusta minimizando la diferencia de píxeles contra la palabra «Mañana» (Urbanist
   36 px peso 700; astas de 4.57 px contra 4.55 del original), y el hueco entre palabras sale de
   componer «Hoy tenemos» en la misma fuente en vez de copiar los 12 px que había tras la «a». El
@@ -279,12 +279,12 @@ mensaje contradiciéndose consigo mismo —en la bandeja «HOY», y al abrirlo �
 Y una tercera cosa que sí importa: **la pieza vieja NO se sobrescribe**. `imagen correo qr.png`
 son los bytes que recibieron las 169 del día 4; la variante va a `imagen correo qr hoy.png`. Si se
 reemplazara, el repositorio afirmaría que aquellas 169 recibieron algo que no recibieron, y ningún
-arnés lo gritaría —los tests comparan el adjunto contra el ARCHIVO, no contra los bytes
-históricos—. Es la misma razón por la que este correo nunca compartió pieza con el de inscripción.
+arnés lo gritaría los tests comparan el adjunto contra el ARCHIVO, no contra los bytes
+históricos. Es la misma razón por la que este correo nunca compartió pieza con el de inscripción.
 
-## Fase 4 — Los arneses ✔
+## Fase 4  Los arneses ✔
 
-- `node scripts/envio-qr-test.mjs` — Graph falso en loopback, libros en temporales, sin red ni
+- `node scripts/envio-qr-test.mjs`  Graph falso en loopback, libros en temporales, sin red ni
   credenciales. La prueba estrella decodifica **los bytes reales del adjunto** de cada mensaje
   sobre una población de alias parecidos a propósito, y hay dos pruebas que **sabotean** el
   generador para comprobar que el aborto ocurre de verdad. Más: idempotencia, reanudación, la
@@ -294,24 +294,24 @@ históricos—. Es la misma razón por la que este correo nunca compartió pieza
 
   Dos bloques que separan las dos catástrofes opuestas: un **QR cruzado aborta** la corrida entera
   (el mecanismo está roto), pero un **Graph que devuelve 500** solo anota `fallido` y sigue con los
-  demás —lo contrario dejaría a dos tercios del auditorio sin correo por un hipo de red—, y un
+  demás lo contrario dejaría a dos tercios del auditorio sin correo por un hipo de red, y un
   **429 se reintenta** conservando el `client-request-id`.
 
-- `node scripts/envio-qr-auditar.mjs <audiencia>` — **segunda opinión** sobre los PNG que dejó un
+- `node scripts/envio-qr-auditar.mjs <audiencia>`  **segunda opinión** sobre los PNG que dejó un
   ensayo. No genera nada: los lee del disco y cruza el **nombre del archivo** contra el **contenido
   decodificado**, y ambos contra la audiencia. La distinción con el auto-chequeo del envío no es
   cosmética: aquel compara el PNG contra la URL que acaba de construir *en la misma vuelta*, así
   que un bucle cruzado seguiría cuadrando consigo mismo. Este además ve lo que solo se aprecia en
   conjunto: que no haya dos personas con el mismo código, ni códigos huérfanos, ni faltantes.
-- `node scripts/qr-test.mjs` — sigue verde, y gana el check del `d` y el de la tinta.
-- `node scripts/inscripcion-test.mjs` — cubre el extracto de `html-correo.js`.
+- `node scripts/qr-test.mjs`  sigue verde, y gana el check del `d` y el de la tinta.
+- `node scripts/inscripcion-test.mjs`  cubre el extracto de `html-correo.js`.
 
 ---
 
 ## Orden de ejecución
 
 1. **Fase 0.1**: pedir el consentimiento de `GroupMember.Read.All`. Es lo único que bloquea.
-2. `node --env-file=.env scripts/envio-qr-audiencia.mjs` — y **leer el informe de anomalías**.
+2. `node --env-file=.env scripts/envio-qr-audiencia.mjs`  y **leer el informe de anomalías**.
 3. Ensayo: `node --env-file=.env scripts/envio-qr.mjs --audiencia .datos/audiencia-<fecha>.json`.
    Genera y verifica los 163 QR sin enviar nada. Abrir `.datos/qr/` y mirar unos cuantos al azar:
    que el alias del archivo sea el de esa persona.
@@ -359,7 +359,7 @@ lo usa dentro de tres meses. La respuesta se parte en dos, y solo una mitad depe
 - Un QR es papel: los píxeles codifican una cadena. Mientras la cadena no cambie, el código dice lo
   mismo dentro de diez años.
 
-**Del otro lado — lo que sí puede dejar de funcionar, y no lo controla este repo:**
+**Del otro lado  lo que sí puede dejar de funcionar, y no lo controla este repo:**
 
 | Qué | Por qué importa |
 |---|---|
@@ -371,7 +371,7 @@ lo usa dentro de tres meses. La respuesta se parte en dos, y solo una mitad depe
 **Y una asimetría deliberada que hay que tener presente el día 5:** el correo lleva **siempre** el
 ID de la **mañana**; la escarapela sí rota al de la tarde al mediodía. Quien escanee el código del
 correo por la tarde quedará registrado en la jornada de la mañana. Si eso importa, el camino es
-decírselo a la gente en el copy o pedirles que usen la escarapela después del almuerzo — no
+decírselo a la gente en el copy o pedirles que usen la escarapela después del almuerzo  no
 cambiar el QR del correo, que no puede rotar.
 
 ---

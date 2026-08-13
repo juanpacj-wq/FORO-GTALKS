@@ -2,7 +2,7 @@
  * Transporte: poner un mensaje en Microsoft Graph. Nada más.
  *
  * Permiso: `Mail.Send` de APLICACIÓN (client credentials), no delegado. El delegado enviaría
- * «como» el asistente —el correo aparecería en SU bandeja de enviados y con él como remitente—,
+ * «como» el asistente el correo aparecería en SU bandeja de enviados y con él como remitente,
  * que para una confirmación de inscripción es incorrecto; además obligaría a meter el scope en el
  * login, que hoy es mínimo a propósito (ver `auth/m365.js`).
  *
@@ -34,7 +34,7 @@ const REINTENTABLES = new Set([429, 503, 504]);
  * UNA dirección, y solo una. Guardia del TRANSPORTE, independiente de la política de
  * `inscripcion.js`: aunque quien llame se equivoque, de aquí no puede salir un mensaje cuyo
  * destino contenga una coma, un punto y coma, un espacio o un salto de línea es decir, nada
- * que pueda significar «y también a estos otros»—. Es la última línea antes de Graph.
+ * que pueda significar «y también a estos otros». Es la última línea antes de Graph.
  */
 const UNA_DIRECCION = /^[^\s@,;:<>"'()[\]\\]+@[^\s@,;:<>"'()[\]\\]+\.[^\s@,;:<>"'()[\]\\]+$/;
 

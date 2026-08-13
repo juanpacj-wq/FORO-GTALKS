@@ -7,7 +7,7 @@
 #
 # Mismo transporte que deploy.sh: tar por stdin de ssh con sha256 verificado en las
 # dos puntas. El destino es /var/lib/gtalks/certificados fuera de /opt/gtalks, para
-# que sobreviva a los despliegues igual que el libro—, con dueño gtalks:gtalks y modo
+# que sobreviva a los despliegues igual que el libro, con dueño gtalks:gtalks y modo
 # 0640. El manifiesto que viaja es EXACTAMENTE el que describirá lo subido: con
 # --solo se filtra aquí, en la estación, y el servidor jamás ve entradas de archivos
 # que no tenga (arrancaría abortando: «subida incompleta»).

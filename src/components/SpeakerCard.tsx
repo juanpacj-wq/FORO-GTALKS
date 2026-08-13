@@ -10,7 +10,7 @@ import './SpeakerCard.css'
  *
  * Once personas en tarjetas iguales es una rejilla de relleno: todas pesan lo
  * mismo y ninguna se lee. Como filaretrato, nombre grande, cargo, y una
- * regla de 1 px separando— el listado se lee como el índice de un programa,
+ * regla de 1 px separando el listado se lee como el índice de un programa,
  * que es lo que es.
  *
  * El retrato va cuadrado y no vertical: en una fila la foto no puede competir

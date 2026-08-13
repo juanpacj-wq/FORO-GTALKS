@@ -393,7 +393,7 @@ export function buildAuthApp() {
       user: { nombre_completo, cargo, area, upn, email, oid, roles },
       inscripcion: estadoInscripcion(oid),
       // Como `inscripcion`: estado del servidor, no promesa. `no_aplica` cuando la función está
-      // apagada, cuando la persona no asistió y cuando el oid no existe — a la interfaz le da
+      // apagada, cuando la persona no asistió y cuando el oid no existe  a la interfaz le da
       // igual cuál de los tres, y a un curioso también debe darle igual.
       certificado: estadoCertificado(oid),
     });
@@ -402,8 +402,8 @@ export function buildAuthApp() {
   // ── El certificado de participación: bytes pre-generados, SOLO del oid de la sesión ────────
   // No admite parámetros: no hay forma de pedir el de otro, ni de listar, ni de enumerar (la
   // regla de docs/EXPORTAR-INSCRITOS.md sobre «la peor puerta» se cumple por construcción).
-  // `revalidate` va aquí igual que en /api/me: esto ES identidad —entrega un documento con
-  // nombre y cédula—, y una sesión revocada en Entra no debe poder descargarlo.
+  // `revalidate` va aquí igual que en /api/me: esto ES identidad entrega un documento con
+  // nombre y cédula, y una sesión revocada en Entra no debe poder descargarlo.
   app.get('/api/certificado', asyncH(revalidate), (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     if (!estaAutenticado(req.session)) return res.status(401).json({ authenticated: false });
@@ -419,7 +419,7 @@ export function buildAuthApp() {
   // ── Encuestas: estado público, de solo lectura ──────────────────────────────
   // La ÚNICA pieza del sitio que abre por reloj. No hay sesión ni cookie de por medio: es un
   // hecho público («¿ya cerró el evento?») más la URL del formulario, que se RETIENE hasta esa
-  // hora la decisión vive en server/encuestas.js, no aquí—. `no-store` no es manía: una caché
+  // hora la decisión vive en server/encuestas.js, no aquí. `no-store` no es manía: una caché
   // compartida que guardara la respuesta «cerrada» seguiría negando la encuesta después de las 4.
   app.get('/api/encuestas', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -441,7 +441,7 @@ export function buildAuthApp() {
   }
   // `index: false` no es cosmético: sin él, serve-static respondería `GET /` por su cuenta y ese
   // HTML saldría SIN Content-Security-Policy (el setHeaders de aquí solo pone Cache-Control).
-  // Con él, TODA navegaciónincluida la raíz— cae al fallback de abajo, que es la única puerta
+  // Con él, TODA navegaciónincluida la raíz cae al fallback de abajo, que es la única puerta
   // por la que sale HTML y por tanto el único sitio donde la CSP tiene que estar bien.
   app.use(express.static(DIST_DIR, {
     index: false,

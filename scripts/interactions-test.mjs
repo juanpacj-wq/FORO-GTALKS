@@ -59,7 +59,7 @@ const anclaActiva = () =>
 
 // Espera activa, en vez de dormir una cantidad fija y mirar. Un plazo fijo tras
 // un scroll suave es una apuesta sobre lo rápida que vaya la máquina: con el
-// equipo cargadojusto después de un build, por ejemplo— el scroll todavía no
+// equipo cargadojusto después de un build, por ejemplo el scroll todavía no
 // ha parado y el scrollspy se lee a medias. Falló así una vez de catorce, que
 // es lo peor que le puede pasar a un arnés: un fallo que no se distingue de uno
 // de verdad y que se «arregla» volviendo a correrlo. Si el scrollspy está roto
@@ -103,7 +103,7 @@ check(
 console.log('\nCertificado')
 // Las interacciones CON sesión (estados del botón, el aviso emergente, Escape) viven en
 // sesion-test.mjs, que es donde se intercepta /api/me. Aquí, lo estructural: la ruta es de
-// primera clase se llega desde el nav y no redirige— y sin sesión solo invita a entrar.
+// primera clase se llega desde el nav y no redirige y sin sesión solo invita a entrar.
 await desktop.goto(base + '/', { waitUntil: 'networkidle' })
 await desktop.click('.gt-header__enlace[href="/certificado"], nav a[href="/certificado"]')
 await desktop.waitForURL('**/certificado')
@@ -153,8 +153,8 @@ await desktop.goto(base + '/ponentes', { waitUntil: 'networkidle' })
 check('hay 11 ponentes', (await desktop.locator('.gt-ponente').count()) === 11)
 // La presidencia abre y cierra la jornada: eso es protocolo, no programa, así
 // que su fila va sin línea de horas (`SIN_RESUMEN` en foro.ts) y son diez, no
-// once. Se comprueban las dos mitades por separado —cuántas la llevan y que la
-// que falta es exactamente esa— porque un `=== 10` a secas daría por bueno que
+// once. Se comprueban las dos mitades por separado cuántas la llevan y que la
+// que falta es exactamente esa porque un `=== 10` a secas daría por bueno que
 // la excepción se mueva de persona.
 check(
   'las diez filas del programa dicen cuándo intervienen',
@@ -178,7 +178,7 @@ check(
 
 // Los dos estados de la biografía. El documento de Comunicaciones no las trae
 // todas, y el caso ausente es el que se puede hacer mal: se verifica que NO se
-// pinte nadani cartel, ni caja vacía—, que es la única forma de que nadie lo
+// pinte nadani cartel, ni caja vacía, que es la única forma de que nadie lo
 // «arregle» metiendo un «biografía próximamente».
 //
 // Los dos slugs se DERIVAN de src/data/foro.ts y no se escriben aquí. Estaban
@@ -242,7 +242,7 @@ if (sinBio) {
 // estado por lo que se puede romper sin que se note: cerrada, que el botón sea
 // un botón deshabilitado con su aviso y no un enlace a ninguna parte; abierta
 // (interceptando /api/encuestas), que el enlace lleve el `rel` seguro sin
-// `noopener` la pestaña de destino puede reescribir la de origen—; y el paso
+// `noopener` la pestaña de destino puede reescribir la de origen; y el paso
 // de una a otra SIN recargar, que es la promesa de «se habilita sola a las 4».
 console.log('\nEncuestas (cerrada: preview no tiene /api/encuestas)')
 const AVISO_SATISFACCION = 'Se habilitará esta encuesta cuando finalice el evento.'

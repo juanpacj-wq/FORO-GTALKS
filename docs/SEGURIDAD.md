@@ -41,7 +41,7 @@ de la sesión; el sitio solo lo pinta, no guarda ni envía nada.
 
 **El correo de inscripción** sale en el **primer** inicio de sesión de cada persona y nunca más
 (`server/correo/`, ver §Correo de inscripción). No añade superficie HTTP: no hay ruta para
-dispararlo, reenviarlo ni consultarlo lo comprueba `gate-test.mjs`—; lo único que cambió es un
+dispararlo, reenviarlo ni consultarlo lo comprueba `gate-test.mjs`; lo único que cambió es un
 campo dentro de `/api/me`, que sigue cerrado sin sesión.
 
 ### La encuesta de satisfacción abre por reloj
@@ -54,7 +54,7 @@ público**; `GET /api/encuestas` la entrega solo cuando el reloj **del servidor*
 servidor no participa, y un `cierreIso` ambiguo aborta el arranque). Antes de esa hora el botón de
 `/encuestas` va deshabilitado con su aviso, y el cliente **falla cerrado**: sin confirmación del
 servidor sea porque aún no es la hora, porque `preview` no tiene API o porque la respuesta vino
-rota— no hay enlace que habilitar. Adelantar el reloj del teléfono no fabrica nada, porque no hay
+rota no hay enlace que habilitar. Adelantar el reloj del teléfono no fabrica nada, porque no hay
 nada que fabricar.
 
 No añade superficie de escritura: es un GET de solo lectura sin sesión ni cookie, y no existe
@@ -95,7 +95,7 @@ El rompebucles de cookie (`gt_lt`) murió con el SSO silencioso: sin `prompt=non
 intento automático que pueda encadenarse solo, así que ya no hay bucle que romper todo login
 nace de un clic.
 
-El caso que ese mecanismo cubría de verdad«autenticó, pero la cookie no se pudo fijar»— sigue
+El caso que ese mecanismo cubría de verdad«autenticó, pero la cookie no se pudo fijar» sigue
 existiendo y ahora se detecta donde ocurre: en `/auth/redirect`. Si Microsoft devolvió `code` y
 `state` pero la sesión no trae `authState` (la sesión pre-login no sobrevivió el viaje), la causa
 es la cookie → `?auth=cookies_bloqueadas`. Si `authState` existe y **no coincide**, eso sí es
@@ -198,22 +198,22 @@ el plan completo está en [`PLAN-CORREO-INSCRIPCION.md`](./PLAN-CORREO-INSCRIPCI
 
 **El cuerpo del correo ES la pieza oficial** (`imagen correo.png`, raíz del repo), incrustada **en
 línea** como adjunto con `Content-ID` (`cid:`) y envuelta entera en un enlace a
-`PUBLIC_ORIGIN + /escarapela`. No hay imágenes **remotas** —Outlook las bloquea y serían un píxel
-de rastreo—: la pieza viaja dentro del mensaje, así que se ve sin «descargar imágenes» y no delata
+`PUBLIC_ORIGIN + /escarapela`. No hay imágenes **remotas** Outlook las bloquea y serían un píxel
+de rastreo: la pieza viaja dentro del mensaje, así que se ve sin «descargar imágenes» y no delata
 cuándo se abre. La lee `cargarImagenCorreo()` **una vez al arrancar**: si falta, no es un PNG o no
 cabría en los ~4 MB de `sendMail`, el envío queda desactivado desde el arranque con un aviso
 ruidoso, no la mañana del foro. Bajo la imagen queda un enlace textual de respaldo al mismo
 destino, y el texto alterno de la imagen cuenta lo mismo a quien no la vea.
 
 **Permiso:** `Mail.Send` de **aplicación** (client credentials), no delegado el delegado
-enviaría «como» el asistente, desde su propia bandeja—. El remitente es un buzón del tenant
+enviaría «como» el asistente, desde su propia bandeja. El remitente es un buzón del tenant
 (`INSCRIPCION_REMITENTE`). Sale de Exchange Online, así que SPF, DKIM y DMARC de `gecelca.com.co`
 ya están alineados: no hay DNS que tocar ni relay externo.
 
 **Credenciales: hoy es la MISMA App Registration del login.** El bloque `MAIL_*` se deja vacío y el
 módulo cae a `M365_*`. La razón es operativa: con el secreto duplicado en el entorno, rotarlo en un
 sitio y olvidarlo en el otro rompería el correo en silencio, con el login intacto y nadie mirando.
-El respaldo es **todo o nada** —un `MAIL_*` suelto es un error de configuración, no una mezcla— y
+El respaldo es **todo o nada** un `MAIL_*` suelto es un error de configuración, no una mezcla y
 el arranque **declara en el log de qué app salen las credenciales**, porque que la app por la que
 todo el mundo inicia sesión sea además la que manda correo es una decisión que tiene que quedar
 dicha, no deducirse leyendo un `.env`. La consecuencia a tener presente: esa app pasa a ser
@@ -221,8 +221,8 @@ dicha, no deducirse leyendo un `.env`. La consecuencia a tener presente: esa app
 
 **Dos llaves para abrir el envío masivo, no una.** `INSCRIPCION_MODO` es `off` · `simulacro` ·
 `lista` · `todos`, y `lista`/`simulacro` exigen `INSCRIPCION_DESTINATARIOS`. Pasar de unos pocos a
-todo el tenant obliga a cambiar **las dos** variables —`todos` con la lista puesta es un **error de
-configuración**, no una lista que se ignora—: ninguna errata de una sola puede escribirle a la
+todo el tenant obliga a cambiar **las dos** variables `todos` con la lista puesta es un **error de
+configuración**, no una lista que se ignora: ninguna errata de una sola puede escribirle a la
 empresa entera. Una configuración a medias **no** enciende el envío a medias: en producción aborta
 el arranque (`server/index.js`) y en desarrollo el módulo avisa y se apaga.
 
@@ -259,7 +259,7 @@ construcción, en vez de confiar en que alguien se acuerde de borrar un archivo.
 En `simulacro` no se construye ni el cliente de MSAL: el proceso **no hace una sola petición de
 red** relacionada con el correo, ni siquiera para pedir el token.
 
-### El libro de inscripciones — es ESTADO, no un log
+### El libro de inscripciones  es ESTADO, no un log
 
 | Qué | Dónde | Contenido |
 |---|---|---|
@@ -285,7 +285,7 @@ El **aviso de privacidad** vive junto al botón de entrar, **antes** del login: 
 registrado para el control de asistencia del foro.»* Hasta el 2026-08-12 tenía una segunda frase
 que anunciaba el correo de inscripción; el usuario la retiró con el envío ya apagado
 (`INSCRIPCION_MODO=off`): no se anuncia un correo que no va a salir. Si el envío volviera a
-encenderse, la frase tiene que volver con él — `sesion-test.mjs` vigila hoy que NO esté, así que
+encenderse, la frase tiene que volver con él  `sesion-test.mjs` vigila hoy que NO esté, así que
 ese arnés se invierte a la vez.
 
 ---
@@ -293,13 +293,13 @@ ese arnés se invierte a la vez.
 ## Envío único del QR de asistencia
 
 El correo de inscripción solo llega a quien **ya entró** al sitio. Este otro cierra el hueco
-contrario: le manda a **todos los invitados** —se hayan inscrito o no— su código QR de registro
+contrario: le manda a **todos los invitados** se hayan inscrito o no su código QR de registro
 antes del foro. Sale de `scripts/envio-qr.mjs`, **una sola vez**, y se corre a mano desde la
 estación. Plan completo en [`PLAN-ENVIO-QR.md`](./PLAN-ENVIO-QR.md).
 
 **No añade superficie HTTP.** El servidor no carga ni una línea de esto: no hay ruta para
 dispararlo, reenviarlo ni consultarlo. `server/correo/plantilla-envio-qr.js` vive junto a la otra
-plantilla por afinidad, pero nada de `server/app.js` la importa — y no puede: importa `uqr` y
+plantilla por afinidad, pero nada de `server/app.js` la importa  y no puede: importa `uqr` y
 Playwright por la vía del script, y el despliegue los poda (`npm prune --omit=dev`).
 
 ### El único fallo sin arreglo posible: el QR de otro
@@ -337,7 +337,7 @@ carpeta Enviados del remitente. Consecuencias asumidas:
 ### El origen público no se hereda del `.env`
 
 El correo enlaza a `PUBLIC_ORIGIN + /escarapela`, y el `.env` de la estación dice
-`http://localhost:5173` — correcto para desarrollar, catastrófico para un envío masivo. `envio-qr.mjs`
+`http://localhost:5173`  correcto para desarrollar, catastrófico para un envío masivo. `envio-qr.mjs`
 **aborta** si `--confirmar` va con un origen que no sea `https://`; se le pasa en la línea de
 comando, que tiene precedencia sobre `--env-file`. El dominio es `cdp.gecelca.com.co`.
 
@@ -348,7 +348,7 @@ comando, que tiene precedencia sobre `--env-file`. El dominio es `cdp.gecelca.co
   vuelve a consultar Graph**: leer el directorio y mandar correo son dos privilegios distintos, y
   así lo que se manda es exactamente lo que un humano revisó.
 - El script audita antes de nada: conteo esperado, `oid` y alias únicos, alias de invitado B2B
-  (`#EXT#`), cuentas deshabilitadas, y **discrepancias entre el alias del `mail` y el del UPN** —
+  (`#EXT#`), cuentas deshabilitadas, y **discrepancias entre el alias del `mail` y el del UPN** 
   esa persona recibiría un QR distinto al de su propia escarapela. Los anómalos no se envían.
 - El libro es `.datos/envio-qr.jsonl`, con ruta **absoluta contra la raíz del repo**: correr el
   script desde otra carpeta abriría un libro vacío y todo el mundo recibiría un segundo correo.
@@ -366,7 +366,7 @@ comando, que tiene precedencia sobre `--env-file`. El dominio es `cdp.gecelca.co
 
 Tras el foro, cada asistente descarga su certificado en PDF desde `/certificado`, autenticándose
 con la misma sesión de Entra de la escarapela. El modelo de amenaza es el heredero directo del
-del envío del QR: **que Ana descargue el certificado de Beto** — un documento con el nombre y la
+del envío del QR: **que Ana descargue el certificado de Beto**  un documento con el nombre y la
 cédula de otra persona. Y hay una segunda amenaza propia: que la ruta nueva se convierta en **la
 «peor puerta»** contra la que advierte `docs/EXPORTAR-INSCRITOS.md` (una que sirva el registro de
 asistencia). No lo es, y no por convención sino por construcción: la ruta **no admite parámetros**.
@@ -382,7 +382,7 @@ libro). `GET /api/certificado` solo entrega bytes que ya existían.
 | Auto-chequeo por PDF: reabrir, rasterizar, y restar contra una referencia sin textos; centrado ±2 px y ancho esperado | `scripts/certificados-generar.py` | Un texto fuera de su sitio, un nombre que desborde su raya, cualquier cambio fuera de las dos bandas |
 | Segunda opinión por otra vía: la capa de texto de CADA pdf contra el archivo que lo nombra y contra la audiencia congelada, no contra el manifiesto del mismo lote | `scripts/certificados-auditar.py` | El cruce A-con-datos-de-B, que el auto-chequeo no puede ver porque compararía B contra B. Probado con sabotaje |
 | El manifiesto lleva `oid → archivo` y nada más | `certificados-generar.py` → `server/certificados.js` | Que el servidor conozca nombres o cédulas que no necesita (minimización, como el libro sin direcciones) |
-| `CERTIFICADOS_DIR` vacío = la función no existe; a medias = el arranque ABORTA; allowlist del nombre de archivo + `resolve` dentro del directorio | `server/certificados.js` (`iniciarCertificados`) | Encender a medias, y el traversal por manifiesto — negado por construcción y fijado por `certificados-server-test.mjs` |
+| `CERTIFICADOS_DIR` vacío = la función no existe; a medias = el arranque ABORTA; allowlist del nombre de archivo + `resolve` dentro del directorio | `server/certificados.js` (`iniciarCertificados`) | Encender a medias, y el traversal por manifiesto  negado por construcción y fijado por `certificados-server-test.mjs` |
 | La ruta resuelve SOLO el oid de la sesión; sin parámetros, sin listado, sin hermanas | `server/app.js` (`GET /api/certificado`) + `gate-test.mjs` | Pedir el certificado de otro o enumerar: no existe URL que lo nombre |
 | `revalidate` también en la descarga | `server/app.js` | Que una sesión revocada en Entra siga descargando un documento con datos personales |
 | La interfaz solo anuncia lo que el servidor confirma: solo el literal `disponible` pinta descarga | `src/data/sesion.ts` + `sesion-test.mjs` | Prometer un certificado que quizá no existe (campo ausente, server viejo, persona sin asistencia) |
@@ -487,16 +487,16 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 
 | Riesgo | Por qué se acepta | Revisión |
 |---|---|---|
-| **El contenido del foro es público** | Decisión del negocio (2026-07-28): la carta de presentación del evento debe poder abrirse sin fricción. Lo sensiblela identidad y el registro de asistencia— sigue detrás de la sesión (`/api/me`) y de Entra. `noindex` se mantiene | Cada edición: confirmar que sigue siendo la intención |
+| **El contenido del foro es público** | Decisión del negocio (2026-07-28): la carta de presentación del evento debe poder abrirse sin fricción. Lo sensiblela identidad y el registro de asistencia sigue detrás de la sesión (`/api/me`) y de Entra. `noindex` se mantiene | Cada edición: confirmar que sigue siendo la intención |
 | **Aviso `GHSA-qwww-vcr4-c8h2` en react-router 7.12–8.2** (alta) | Afecta al **modo RSC con actions**. Este sitio usa el modo declarativo puro: `BrowserRouter` + `<Routes>`, sin `createBrowserRouter`, sin `loader`/`action`, sin RSC y sin servidor de React verificado por búsqueda en `src/`. La ruta vulnerable no existe aquí. **No hay versión corregida publicada en la rama 7.x.** | Cada edición: comprobar si salió un 7.x parcheado |
 | **Sesiones en memoria**: un reinicio las cierra | El costo es un clic: el sitio sigue arriba y, como Entra conserva la sesión del navegador, el botón de `/escarapela` reentra sin pedir credenciales. Persistirlas significaría escribir **refresh tokens de Entra en disco** en una máquina expuesta a internet | Si algún día hay más de un proceso |
 | **`img-src data:`** en la CSP | Lo exigen el grano SVG del sistema de diseño y la foto local de la escarapela (dataURL de localStorage). Las imágenes no ejecutan | |
 | **La foto del carné queda en localStorage** tras cerrar sesión | La eligió la propia persona, nunca viaja al servidor, y la clave por `oid` garantiza que otra cuenta del mismo equipo jamás la ve pintada. Borrarla en el logout exigiría interceptar una navegación que debe seguir siendo navegación (front-channel) | Si aparece un caso real de equipo compartido |
 | **El remitente NO está acotado en Exchange** | `Mail.Send` de aplicación permite, por defecto, enviar como **cualquier** buzón del tenant; el control que lo cierra es una `ApplicationAccessPolicy` (o RBAC for Applications) de Exchange Online, y **no se aplicó**: exige rol de *Organization Management*, que la cuenta del proyecto no tiene, y el sitio vive un solo día. Lo que sí queda es la lista blanca de **destinatarios** en el código (`INSCRIPCION_DESTINATARIOS`, fallo cerrado) y el secreto en `/etc/gtalks/env`. Decisión del usuario, 2026-07-30 | Si el correo se abre a todo el tenant, o si el sitio pasa a vivir más de una edición, aplicarla |
-| **Un reinicio entre la reserva y el envío deja un `reservado` huérfano**: esa persona no recibe correo y no se reintenta sola | La alternativa —reintentar al arrancar— puede **duplicar** envíos, que es justo el fallo que el módulo existe para evitar. El huérfano es visible con un `grep` sobre el libro | Revisar el libro una vez al día en la semana del foro |
+| **Un reinicio entre la reserva y el envío deja un `reservado` huérfano**: esa persona no recibe correo y no se reintenta sola | La alternativa reintentar al arrancar puede **duplicar** envíos, que es justo el fallo que el módulo existe para evitar. El huérfano es visible con un `grep` sobre el libro | Revisar el libro una vez al día en la semana del foro |
 | **El aviso de privacidad promete el correo a todo el que entra**, y durante el piloto solo lo reciben los de la lista | Es una divulgación previa a un tratamiento de datos: sobre-informar es la dirección segura, informar de menos es la arriesgada. La interfaz, en cambio, **solo anuncia lo que el servidor confirma** | Deja de ser discrepancia en cuanto el modo pase a `todos` |
 | **La URL de la encuesta de satisfacción circuló en bundles anteriores** al gate por reloj | Quien la haya guardado de un despliegue previo puede abrir el formulario antes del cierre; el servidor solo puede retener lo que sirve HOY. El cierre de fondo está en Forms: la encuesta puede llevar además su propia **fecha de inicio** («Aceptar respuestas desde»), configurada por Comunicaciones en el tenant defensa en profundidad fuera de este repo | Antes del evento: pedir a Comunicaciones esa fecha de inicio en Forms |
-| **La app del login tiene `Group.ReadWrite.All` y `GroupMember.ReadWrite.All`** (concedidos el 2026-08-03) | Se pidió la variante de **lectura** (`GroupMember.Read.All`), que es la mínima para `/groups/{id}/members`; se concedieron las de **escritura**. El script solo hace `GET`, así que funciona igual — pero la misma App Registration que ya podía **enviar correo como cualquier buzón** y por la que **todo el mundo inicia sesión** puede ahora **crear, modificar y eliminar grupos y membresías de todo el tenant**. Los permisos de aplicación de Graph son de tenant y no se pueden acotar a un grupo: ni RBAC de Entra, ni unidades administrativas, ni RSC (que es de Teams) | **Bajarlos a `Group.Read.All` / `GroupMember.Read.All`** —no rompe nada— y **retirarlos cuando termine el envío**. Si el envío se repite cada edición, moverlos a una App Registration propia |
+| **La app del login tiene `Group.ReadWrite.All` y `GroupMember.ReadWrite.All`** (concedidos el 2026-08-03) | Se pidió la variante de **lectura** (`GroupMember.Read.All`), que es la mínima para `/groups/{id}/members`; se concedieron las de **escritura**. El script solo hace `GET`, así que funciona igual  pero la misma App Registration que ya podía **enviar correo como cualquier buzón** y por la que **todo el mundo inicia sesión** puede ahora **crear, modificar y eliminar grupos y membresías de todo el tenant**. Los permisos de aplicación de Graph son de tenant y no se pueden acotar a un grupo: ni RBAC de Entra, ni unidades administrativas, ni RSC (que es de Teams) | **Bajarlos a `Group.Read.All` / `GroupMember.Read.All`** no rompe nada y **retirarlos cuando termine el envío**. Si el envío se repite cada edición, moverlos a una App Registration propia |
 | **El QR viaja por correo, y registra asistencia sin autenticar** | El código es el mismo que ya estaba en la escarapela; lo que cambia es que ahora vive también en una bandeja de entrada y en Enviados del remitente. Un reenvío permite que otra persona marque esa asistencia. Se acepta porque el control de asistencia de un foro de un día no justifica un segundo factor, y porque el correo lo dice explícitamente | Si alguna edición necesita asistencia fehaciente, el QR tiene que llevar un token de un solo uso, no el alias |
 | **El libro del envío vive en la estación**, sin respaldo automático y fuera de git | Es un archivo de 163 líneas sin direcciones de correo. La mitigación real es `--maximo N` obligatorio con `--confirmar`: un libro perdido cuesta N correos repetidos, no 163. Y el registro autoritativo es el *message trace* de Exchange, no el libro | Copiarlo a un sitio sincronizado tras cada corrida |
 | **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde. (Con el sitio público el pico del login ya no es «todo el auditorio a la misma hora»: solo pasa por `/auth/*` quien abre su escarapela) | Ajustar con los rangos de egress cuando IT los entregue |

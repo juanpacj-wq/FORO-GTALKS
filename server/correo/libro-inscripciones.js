@@ -2,8 +2,8 @@
  * El libro de inscripciones: la memoria de a quién ya se le escribió.
  *
  * Es la pieza que hace que el correo salga UNA vez y solo una. Microsoft Graph no tiene señal
- * fiable de «primer inicio de sesión» —los sign-in logs piden Entra ID P1, no son inmediatos y
- * exigen `AuditLog.Read.All`—, así que el estado es nuestro.
+ * fiable de «primer inicio de sesión» los sign-in logs piden Entra ID P1, no son inmediatos y
+ * exigen `AuditLog.Read.All`, así que el estado es nuestro.
  *
  * ── Tres decisiones que no son obvias ────────────────────────────────────────
  *

@@ -44,7 +44,7 @@ const opcion = (nombre, defecto) => {
 const grupoPedido = opcion('--grupo', process.env.ENVIO_QR_GRUPO || GRUPO_POR_DEFECTO)
 /** Tamaño del grupo que se da por bueno. Es un CANDADO, no un dato: si el grupo crece o encoge
  *  sin que nadie lo sepa, la corrida se pone roja antes de mandar nada. Se actualiza a mano y a
- *  propósito cuando el cambio es deliberado — 163 al congelarlo el 2026-08-03, 164 desde que se
+ *  propósito cuando el cambio es deliberado  163 al congelarlo el 2026-08-03, 164 desde que se
  *  añadió a `csotomayor` el 2026-08-04. */
 const esperados = Number(opcion('--esperados', '164'))
 /** Personas que deben recibir el correo aunque NO estén en el grupo. Repetible. Se resuelven una
@@ -82,7 +82,7 @@ async function pedir(url) {
 // ── Resolver el grupo: acepta el Object ID o el NOMBRE ───────────────────────
 // Un GUID es lo inequívoco, pero obligar a buscarlo en el portal cada vez que se crea un grupo de
 // prueba es una invitación a pegar el que no era. Si lo que llega no tiene forma de GUID, se
-// resuelve por `displayName` — y si hay más de uno con ese nombre, se ABORTA en vez de elegir:
+// resuelve por `displayName`  y si hay más de uno con ese nombre, se ABORTA en vez de elegir:
 // mandarle a la audiencia equivocada es exactamente lo que este script existe para evitar.
 const ES_GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 let grupo = grupoPedido
@@ -109,7 +109,7 @@ if (!ES_GUID.test(grupoPedido)) {
 // El casteo `/microsoft.graph.user` no es adorno: `/members` a secas devuelve objetos de
 // directorio MEZCLADOS. Un grupo anidado o un principal de servicio no tienen `mail` ni
 // `userPrincipalName`, y el script produciría un `USUARIO` vacío sin enterarse. Con el casteo,
-// Graph devuelve solo usuarios — y sigue sin expandir grupos anidados, que es justo lo que la
+// Graph devuelve solo usuarios  y sigue sin expandir grupos anidados, que es justo lo que la
 // comprobación del conteo tiene que gritar.
 const miembros = []
 let url = `${GRAPH}/groups/${encodeURIComponent(grupo)}/members/microsoft.graph.user` +
@@ -148,8 +148,8 @@ if (masCorreos.length) console.log(`Total con añadidos: ${miembros.length}.`)
 console.log('')
 
 // ── Derivar el alias y auditar ───────────────────────────────────────────────
-// Se ORDENA por alias antes de nada. Graph no garantiza el orden de los miembros —comprobado: dos
-// lecturas seguidas del mismo grupo devolvieron los mismos 163 en distinta secuencia—, y un
+// Se ORDENA por alias antes de nada. Graph no garantiza el orden de los miembros comprobado: dos
+// lecturas seguidas del mismo grupo devolvieron los mismos 163 en distinta secuencia, y un
 // archivo cuyo orden baila no se puede diffear. Como el archivo congelado existe justamente para
 // que un humano compare antes de mandar 163 correos, sin orden estable no serviría para nada.
 const audiencia = miembros.map((m) => {
@@ -184,7 +184,7 @@ console.log('Auditoría')
 check(`el grupo trae ${esperados} personas`, delGrupo === esperados, `(trajo ${delGrupo})`)
 check('ningún `oid` repetido', oidsRepetidos.length === 0, oidsRepetidos.map(([a]) => a).join(', '))
 check(
-  'ningún alias repetido — dos alias iguales son dos QR idénticos',
+  'ningún alias repetido  dos alias iguales son dos QR idénticos',
   aliasRepetidos.length === 0,
   aliasRepetidos.map(([a, n]) => `${a}×${n}`).join(', '),
 )
@@ -193,7 +193,7 @@ check('todas las personas resuelven un alias limpio', conAnomalias.length === 0,
 if (conAnomalias.length) {
   console.log('\nPersonas que NO recibirán el correo sin revisión manual:')
   for (const p of conAnomalias) {
-    console.log(`  · ${p.nombre || '(sin nombre)'} <${p.correo || 'sin correo'}> — ${p.anomalias.join('; ')}`)
+    console.log(`  · ${p.nombre || '(sin nombre)'} <${p.correo || 'sin correo'}>  ${p.anomalias.join('; ')}`)
   }
 }
 

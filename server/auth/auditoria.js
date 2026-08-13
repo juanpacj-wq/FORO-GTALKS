@@ -28,7 +28,7 @@ if (RUTA) {
       flujo = null;
     });
   } catch (err) {
-    console.error('[auditoria] no se pudo abrir', RUTA, '—', err.message);
+    console.error('[auditoria] no se pudo abrir', RUTA, '', err.message);
   }
 }
 

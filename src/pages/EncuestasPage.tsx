@@ -21,11 +21,11 @@ import './EncuestasPage.css'
  * Con una diferencia entre ellas: la de satisfacción pregunta por la
  * experiencia del foro, así que no abre hasta que el foro cierra. Su URL no
  * está en este bundle la retiene el servidor y la entrega `/api/encuestas`
- * pasada la hora de `evento.json`—, y mientras tanto el botón va deshabilitado
+ * pasada la hora de `evento.json`, y mientras tanto el botón va deshabilitado
  * con su aviso. Quien decide es el reloj del SERVIDOR: adelantar el del
  * teléfono no fabrica el enlace. Ver `BotonSatisfaccion` abajo.
  *
- * Las otras dos —oportunidades y las preguntas pendientes para panelistas— van
+ * Las otras dos oportunidades y las preguntas pendientes para panelistas van
  * abiertas siempre: traen su `url` y `PieEncuesta` las pinta como enlace. La
  * regla que separa unas de otras es esa y solo esa: **sin `url`, el servidor
  * decide**.

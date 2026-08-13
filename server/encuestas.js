@@ -4,8 +4,8 @@
  *
  * La regla de negocio: la encuesta pregunta por la experiencia del foro, así
  * que no debe recibir respuestas antes de que el foro termine. Un gate solo en
- * la interfaz sería cosmético —cualquiera puede adelantar el reloj de su
- * equipo, o leer la URL del bundle—, así que la defensa es de retención: la
+ * la interfaz sería cosmético cualquiera puede adelantar el reloj de su
+ * equipo, o leer la URL del bundle, así que la defensa es de retención: la
  * URL del formulario vive AQUÍ, nunca en `src/`, y solo viaja al navegador
  * cuando `Date.now()` del servidor pasó el cierre. Antes de esa hora, el
  * cliente no tiene nada que habilitar.
@@ -54,8 +54,8 @@ if (!Number.isFinite(CIERRE_MS)) {
 }
 
 /**
- * Lo que `/api/encuestas` responde. Cerrada, el objeto NO tiene `url` —no es
- * un campo vacío ni oculto: no existe—; `desde` y `ahora` viajan siempre para
+ * Lo que `/api/encuestas` responde. Cerrada, el objeto NO tiene `url` no es
+ * un campo vacío ni oculto: no existe; `desde` y `ahora` viajan siempre para
  * que el cliente pueda programar su recomprobación restando DOS relojes del
  * servidor, sin fiarse del suyo.
  *

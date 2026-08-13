@@ -64,7 +64,7 @@ export default function Escarapela({
 
   const url = urlAsistencia(usuario.email, ahora)
   // El dibujo del QR NO vive aquí: vive en `src/data/qr-arte.ts`, porque tiene dos lectores
-  // esta pantalla y `scripts/envio-qr.mjs`, que lo rasteriza para el correo—. Todas las cotas
+  // esta pantalla y `scripts/envio-qr.mjs`, que lo rasteriza para el correo. Todas las cotas
   // medidas (punto al 72 %, claro al 10 %, marcadores redondeados, la «G» al 16 %, ecc 'Q' y
   // borde 2) están allí con su justificación. `qr-test.mjs` exige que el `d` que pinta este
   // componente sea idéntico al que produce Node: si divergen, el correo llevaría otro QR.
@@ -77,10 +77,10 @@ export default function Escarapela({
 
   // El cargo tiene 9.46cqw de luz hasta la píldora (top 120.70 − top 111.24): una línea de su
   // cuerpo base (4.79cqw × 1.15) cabe; la segunda invadía la banda de ASISTENTE «Gerente De
-  // Tecnologia De Informacion» lo demostró en producción—. El blindaje MIDE el texto pintado en
+  // Tecnologia De Informacion» lo demostró en producción. El blindaje MIDE el texto pintado en
   // vez de estimar por caracteres (los avances por glifo no son parejos) y encoge el cuerpo
-  // hasta asentarlo en una línea, como la pieza. El piso no es de gusto: sale de la geometría —
-  // por debajo de 4.0cqw, DOS líneas (2 × 1.15 × 4.0 = 9.2cqw) también caben en la luz—, así
+  // hasta asentarlo en una línea, como la pieza. El piso no es de gusto: sale de la geometría 
+  // por debajo de 4.0cqw, DOS líneas (2 × 1.15 × 4.0 = 9.2cqw) también caben en la luz, así
   // que ni el peor cargo imaginable toca la píldora. Se re-mide al resolver `document.fonts`:
   // con las métricas del fallback, la cifra saldría de otra fuente.
   const cargoRef = useRef<HTMLParagraphElement>(null)
@@ -90,7 +90,7 @@ export default function Escarapela({
     const ajustar = () => {
       // Con Range y no con scrollWidth: scrollWidth y clientWidth son ENTEROS, y un desborde
       // de medio píxel se esconde en ese redondeo el texto «casi cabe», el ajuste no actúa y
-      // la línea parte igual—. El Range da el ancho fraccional del texto pintado. La holgura
+      // la línea parte igual. El Range da el ancho fraccional del texto pintado. La holgura
       // del 0.5 % y el redondeo hacia ABAJO matan el otro borde: toFixed redondeando hacia
       // arriba devolvía un cuerpo una pizca mayor que el calculado, y volvía a partir.
       el.style.fontSize = ''
@@ -113,7 +113,7 @@ export default function Escarapela({
   // La pieza asienta «SOFÍA MUNÉVAR» (13 caracteres) en una línea con una versal de 67px, que
   // en Urbanist son 9.35cqw de cuerpo. Un nombre más largo lo reduce en proporción para asentar
   // igual, con un piso legible: sin esto, «María Cristina Giraldo» partía en dos líneas yaun
-  // con cada cosa anclada a su cota— se comía la regla celeste de debajo.
+  // con cada cosa anclada a su cota se comía la regla celeste de debajo.
   const nombreFs = `${Math.max(5.4, Math.min(9.35, (9.35 * 13) / Math.max(usuario.nombre_completo.length, 1))).toFixed(2)}cqw`
 
   return (

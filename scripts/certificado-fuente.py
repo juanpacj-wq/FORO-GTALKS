@@ -26,14 +26,14 @@
 # Se midieron TRECE candidatas con tres arneses sucesivos (ancho de frase; ajuste por palabra con
 # tracking; ajuste subpíxel de escala+tracking + IoU por palabra alineada + grosor de asta).
 # Ninguna ES la fuente de la pieza: el mejor IoU alineado fue 0.608 (Poppins Regular), donde la
-# fuente verdadera daría >0.8. Lo que sí quedó identificado con datos: el PESO — el asta de la
+# fuente verdadera daría >0.8. Lo que sí quedó identificado con datos: el PESO  el asta de la
 # pieza mide 3.00 px, exactamente la de Poppins Regular y Glacial Regular; toda Medium/Bold quedó
 # descartada.
 #
 # El usuario decidió ese día: **Poppins Regular como fuente DEFINITIVA del nombre y la cédula**,
 # aceptando la diferencia de formas como equivalente visual al cuerpo en que se pinta. La
 # decisión queda como riesgo aceptado en docs/SEGURIDAD.md; este script se conserva tal cual
-# —negándose— como testigo del método: si llega otra entrega de la pieza o aparece la fuente
+# negándose como testigo del método: si llega otra entrega de la pieza o aparece la fuente
 # original, se corre otra vez y manda lo que mida.
 
 from __future__ import annotations
@@ -49,8 +49,8 @@ PIEZA = RAIZ / 'Certificado de participación.png'
 FUENTES = RAIZ / 'fuentes-origen'
 
 # Las frases testigo: TODO el cuerpo en regular de la pieza (la línea en negrilla del «1° Foro…»
-# queda fuera). Una sola frase no discrimina — con ~10 palabras el ruido de ±1-2 px por borde
-# tapa la señal—; con las cuatro son 27 palabras y el ajuste decide con autoridad.
+# queda fuera). Una sola frase no discrimina  con ~10 palabras el ruido de ±1-2 px por borde
+# tapa la señal; con las cuatro son 27 palabras y el ajuste decide con autoridad.
 FRASES = [
     ('Por su participación y asistencia al', 690, 740),
     ('espacio de diálogo sobre los desafíos y tendencias que están definiendo la', 780, 824),

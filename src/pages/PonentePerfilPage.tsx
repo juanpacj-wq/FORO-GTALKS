@@ -113,7 +113,7 @@ export default function PonentePerfilPage() {
              contorno desplazado. Dos motivos, y ninguno es decorativo.
 
              Uno, la maqueta no se mueve el día que llegue el retrato lo que
-             hay ahora es lo que habrá—. Y dos, un monograma de 128 px en una
+             hay ahora es lo que habrá. Y dos, un monograma de 128 px en una
              columna de 460 deja un hueco de media página, que es justo lo que
              hace que una ficha se lea como una plantilla a la que le falta un
              trozo. */

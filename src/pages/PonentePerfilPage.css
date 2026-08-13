@@ -1,6 +1,6 @@
 /* El perfil usa las dos superficies del sistema, y esa división es lo que
    estructura la página: sobre el campo oscuro va quién es la personaretrato
-   y trayectoria—, y sobre el papel va lo que hace en el foro. El papel es el
+   y trayectoria, y sobre el papel va lo que hace en el foro. El papel es el
    mismo objeto que la tarjeta del programa en la home, porque es el mismo
    dato: la agenda filtrada por una persona.                                  */
 
@@ -25,7 +25,7 @@
    600, y sobraba media página a la derecha y otro tanto por debajo de la foto.
 
    La primera pista es `auto` y no un ancho fijo porque la ocupan dos cosas de
-   tamaño distintoel retrato cuando existe, el monograma cuando no— y el
+   tamaño distintoel retrato cuando existe, el monograma cuando no y el
    texto tiene que arrancar justo detrás en los dos casos.                    */
 
 .gt-perfil__intro {
@@ -38,7 +38,7 @@
 .gt-perfil__retrato {
   width: clamp(16rem, 30vw, 29rem);
   align-self: stretch;
-  /* Red de seguridad para el caso más cortodos líneas de texto y nada más—,
+  /* Red de seguridad para el caso más cortodos líneas de texto y nada más,
      que hoy no ocurre porque ahí sube el programa, pero ocurriría si un día
      alguien no tuviera ni biografía ni intervenciones.                       */
   min-height: 22rem;
@@ -54,7 +54,7 @@
 
 /* --- La placa, mientras no haya foto -----------------------------------------
    Ocupa el sitio exacto del retratomisma columna, mismo alto, misma forma y
-   el mismo contorno desplazado— para que la maqueta no se mueva el día que la
+   el mismo contorno desplazado para que la maqueta no se mueva el día que la
    foto llegue. Las iniciales van a tamaño de titular: a esa escala dejan de
    ser un avatar por defecto y pasan a ser un grafismo, que es lo mismo que
    hace el sistema con el numeral «1» y con el wordmark.                      */
@@ -141,7 +141,7 @@
 }
 
 /* El primer párrafo es siempre quién es la persona y qué estudióasí abre
-   cada ficha del documento de Comunicaciones—, así que se compone como
+   cada ficha del documento de Comunicaciones, así que se compone como
    entradilla. Todas las biografías llegan aquí con dos párrafos o más: las que
    el documento entrega en un bloque único se parten en foro.ts por un punto y
    seguido, sin tocar el texto, justo para que esta regla las alcance.
@@ -161,7 +161,7 @@
 
 /* --- El programa, sobre lámina -----------------------------------------------
    La misma tarjeta vive en dos anchos distintosdentro de la columna de texto
-   cuando no hay biografía, y a ancho completo cuando sí—, así que se mide a sí
+   cuando no hay biografía, y a ancho completo cuando sí, así que se mide a sí
    misma con una container query en vez de mirar la ventana. Es lo que ya hace
    la línea del día, y por el mismo motivo: lo que decide si las horas caben en
    su propia columna es el ancho de la tarjeta, no el del navegador.          */

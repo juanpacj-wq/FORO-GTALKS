@@ -92,7 +92,7 @@ export function iniciarCertificados(env = process.env) {
 
 /**
  * Lo que `/api/me` anuncia. `no_aplica` cubre a propósito TRES casos con una sola palabra
- * la función apagada, la persona sin certificado, y un oid desconocido—: distinguirlos no le
+ * la función apagada, la persona sin certificado, y un oid desconocido: distinguirlos no le
  * sirve a la interfaz y sí le contaría cosas a quien no debe.
  * @returns {'disponible'|'no_aplica'}
  */

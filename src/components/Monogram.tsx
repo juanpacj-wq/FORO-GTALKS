@@ -10,7 +10,7 @@ import './Monogram.css'
  * círculo con iniciales es el relleno por defecto de cualquier sitio; la hoja
  * es la misma forma que el marco de las fotos, así que la ausencia se lee como
  * decisión y no como un hueco. Es la caja de tres sitiosel índice de
- * ponentes, el roster de la home y el programa—, y por eso vive aquí en vez de
+ * ponentes, el roster de la home y el programa, y por eso vive aquí en vez de
  * reimplementarse en cada uno.
  *
  * Es decorativa (`aria-hidden`): el nombre completo va siempre escrito al lado.
@@ -19,7 +19,7 @@ import './Monogram.css'
  * con la imagen dentro. Dos razones: los selectores de hover de quien la
  * contiene siguen encontrando `.gt-monograma`, y el `<span>` aporta los dos
  * pseudoelementos que necesita el tratamiento de retratodos modos de fusión
- * distintos piden dos capas—.
+ * distintos piden dos capas.
  */
 export default function Monogram({
   nombre,

@@ -2,8 +2,8 @@
  * Los hechos del evento, para el correo de inscripción.
  *
  * Lee EL MISMO archivo que el sitio (`src/data/evento.json`, que `src/data/foro.ts` importa),
- * en vez de mantener una copia aquí. La alternativa —dos listas con la misma fecha y el mismo
- * lugar— se habría separado en cuanto se resolviera el pendiente #1 (la sede: los PDF dicen
+ * en vez de mantener una copia aquí. La alternativa dos listas con la misma fecha y el mismo
+ * lugar se habría separado en cuanto se resolviera el pendiente #1 (la sede: los PDF dicen
  * «G Working», la carpeta dice «Puerta de Oro»), y el correo habría seguido citando la vieja.
  *
  * `src/` sí llega al servidor: `deploy/deploy.sh` empaqueta el repo con `git archive` y la poda
@@ -60,7 +60,7 @@ export function cargarEvento() {
   return cache;
 }
 
-/** «1° Foro GECELCA G-TALKS» — con lo que el correo se presenta en el asunto. */
+/** «1° Foro GECELCA G-TALKS»  con lo que el correo se presenta en el asunto. */
 export function tituloCorto(evento) {
   return `${evento.edicion}° Foro GECELCA ${evento.marca}`;
 }

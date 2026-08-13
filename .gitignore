@@ -23,7 +23,7 @@ dist/
 # inscritos ya viven en .datos/ (ignorado); cualquier otro es material de trabajo.
 *.xlsx
 # El listado de asistentes del 2026-08-12 (asistentes.md) trae la cédula de las 155
-# personas en su columna IDENTIF. — mismo trato que el Excel. Se cubre también el
+# personas en su columna IDENTIF.  mismo trato que el Excel. Se cubre también el
 # nombre intermedio que tuvo la entrega (asistentescedula.md), por si reaparece.
 /asistentes.md
 /asistentescedula.md
@@ -63,7 +63,7 @@ deploy/deploy.env
 
 # Candidatas tipográficas descargadas para identificar la fuente del certificado
 # (scripts/certificado-fuente.py las re-descarga). Lo único que el GENERADOR necesita
-# sí se versiona: Poppins Regular con su licencia OFL — sin ella no se regenera ningún
+# sí se versiona: Poppins Regular con su licencia OFL  sin ella no se regenera ningún
 # certificado, el mismo argumento que fotos-origen/.
 fuentes-origen/*
 !fuentes-origen/Poppins-Regular.ttf

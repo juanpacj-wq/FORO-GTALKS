@@ -6,7 +6,7 @@
 #
 # El mismo argumento que `envio-qr-auditar.mjs`: el auto-chequeo del generador compara el PDF
 # contra los datos que ACABA de usar, en memoria, dentro de la misma vuelta del bucle. Si el
-# bucle estuviera cruzado —la persona A con los datos de B—, la comparación seguiría cuadrando,
+# bucle estuviera cruzado la persona A con los datos de B, la comparación seguiría cuadrando,
 # porque compararía B contra B. Esto cruza el NOMBRE DEL ARCHIVO (que sale del alias) contra el
 # CONTENIDO (la capa de texto del PDF, que es vectorial y se extrae sin OCR), y ambos contra la
 # AUDIENCIA CONGELADA, que es la fuente. No genera nada y no comparte ni una línea de código de

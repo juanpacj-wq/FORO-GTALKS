@@ -6,8 +6,8 @@
 // segunda opinión sobre el mismo trabajo, hecha por otro camino:
 //
 //   · El auto-chequeo de `envio-qr.mjs` compara el PNG contra la URL que ACABA de construir, en
-//     memoria, dentro de la misma vuelta del bucle. Si el bucle estuviera cruzado —la persona A
-//     con los datos de B—, la comparación seguiría cuadrando, porque compararía B contra B.
+//     memoria, dentro de la misma vuelta del bucle. Si el bucle estuviera cruzado la persona A
+//     con los datos de B, la comparación seguiría cuadrando, porque compararía B contra B.
 //   · Esto compara el NOMBRE DEL ARCHIVO (que sale del alias de la persona) contra el CONTENIDO
 //     decodificado, y ambos contra la audiencia congelada. Un cruce en el bucle sí se ve aquí.
 //

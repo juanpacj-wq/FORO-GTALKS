@@ -3,7 +3,7 @@
     .venv-design/Scripts/python scripts/pieza-correo-hoy.py
 
 `imagen correo qr.png` se compuso para salir el 4 de agosto, la víspera del foro. El envío del 5
-—los rezagados que entraron al grupo esa misma mañana— los citaba para mañana cuando el foro era
+los rezagados que entraron al grupo esa misma mañana los citaba para mañana cuando el foro era
 ese día. El asunto se corrige en `server/correo/plantilla-envio-qr.js`; el titular de la pieza,
 aquí.
 
@@ -29,7 +29,7 @@ inscripción. Así que la variante va a un archivo nuevo y las dos se versionan.
 2. **La fuente no se adivina: se ajusta.** Urbanist 36 px / peso 700 salió de minimizar la
    diferencia de píxeles contra la palabra «Mañana» del original (IoU 0.83, 135×26 px contra
    136×27). Urbanist es además la tipografía del sistema de diseño, autohospedada en
-   `public/fonts/` — el .woff2 se convierte aquí mismo, no hay dependencia nueva.
+   `public/fonts/`  el .woff2 se convierte aquí mismo, no hay dependencia nueva.
 3. **El espacio sale de la fuente, no de una resta.** El hueco entre «Hoy» y «tenemos» se mide
    componiendo «Hoy tenemos» con la misma Urbanist. Copiar los 12 px que había tras la «a» de
    «Mañana» habría dejado el renglón apretado: la «y» termina en diagonal y pide más aire.

@@ -58,7 +58,7 @@ export default function InicioPage() {
                 que mide el conjunto y la base del «1» tiene que caer dentro de
                 ella. Las cotas están en InicioPage.css, medidas sobre el PDF.
                 El `alto` del numeral lo fija Icono como estilo inlineninguna
-                regla CSS puede ganarle—, así que va aquí. */}
+                regla CSS puede ganarle, así que va aquí. */}
             <div className="gt-hero__lockup">
               <h1 className="gt-hero__titulo">
                 <Icono
@@ -97,8 +97,8 @@ export default function InicioPage() {
 
           <div className="gt-hero__media">
             {/* Sin `ratio`: el marco del hero no va por proporción sino por lo
-                que le deja el layoutancho— y por lo que cabe en la primera
-                pantalla —alto—. Las dos cotas están en InicioPage.css. */}
+                que le deja el layoutancho y por lo que cabe en la primera
+                pantalla alto. Las dos cotas están en InicioPage.css. */}
             <PhotoFrame
               className="gt-hero__foto gt-marco--paralaje"
               src="/img/hero-matriz-energetica.webp"
@@ -180,7 +180,7 @@ export default function InicioPage() {
           <LineaDelDia activo={bloqueActivo} onActivo={setBloqueActivo} />
           <div className="gt-agenda__envoltorio gt-lamina">
             {/* Cabecera de la lámina: la convierte en un documentoel programa
-                impreso del día— y no en una lista suelta sobre un rectángulo. */}
+                impreso del día y no en una lista suelta sobre un rectángulo. */}
             <div className="gt-agenda__cabecera">
               <p className="gt-dato">Programa</p>
               <p className="gt-agenda__cabecera-dato">

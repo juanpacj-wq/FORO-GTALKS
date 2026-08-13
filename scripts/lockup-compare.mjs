@@ -19,7 +19,7 @@
 //     resultado no depende de dónde caiga el bloque en la página.
 //
 // Se prueban varios anchos porque el cuerpo del lockup se acota por el ancho disponible. El que
-// se captura para el diff es el primeroescritorio ancho, el titular en su techo de 6rem— o el
+// se captura para el diff es el primeroescritorio ancho, el titular en su techo de 6rem o el
 // que se pase como argumento: `node scripts/lockup-compare.mjs 1440`.
 
 import { chromium } from 'playwright'

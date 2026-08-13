@@ -9,20 +9,20 @@
 // Concretamente: la hoja `Hoja1` de «ASISTENCIA FORO.xlsx» (completada contra Entra y contra la
 // planta el 2026-08-10) más quienes asistieron sin escanear QR, que no están en la hoja y van
 // nombrados en SIN_QR con su cédula en `.datos/sin-qr-2026-08-12.txt`. Los 14 de la hoja
-// «query (13)» que no pasaron a Hoja1 quedan FUERA por decisión del usuario (2026-08-10) — si
+// «query (13)» que no pasaron a Hoja1 quedan FUERA por decisión del usuario (2026-08-10)  si
 // eso cambia, se re-congela, no se parchea.
 //
 // El 2026-08-12 llegó `asistentes.md` (155 filas) y los sin-QR pasaron de 3 a 24: los 21 nuevos
 // son TODOS «ASISTIÓ, NO QR». El diff contra la audiencia del 10 enseñó dos cosas que el listado
 // solo no dice: nueve de sus filas son personas que YA estaban (misma persona, grafía distinta o
 // nombre truncado: Lamboglia/LAMBLOGIA, REYES RENATO por Renato Reyes Bilbao…), y Edgar
-// Paternina Amaris —que escaneó QR y está en Hoja1— no aparece en el md. La instrucción fue
+// Paternina Amaris que escaneó QR y está en Hoja1 no aparece en el md. La instrucción fue
 // AGREGAR, así que se conserva: 132 de Hoja1 + 23 sin-QR descargables = 155, y Howard aparte.
 //
 // ── Por qué se congela, y por qué se revisa a mano ───────────────────────────
 //
 // El mismo argumento que `envio-qr-audiencia.mjs`: el generador de PDFs no debe consultar ni el
-// Excel ni Graph — entre «quién es la audiencia» y «generar los artefactos» tiene que mediar un
+// Excel ni Graph  entre «quién es la audiencia» y «generar los artefactos» tiene que mediar un
 // archivo que un humano pueda leer, corregir y volver a verificar. Aquí además se DERIVA un dato
 // (el nombre en el orden «NOMBRES APELLIDOS», en mayúsculas) y toda derivación puede equivocarse:
 // la que no particione limpio queda marcada como anomalía y NO deja escribir el archivo final
@@ -63,7 +63,7 @@ function abortar(mensaje) {
 // directorio con el criterio de `personas-resolver.mjs`: UNA coincidencia exacta o nada.
 // Los tres primeros son los contratistas del 2026-08-10; el resto llegó con `asistentes.md`
 // el 2026-08-12. KOPP va con esa grafía a propósito: el listado decía «KOOP», que no existe en
-// el directorio — el cargo y la gerencia de la fila (Analista de Sistemas de Gestión) son
+// el directorio  el cargo y la gerencia de la fila (Analista de Sistemas de Gestión) son
 // exactamente los de Kenneth Kopp Sierra (kkopp@), así que la errata es del listado.
 const SIN_QR = [
   'HOWARD DIAZ GRANADOS CATRIN',
@@ -108,7 +108,7 @@ const SIN_CUENTA = new Set([
 // Echeverri, Barbosa/Barboza, Yennifer/Yenifer, Degiovany/Degiovanni) o con partículas que Entra
 // no registra («De La Concepcion», «De Jesus»). Se REORDENA conservando la grafía del Excel: es
 // la fuente del listado de asistencia. Si alguna grafía resulta estar mal en el Excel, se
-// corrige ALLÍ y se re-congela — no aquí.
+// corrige ALLÍ y se re-congela  no aquí.
 const ORDEN_A_MANO = new Map([
   ['cconsuegra@gecelca.com.co', 'Camilo Andres Consuegra Jimenes'],
   ['adegiovanni@gecelca.com.co', 'Augusto Rafael Degiovany Mejia'],
@@ -126,7 +126,7 @@ const ORDEN_A_MANO = new Map([
   ['lvalencia@gecelca.com.co', 'Luz Estella Valencia Silvera'],
 ])
 
-/** Palabras normalizadas (sin tildes, sin ñ/n, MAYÚSCULAS) — el criterio de personas-resolver. */
+/** Palabras normalizadas (sin tildes, sin ñ/n, MAYÚSCULAS)  el criterio de personas-resolver. */
 const palabras = (s) => String(s ?? '')
   .normalize('NFD').replace(/[̀-ͯ]/g, '')
   .toUpperCase().replace(/[^A-Z\s]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -300,8 +300,8 @@ for (const pedido of SIN_QR) {
   })
   // La inversa: el displayName de Entra a veces trae MENOS palabras que el listado («Hernando
   // Franco Zambrano» para FRANCO ZAMBRANO HERNANDO JOSE). Se exigen al menos 3 palabras del
-  // directorio contenidas en el pedido — con 2 casaría cualquiera que comparta nombre y un
-  // apellido — y sigue valiendo la regla de siempre: UNA coincidencia o nada.
+  // directorio contenidas en el pedido  con 2 casaría cualquiera que comparta nombre y un
+  // apellido  y sigue valiendo la regla de siempre: UNA coincidencia o nada.
   const inversas = (exactas.length || contenidas.length) ? [] : indexados.filter((x) => {
     if (x.p.length < 3) return false
     const resto = [...pp]
@@ -311,7 +311,7 @@ for (const pedido of SIN_QR) {
   if (casadas.length !== 1) {
     anomaliasGlobales.push({
       correo: `(sin resolver) ${pedido}`,
-      anomalias: [`${casadas.length} coincidencias en el directorio${casadas.length ? ': ' + casadas.map((c) => c.u.displayName).join(' · ') : ''} — si de verdad no tiene cuenta, pásalo a SIN_CUENTA`],
+      anomalias: [`${casadas.length} coincidencias en el directorio${casadas.length ? ': ' + casadas.map((c) => c.u.displayName).join(' · ') : ''}  si de verdad no tiene cuenta, pásalo a SIN_CUENTA`],
     })
     continue
   }
@@ -324,7 +324,7 @@ const { estado, check } = crearVerificador()
 check(`la audiencia trae ${esperados} personas`, personas.length === esperados, `(hay ${personas.length})`)
 const repetidos = (xs) => [...xs.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map())].filter(([, n]) => n > 1).map(([k]) => k)
 check('ningún oid repetido', repetidos(personas.map((p) => p.oid).filter(Boolean)).length === 0)
-check('ningún alias repetido — dos alias iguales son dos PDF que se pisan', repetidos(personas.map((p) => p.alias)).length === 0)
+check('ningún alias repetido  dos alias iguales son dos PDF que se pisan', repetidos(personas.map((p) => p.alias)).length === 0)
 check('ninguna cédula repetida', repetidos(personas.map((p) => p.cedula)).length === 0)
 check('todas con oid (sin él no hay descarga)', personas.every((p) => p.oid))
 check('todas con nombre pintado', personas.every((p) => p.nombrePintado))
@@ -351,7 +351,7 @@ if (fs.existsSync(destino)) {
 fs.writeFileSync(destino, JSON.stringify({ generado: new Date().toISOString(), esperados, personas, entregaManual }, null, 2), { mode: 0o640 })
 
 console.log(`\n✔ Audiencia congelada: ${personas.length} personas → ${path.relative(RAIZ, destino)}`)
-for (const e of entregaManual) console.log(`  ⚠ ENTREGA MANUAL: ${e.nombre} (C.C. ${e.cedula}) — ${e.motivo}`)
-console.log('\nRevisa el archivo A MANO antes de generar — sobre todo cada `nombrePintado`: es lo que')
+for (const e of entregaManual) console.log(`  ⚠ ENTREGA MANUAL: ${e.nombre} (C.C. ${e.cedula})  ${e.motivo}`)
+console.log('\nRevisa el archivo A MANO antes de generar  sobre todo cada `nombrePintado`: es lo que')
 console.log('va impreso en el diploma de esa persona. El siguiente paso es:')
 console.log(`  .venv-design/Scripts/python scripts/certificados-generar.py --audiencia ${path.relative(RAIZ, destino).replace(/\\/g, '/')}\n`)

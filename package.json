@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Carta de presentación digital del 1° Foro GECELCA «Energía en Acción — Retos y oportunidades» (G-TALKS), tras un gate de Microsoft Entra ID",
+  "description": "Carta de presentación digital del 1° Foro GECELCA «Energía en Acción  Retos y oportunidades» (G-TALKS), tras un gate de Microsoft Entra ID",
   "scripts": {
     "dev": "vite",
     "dev:auth": "node --env-file=.env --watch server/index.js",

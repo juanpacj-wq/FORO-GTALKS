@@ -149,7 +149,7 @@
 /* ── Cabecera: lockup del foro y marca G-TALKS ──────────────────────────────── */
 
 /* El navy de detrás lo pinta el SVG del telón, que no es ancestro de estos textos: se repite en
- * cada unonavy plano sobre navy plano, invisible— para que el fondo real sea legible desde el
+ * cada unonavy plano sobre navy plano, invisible para que el fondo real sea legible desde el
  * DOM (el auditor de contraste compone los background-color de los ancestros). */
 .gt-carne__foro,
 .gt-carne__lockup-regla,
@@ -166,7 +166,7 @@
  *
  * Y NO lleva el fondo navy de los textos de al lado: un Icono se pinta con
  * `background-color: currentColor` sobre una máscara (ver Icono.css), así que un `background`
- * propio lo borranavy sobre navy—. Tampoco le hace falta: es decorativo, y el auditor de
+ * propio lo borranavy sobre navy. Tampoco le hace falta: es decorativo, y el auditor de
  * contraste no audita iconos. */
 /* El alto es el del viewBox, no el de la tinta: `numeral-uno.svg` sale de los PDF y es la CAJA
  * EM del glifo. Medido sobre su propio `d`: la tinta ocupa el 50.89 % del alto (desde el
@@ -174,7 +174,7 @@
  *
  * El tamaño NO se puede deducir del alto de la tinta, porque en la pieza el «1» está cortado
  * por abajo: la regla del lockup le tapa el serif de la base. Se deduce del ANCHO, y del ancho
- * de lo que sí se ve el asta con su bandera—, que en el glifo mide 50.9 de las 219.82
+ * de lo que sí se ve el asta con su bandera, que en el glifo mide 50.9 de las 219.82
  * unidades del viewBox. De ahí los tres valores:
  *
  *   alto  = 83 (ancho medido) / (50.9 / 219.82)             = 358.4px = 35.00cqw
@@ -183,12 +183,12 @@
  *
  * Y la comprobación de que el razonamiento cierra: con esas tres cotas el serif de la base cae
  * en y 301.4-305.3 y x 102.9-203.2, o sea DENTRO de la regla del lockup (y 302-306,
- * x 102-490). Que es justo lo que hace la pieza los dos son blancos y se funden—, y por eso
+ * x 102-490). Que es justo lo que hace la pieza los dos son blancos y se funden, y por eso
  * el «1» parece no tener serif.
  *
  * Y NO lleva el fondo navy de los textos de al lado: un Icono se pinta con
  * `background-color: currentColor` sobre una máscara (ver Icono.css), así que un `background`
- * propio lo borranavy sobre navy—. Tampoco le hace falta: es decorativo, y el auditor de
+ * propio lo borranavy sobre navy. Tampoco le hace falta: es decorativo, y el auditor de
  * contraste no audita iconos. */
 .gt-carne__numeral {
   position: absolute;

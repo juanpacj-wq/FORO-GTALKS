@@ -75,8 +75,8 @@ ENCABEZADO = re.compile(r"^([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ .]+?)\s+[-–]
 # …salvo cuando no. La ficha que cerró la lista llegó como «11. Erick Wehdeking
 # Arcieri»: numerada, en caja mixta y sin cargo, porque se añadió después al
 # final del documento. Sin esta segunda forma su biografía no abre bloque y se
-# pega a la de la persona anterior —que es exactamente lo que pasó, y solo se
-# vio al comparar la entrega con la referencia—. Se exige la numeración de
+# pega a la de la persona anterior que es exactamente lo que pasó, y solo se
+# vio al comparar la entrega con la referencia. Se exige la numeración de
 # lista, de dos a cinco palabras capitalizadas y nada más en la línea: un
 # párrafo de cuerpo no puede colarse por aquí.
 ENCABEZADO_NUMERADO = re.compile(r"^\d{1,2}\.\s+((?:[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+\s*){2,5})$")
@@ -100,7 +100,7 @@ CORRECCIONES = {
 # las 325 de José Fernando Prada. Es una guía, no un fallo, y los extremos NO
 # se eligieron: son la frase de presentación más corta y la más larga que da el
 # documento. Una entradilla no se rellena ni se recorta para caber en un número
-# —sería reescribir el copy—, así que salirse solo significa «mírala». Puestos
+# sería reescribir el copy, así que salirse solo significa «mírala». Puestos
 # en la página van de 2 a 5 líneas, el mismo abanico que ya producían las
 # cuatro fichas que el documento entregó partidas de fábrica.
 LEAD_MIN, LEAD_MAX = 100, 340

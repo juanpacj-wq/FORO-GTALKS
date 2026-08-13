@@ -2,7 +2,7 @@
 //
 // Es el gemelo de `xlsx-minimo.mjs`: aquél CREA un libro desde cero, éste MODIFICA uno ajeno.
 // Son problemas distintos. Al crear, uno manda sobre las 6 partes del paquete; al modificar, el
-// libro trae 18 —tablas, una consulta viva a SharePoint, estilos, tema— y la única regla que
+// libro trae 18 tablas, una consulta viva a SharePoint, estilos, tema y la única regla que
 // importa es no romper ninguna. Por eso aquí se descomprimen TODAS las entradas y se vuelven a
 // escribir tal cual, y solo se tocan `sharedStrings.xml` y la hoja de destino.
 //

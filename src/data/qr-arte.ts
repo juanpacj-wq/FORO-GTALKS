@@ -1,6 +1,6 @@
 /**
  * El dibujo del QR de asistencia. UN archivo, DOS lectores el mismo principio de
- * `evento.json`—, porque el QR ya no vive solo en la pantalla:
+ * `evento.json`, porque el QR ya no vive solo en la pantalla:
  *
  * - `src/components/Escarapela.tsx` lo pinta como nodos SVG en el DOM (dorso del carné).
  * - `scripts/envio-qr.mjs` lo rasteriza a PNG en Node para incrustarlo en el correo.
@@ -62,7 +62,7 @@ export const QR_PAPEL = '#ffffff'
 
 /**
  * Lado por defecto de la captura para el correo: 1080 px sobre un panel de 90 módulos son 12
- * píxeles por módulo, y 1080 se muestra a 270 px en el mensaje — una razón de **4:1 exacta**.
+ * píxeles por módulo, y 1080 se muestra a 270 px en el mensaje  una razón de **4:1 exacta**.
  * Outlook de escritorio remuestrea con el motor de Word, que trata bien las potencias de dos y
  * produce moiré con razones feas; y el moiré, en un QR, es un código que no se lee.
  */

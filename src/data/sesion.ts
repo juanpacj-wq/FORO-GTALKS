@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
  *
  * `cargo` y `area` NO son claims de OIDC: el servidor los pide a Microsoft Graph al iniciar
  * sesión (scope `User.Read`). Pueden venir vacíosinvitados B2B sin cargo en el directorio de
- * GECELCA, o Graph no disponible—, así que la interfaz nunca debe darlos por hechos.
+ * GECELCA, o Graph no disponible, así que la interfaz nunca debe darlos por hechos.
  */
 export interface Usuario {
   nombre_completo: string
@@ -67,7 +67,7 @@ async function consultarSesion(): Promise<EstadoSesion> {
     })
     // El cuerpo se consume SIEMPRE, también en el 401. Una respuesta cuyo cuerpo nadie lee deja
     // la petición sin cerrar: mantiene viva la conexión y, de paso, hace que `networkidle` no
-    // llegue nuncaasí se cayeron las pruebas de Playwright—.
+    // llegue nuncaasí se cayeron las pruebas de Playwright.
     const datos = await r.json().catch(() => null)
     if (!r.ok || !datos?.authenticated || !datos.user) return { estado: 'sin-sesion' }
     return {
@@ -75,7 +75,7 @@ async function consultarSesion(): Promise<EstadoSesion> {
       usuario: datos.user,
       inscripcion: datos.inscripcion ?? { estado: 'no_aplica' },
       // Fallo cerrado: solo `disponible` literal habilita la descarga. Cualquier otra cosa
-      // incluido un servidor que no conozca el campo— es `no_aplica`.
+      // incluido un servidor que no conozca el campo es `no_aplica`.
       certificado: datos.certificado === 'disponible' ? 'disponible' : 'no_aplica',
     }
   } catch {

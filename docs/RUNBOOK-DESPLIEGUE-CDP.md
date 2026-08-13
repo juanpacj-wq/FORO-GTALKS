@@ -21,17 +21,17 @@ Contexto que asume este runbook, y que si cambia hay que revisar antes de pegar 
 
 ---
 
-## Fase 0 — Prerrequisitos (antes de tocar el servidor)
+## Fase 0  Prerrequisitos (antes de tocar el servidor)
 
 Ninguno de estos pasos es en el servidor. Sin ellos el sitio público funcionará, pero el botón
 de la escarapela fallará con `AADSTS50011` (redirect URI no registrada).
 
-- [X] **Entra ID — App Registration del login** (Azure Portal → Microsoft Entra ID →
+- [X] **Entra ID  App Registration del login** (Azure Portal → Microsoft Entra ID →
   App registrations → la app del foro → **Authentication** → plataforma **Web**): agregar
   `https://cdp.gecelca.com.co/auth/redirect` como redirect URI y
   `https://cdp.gecelca.com.co/` como post-logout redirect URI.
 - [X] **Enterprise App**: «Asignación requerida = Sí» con los usuarios/grupos del foro asignados
-  (el grupo de seguridad del evento). Eso —no el código— decide quién puede iniciar sesión.
+  (el grupo de seguridad del evento). Eso no el código decide quién puede iniciar sesión.
 - [X] **Código publicado**: el commit que quieres desplegar está en `main` de GitHub
   (`git push origin main` hecho desde la estación). El servidor clona `main`: lo que no esté
   ahí, no existe para este runbook.
@@ -40,7 +40,7 @@ de la escarapela fallará con `AADSTS50011` (redirect URI no registrada).
 
 ---
 
-## Fase 1 — Inventario: mirar antes de borrar
+## Fase 1  Inventario: mirar antes de borrar
 
 Imprime qué corre hoy en el servidor. **Anota** los nombres de los servicios de la aplicación
 vieja (los usarás en la Fase 4) y confirma que nada de lo que veas te sorprende.
@@ -66,7 +66,7 @@ ls /etc/cron.d/ 2>/dev/null
 
 ---
 
-## Fase 2 — Respaldo fechado: el borrado, reversible
+## Fase 2  Respaldo fechado: el borrado, reversible
 
 Un tarball en `/var/backups/` convierte el retiro irreversible en uno reversible. Cuesta un
 minuto y no se borra nunca durante este runbook.
@@ -81,7 +81,7 @@ sudo tar -tzf "/var/backups/retiro-$(date +%F).tgz" | head -20
 
 ---
 
-## Fase 3 — Certificados: localizarlos y asegurarlos ANTES del retiro
+## Fase 3  Certificados: localizarlos y asegurarlos ANTES del retiro
 
 Los tres archivos ya están en el servidor, pero hay que dejarlos en su sitio definitivo
 (`/etc/ssl/gtalks/`) **antes** de arrasar directorios. Primero, encuéntralos:
@@ -92,7 +92,7 @@ sudo find / -xdev \( -name certificate.crt -o -name ca_bundle.crt -o -name priva
 ```
 
 Con la carpeta donde aparecieron, edita la primera línea y pega el bloque. Construye además
-`fullchain.pem` (la hoja **primero**, la cadena de la CA **después** — el orden importa: nginx
+`fullchain.pem` (la hoja **primero**, la cadena de la CA **después**  el orden importa: nginx
 envía el archivo tal cual y los navegadores esperan la hoja de primera):
 
 ```bash
@@ -126,7 +126,7 @@ sitio caído.
 
 ---
 
-## Fase 4 — Retiro de la aplicación vieja
+## Fase 4  Retiro de la aplicación vieja
 
 El único bloque con edición obligatoria: pega en la primera línea los nombres de los servicios
 de la app vieja que anotaste en la Fase 1 (separados por espacio, sin el sufijo `.service`).
@@ -159,7 +159,7 @@ nada, pero ensucia los logs para siempre.
 
 ---
 
-## Fase 5 — Base del sistema: nginx, git, Node, ufw
+## Fase 5  Base del sistema: nginx, git, Node, ufw
 
 `docs/DESPLIEGUE.md` pedía Node 20, pero Node 20 salió de mantenimiento en abril de 2026; el
 proyecto exige `>=20` (`package.json` → `engines`), así que se instala la LTS vigente (22).
@@ -175,7 +175,7 @@ nginx -v
 
 ---
 
-## Fase 6 — Usuario de servicio y directorios
+## Fase 6  Usuario de servicio y directorios
 
 La secuencia de `docs/DESPLIEGUE.md` §Puesta en marcha: usuario de sistema sin shell, el log de
 asistencia con su dueño, y el directorio de secretos cerrado (`0700`). El estado del correo de
@@ -190,18 +190,18 @@ sudo install -m 0700 -d /etc/gtalks
 
 ---
 
-## Fase 7 — Secretos: `/etc/gtalks/env`
+## Fase 7  Secretos: `/etc/gtalks/env`
 
 Los secretos viven fuera del repo, en `0600 root:root`; systemd los lee como PID 1 antes de
 bajar privilegios, así que ni un `git pull` ni el propio proceso pueden tocarlos. El bloque
 escribe la plantilla completa y genera `SESSION_SECRET` al vuelo; después **rellena los tres
-`M365_*` con nano** — es el único paso del runbook que no es pegar a ciegas.
+`M365_*` con nano**  es el único paso del runbook que no es pegar a ciegas.
 
 `NODE_ENV` no va aquí: lo pone la unit de systemd.
 
 ```bash
 sudo tee /etc/gtalks/env >/dev/null <<'FIN'
-# Entorno de producción del Foro G-TALKS — 0600 root:root.
+# Entorno de producción del Foro G-TALKS  0600 root:root.
 # Lo lee systemd (EnvironmentFile) como PID 1. Tras editar: sudo systemctl restart gtalks
 
 # ── Identidad Entra ID (App Registration del login) ──
@@ -222,13 +222,13 @@ SESSION_MAX_AGE_MS=28800000
 SESSION_VIDA_ABSOLUTA_MS=43200000
 SESSION_PRELOGIN_MS=600000
 
-# ── Límite de tasa de /auth/* — es un DIAL: el día del evento se sube (p. ej. 1000) ──
+# ── Límite de tasa de /auth/*  es un DIAL: el día del evento se sube (p. ej. 1000) ──
 AUTH_RATE_LIMIT=300
 
 # ── Registro de asistencia (JSONL con UPN; rota con logrotate, 12 semanas) ──
 AUDIT_LOG_PATH=/var/log/gtalks/acceso.log
 
-# ── Correo de inscripción — apagado hasta que se decida encenderlo (ver el cierre
+# ── Correo de inscripción  apagado hasta que se decida encenderlo (ver el cierre
 #    del runbook). El libro NO es un log y NUNCA se rota. ──
 INSCRIPCION_MODO=off
 INSCRIPCION_DESTINATARIOS=
@@ -238,7 +238,7 @@ MAIL_TENANT_ID=
 MAIL_CLIENT_ID=
 MAIL_CLIENT_SECRET=
 
-# ── Certificados de participación — vacío hasta subirlos con
+# ── Certificados de participación  vacío hasta subirlos con
 #    deploy/certificados-subir.sh; a medias, el arranque aborta. Los PDF viven
 #    fuera de /opt/gtalks para sobrevivir a los despliegues, como el libro.
 #    Tras cada subida: systemctl restart gtalks (el manifiesto se carga al arrancar). ──
@@ -266,7 +266,7 @@ sudo grep -n 'PEGA_AQUI\|SE_GENERA' /etc/gtalks/env && echo '⚠ FALTAN VALORES:
 
 ---
 
-## Fase 8 — Código: clonar, compilar, podar, colocar
+## Fase 8  Código: clonar, compilar, podar, colocar
 
 La misma receta que usa `deploy/deploy.sh`: `npm ci` reproducible desde el lockfile, build
 completo (tsc + vite), poda de dependencias de desarrollo y entrega a `/opt/gtalks` con dueño
@@ -298,7 +298,7 @@ FIN
 
 ---
 
-## Fase 9 — systemd: la unit del servicio
+## Fase 9  systemd: la unit del servicio
 
 ```bash
 sudo cp /opt/gtalks/deploy/systemd/gtalks.service /etc/systemd/system/gtalks.service
@@ -317,7 +317,7 @@ journalctl -u gtalks -n 80 --no-pager
 
 ---
 
-## Fase 10 — nginx: el vhost
+## Fase 10  nginx: el vhost
 
 El vhost viene **ya adaptado en el repo** (dominio `cdp.gecelca.com.co` y rutas de
 `/etc/ssl/gtalks/`): se copia, no se edita.
@@ -333,7 +333,7 @@ sudo systemctl reload nginx
 
 ---
 
-## Fase 11 — logrotate: el registro de asistencia
+## Fase 11  logrotate: el registro de asistencia
 
 Rota **solo** `/var/log/gtalks/acceso.log` (12 semanas ≈ 90 días). El libro de inscripciones
 vive en `/var/lib/gtalks/` justamente para quedar fuera de esto.
@@ -345,7 +345,7 @@ sudo logrotate -d /etc/logrotate.d/gtalks 2>&1 | tail -5   # ensayo en seco, no 
 
 ---
 
-## Fase 12 — Firewall
+## Fase 12  Firewall
 
 ⚠ **Antes de encender ufw, confirma el puerto de SSH**: si va por uno no estándar y no lo
 permites, la próxima desconexión es un viaje al datacenter.
@@ -364,16 +364,16 @@ sudo ufw status verbose
 
 ---
 
-## Fase 13 — Matriz de salud
+## Fase 13  Matriz de salud
 
 La misma que usa `deploy.sh` para decidir un rollback. Lo innegociable no es el 200: es que la
 portada salga **con su CSP** y que `/api/me` siga en **401** sin sesión (la identidad, cerrada).
-Se prueba a través de nginx con `--resolve` para no depender del DNS del servidor — y de paso,
+Se prueba a través de nginx con `--resolve` para no depender del DNS del servidor  y de paso,
 si la cadena TLS quedó mal armada en la Fase 3, estos mismos `curl` fallarán por certificado.
 
 **Ojo con las cabeceras**: `esNavegacion()` (server/app.js) exige `Sec-Fetch-Mode: navigate`
 **y** `Sec-Fetch-Dest: document` a la vez. Con una sola, la portada responde el 404 JSON de
-subrecursos — que es lo correcto, pero no es lo que esta matriz mide. Salió en el primer
+subrecursos  que es lo correcto, pero no es lo que esta matriz mide. Salió en el primer
 despliegue real: un `curl` solo con `Dest` daba 404 con la app perfectamente sana.
 
 ```bash
@@ -386,7 +386,7 @@ echo "CSP en la portada  : $(curl -s -I --resolve cdp.gecelca.com.co:443:127.0.0
   https://cdp.gecelca.com.co/ | grep -ic content-security-policy)   (se espera 1)"
 curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 \
   -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' \
-  -w 'api/me sin sesión  : %{http_code}   (se espera 401 — lo innegociable)\n' https://cdp.gecelca.com.co/api/me
+  -w 'api/me sin sesión  : %{http_code}   (se espera 401  lo innegociable)\n' https://cdp.gecelca.com.co/api/me
 curl -s -o /dev/null --resolve cdp.gecelca.com.co:443:127.0.0.1 \
   -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' \
   -w 'auth/login         : %{http_code}   (se espera 302)\n' https://cdp.gecelca.com.co/auth/login
@@ -401,7 +401,7 @@ echo | openssl s_client -connect 127.0.0.1:443 -servername cdp.gecelca.com.co 2>
 El `location` debe apuntar a `login.microsoftonline.com`. Y las dos comprobaciones que solo se
 pueden hacer **desde tu navegador**, con el DNS real:
 
-1. Navegar `https://cdp.gecelca.com.co/` — el sitio entero, sin candado roto.
+1. Navegar `https://cdp.gecelca.com.co/`  el sitio entero, sin candado roto.
 2. `https://cdp.gecelca.com.co/escarapela` → **Iniciar sesión** → login corporativo → el carné
    pinta tu nombre y cargo. (Si cae con `AADSTS50011`, es la Fase 0: la redirect URI.)
 

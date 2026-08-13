@@ -61,7 +61,7 @@
 /* --- Retrato ---------------------------------------------------------------
    El duotono de arriba compone la foto en `screen` sobre el navy, y eso sobre
    una cara la vacía. Aquí la imagen se pinta normalsolo desaturada en parte,
-   no del todo— y el navy va en `mix-blend-mode: color`, que toma tono y
+   no del todo y el navy va en `mix-blend-mode: color`, que toma tono y
    saturación del plano y deja la luminancia de la foto intacta: la cara sigue
    teniendo volumen. El realce celeste solo levanta las luces, para que el
    retrato pertenezca a la misma paleta que el resto del sitio.

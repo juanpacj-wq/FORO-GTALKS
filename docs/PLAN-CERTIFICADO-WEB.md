@@ -28,7 +28,7 @@ asistente, con la misma sesión de Entra de la escarapela, descarga su PDF perso
 | Dónde vive | Ruta nueva `/certificado`, con entrada en el nav | Más visible y enlazable; la escarapela ya cumplió su función. Usuario, 2026-08-10 |
 | El nombre pintado | MAYÚSCULAS sostenidas, orden «NOMBRES APELLIDOS», grafía del Excel reordenada con givenName/surname de Entra como testigo | Usuario, 2026-08-10. Nueve fichas con grafías divergentes van a mano, comentadas en `certificados-audiencia.mjs` |
 | La cédula pintada | Con puntos de miles (1.003.239.160) | La convención colombiana; como vino la lista de la planta |
-| Audiencia | Hoja1 + los 3 sin-QR = 135 → **134 descargables** (Howard sin cuenta Entra: entrega manual) | Usuario, 2026-08-10. Los 14 de «query (13)» quedan FUERA por decisión explícita — no es un olvido |
+| Audiencia | Hoja1 + los 3 sin-QR = 135 → **134 descargables** (Howard sin cuenta Entra: entrega manual) | Usuario, 2026-08-10. Los 14 de «query (13)» quedan FUERA por decisión explícita  no es un olvido |
 | Audiencia ampliada | `asistentes.md` (155 filas, con cédulas) sumó **21 sin-QR nuevos** → 155 descargables. Se AGREGÓ, no se reemplazó: Edgar Paternina Amaris (escaneó QR, está en Hoja1) no aparece en ese listado y se conserva | Usuario, 2026-08-12. El md traía además 9 filas con grafías divergentes de gente que ya estaba (no son personas nuevas) y la errata «KOOP» por Kopp |
 | Sin asistencia registrada | Botón retenido + aviso emergente que remite a María Cristina Giraldo (mgiraldo@) | Pedido del usuario; el canal exacto del contacto es pendiente de contenido |
 | La fuente | **Poppins Regular, definitiva** | 13 candidatas medidas, ninguna ES la de la pieza; Poppins clava el peso (asta 3.00 px). Riesgo aceptado en SEGURIDAD.md. Usuario, 2026-08-10 |
@@ -42,7 +42,7 @@ asistente, con la misma sesión de Entra de la escarapela, descarga su PDF perso
 - **Ni tocar el flujo OIDC ni la CSP.**
 - **Ni una cédula en git**: el repo es público; `*.xlsx` ignorado, audiencia y PDFs en `.datos/`.
 
-## Fase 1 — La audiencia se congela ✔
+## Fase 1  La audiencia se congela ✔
 
 `scripts/certificados-audiencia.mjs` (molde: `envio-qr-audiencia` + `personas-resolver`): Hoja1
 con `abrirLibro()` + los sin-QR resueltos por nombre exacto; cada persona → su **oid** (la clave
@@ -51,7 +51,7 @@ conteo/unicidad/anomalías con fallo cerrado; `entregaManual` para quien no tien
 El JSON (`.datos/certificados-audiencia-<fecha>.json`) **se revisa a mano** antes de generar y
 **no se sobrescribe**.
 
-## Fase 2 — La fuente se midió, y la decisión quedó escrita ✔
+## Fase 2  La fuente se midió, y la decisión quedó escrita ✔
 
 `scripts/certificado-fuente.py`: tres arneses sucesivos (ancho de frase → ajuste por palabra con
 tracking → subpíxel escala+tracking + IoU alineado + **asta**). Veredicto: ninguna de las 13 ES
@@ -59,7 +59,7 @@ la fuente (mejor IoU 0.608); el peso sí quedó identificado (asta 3.00 px = Reg
 usuario: **Poppins Regular definitiva**, versionada en `fuentes-origen/` con su OFL. El script
 queda negándose, como testigo del método.
 
-## Fase 3 — El generador ✔
+## Fase 3  El generador ✔
 
 `scripts/certificados-generar.py`: A4 apaisado a proporción exacta de la pieza, fondo JPEG q85
 dentro del PDF, nombre y cédula **vectoriales** con Poppins incrustada (subset). Cotas heredadas
@@ -72,13 +72,13 @@ Produce además `manifiesto.json` (oid → archivo, **sin** datos personales), l
 para revisar a ojo. (Hasta el 2026-08-12 emitía además `public/img/certificado-muestra.webp`, la
 vista previa pública de la página; el usuario retiró la imagen y el derivado se fue con ella.)
 
-## Fase 4 — La segunda opinión ✔
+## Fase 4  La segunda opinión ✔
 
 `scripts/certificados-auditar.py` (molde: `envio-qr-auditar`): extrae la **capa de texto** de
 cada PDF (vectorial, sin OCR) y cruza archivo ↔ contenido ↔ **audiencia congelada** + propiedades
 de conjunto + sha256/oid del manifiesto. Probada con sabotaje real.
 
-## Fase 5 — El servidor ✔
+## Fase 5  El servidor ✔
 
 `server/certificados.js` + `server/app.js`: `CERTIFICADOS_DIR` vacío = no existe; a medias =
 aborta; allowlist + resolve niegan el traversal. `/api/me` gana `certificado:
@@ -86,21 +86,21 @@ aborta; allowlist + resolve niegan el traversal. `/api/me` gana `certificado:
 solo el oid de la sesión, `no-store`, attachment; 404 con la forma del genérico. `RUTAS_SPA` +=
 `/certificado`. Manual de guardia: `docs/SEGURIDAD.md` §El certificado de participación.
 
-## Fase 6 — El cliente ✔
+## Fase 6  El cliente ✔
 
 `src/pages/CertificadoPage.tsx` + `.css`: tres estados sobre `useSesion()`; descarga por
 **navegación** (cero JS de PDF); botón retenido con el patrón del gate de encuestas, y el estado
-`--suprimido` para que **Escape gane a hover y foco** (WCAG 1.4.13 — con la clase doblada, porque
+`--suprimido` para que **Escape gane a hover y foco** (WCAG 1.4.13  con la clase doblada, porque
 `:focus-within` puntúa como clase). `certificado` ausente en `/api/me` = retenido, jamás
 descarga. `.gt-boton--inactivo` promovido a `base.css`.
 
-## Fase 7 — Los arneses ✔
+## Fase 7  Los arneses ✔
 
 `gate-test` (401 también navegado, mutadores, hermanas inexistentes sin filtrar nada),
 `certificados-server-test.mjs` (nuevo), `sesion-test` (los tres estados + el aviso entero),
 `interactions-test`, `a11y-test`, `screenshot` (+ruta).
 
-## Fase 8 — La subida y el despliegue por etapas
+## Fase 8  La subida y el despliegue por etapas
 
 `deploy/certificados-subir.sh` (molde: el transporte de `deploy.sh`): tar por stdin de ssh con
 sha256 doble → `/var/lib/gtalks/certificados/` (`gtalks:gtalks`, 0640) + restart + salud.
@@ -130,7 +130,7 @@ bash deploy/certificados-subir.sh                                             # 
 ## Lo que ningún script puede decir
 
 - **¿El canal del contacto del aviso es el correcto?** Hoy dice «María Cristina Giraldo
-  (mgiraldo@gecelca.com.co)» — confirmar con ella el canal (¿correo? ¿Teams? ¿teléfono, como en
+  (mgiraldo@gecelca.com.co)»  confirmar con ella el canal (¿correo? ¿Teams? ¿teléfono, como en
   el pie del sitio?).
 - **¿La pieza es la entrega final?** Si llega otra versión del certificado, es volver a correr
   el bucle entero (medir → generar → auditar → resubir), no parchear.
@@ -139,4 +139,4 @@ bash deploy/certificados-subir.sh                                             # 
 - **¿Cuándo se anuncia?** La ruta existe apenas se despliegue; el anuncio a los asistentes es de
   Comunicaciones.
 - **¿Los 14 de «query (13)» quedan fuera de verdad?** La decisión fue del usuario (2026-08-10);
-  si cambia, se re-congela la audiencia y se regenera — está diseñado para eso.
+  si cambia, se re-congela la audiencia y se regenera  está diseñado para eso.

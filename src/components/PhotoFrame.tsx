@@ -13,7 +13,7 @@ import './PhotoFrame.css'
  * incrustadas en los PDF a baja resolución (456×652 la mayor) y con una
  * dominante naranja de atardecer que pelea con el celeste de la marca. El
  * duotono navy→celeste resuelve las dos cosas a la vezunifica la paleta y
- * disimula la falta de detalle— y hace que la foto se lea como decisión
+ * disimula la falta de detalle y hace que la foto se lea como decisión
  * gráfica y no como un JPG pequeño estirado.
  *
  * `retrato` es ese mismo razonamiento aplicado a una cara: los retratos de los
@@ -53,7 +53,7 @@ export default function PhotoFrame({
   ratio?: string
   /**
    * Para la foto del hero. Es el elemento más grande de la primera pantalla,
-   * o sea el LCP: cargarla en diferidoel default de este componente— retrasa
+   * o sea el LCP: cargarla en diferidoel default de este componente retrasa
    * justo la métrica que mide cuándo la página «aparece».
    */
   prioridad?: boolean

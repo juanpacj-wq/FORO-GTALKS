@@ -240,7 +240,7 @@ console.log('\nEl certificado')
 
 // La misma regla del correo: solo se anuncia lo que el servidor CONFIRMA. `disponible` literal
 // pinta la descarga; `no_aplica` pinta el botón retenido con su aviso; y el campo AUSENTE (un
-// servidor viejo) cae en retenido — jamás en descarga.
+// servidor viejo) cae en retenido  jamás en descarga.
 for (const [nombre, extra, esperaDescarga] of [
   ['disponible', { certificado: 'disponible' }, true],
   ['no_aplica', { certificado: 'no_aplica' }, false],
@@ -274,7 +274,7 @@ for (const [nombre, extra, esperaDescarga] of [
   const aviso = p.locator('#gt-certificado-aviso')
   check('el aviso vive en el DOM aunque no se vea', (await aviso.count()) === 1)
   check('  y no es visible en reposo', !(await aviso.isVisible()))
-  // `force`: Playwright respeta aria-disabled y se niega a pulsarlo sin él — señal de que el
+  // `force`: Playwright respeta aria-disabled y se niega a pulsarlo sin él  señal de que el
   // botón se anuncia como corresponde.
   await p.click('button.gt-certificado__descargar', { force: true })
   await p.waitForTimeout(250)

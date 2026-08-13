@@ -1,4 +1,4 @@
-/* /certificado — la página que entrega el PDF de participación.
+/* /certificado  la página que entrega el PDF de participación.
 
    Composición en una sola columna: título, lead, un párrafo y el botón. Hubo
    una vista previa de la pieza (sin datos personales) hasta el 2026-08-12; el
@@ -63,7 +63,7 @@
    El mismo patrón del gate de encuestas: el aviso SIEMPRE está en el DOM
    (`aria-describedby` lo anuncia), y verse se ve con hover, foco o el toque
    (`--avisando`). El aviso va DEBAJO del botón el botón es lo último de la
-   página y arriba taparía el texto—.                                        */
+   página y arriba taparía el texto.                                        */
 .gt-certificado__gate {
   position: relative;
   display: block;

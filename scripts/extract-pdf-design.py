@@ -776,7 +776,7 @@ def write_report(tokens: dict) -> None:
         a(
             f"| `{d['archivo']}` | {len(d['paginas'])} | {p0['ancho_pt']}×{p0['alto_pt']} pt "
             f"({p0['ancho_mm']}×{p0['alto_mm']} mm) | {d['bytes']/1024:.0f} KB | "
-            f"{', '.join(d['fuentes_incrustadas']) or '—'} |"
+            f"{', '.join(d['fuentes_incrustadas']) or ''} |"
         )
     a("")
     a("Las tres son piezas verticales de una sola página, mismo ancho (612 pt = 216 mm) y alto "
@@ -796,7 +796,7 @@ def write_report(tokens: dict) -> None:
     a("| # | Hex | Variantes fusionadas | % área | Formas | Texto | vs blanco | vs negro | Aparece en |")
     a("|---|---|---|---|---|---|---|---|---|")
     for i, c in enumerate(tokens["colors"]["consolidado"], 1):
-        var = ", ".join(f"`{v}`" for v in c["variantes"]) or "—"
+        var = ", ".join(f"`{v}`" for v in c["variantes"]) or ""
         a(
             f"| {i} | `{c['hex']}` | {var} | {c['cobertura_pct']:.3f}% | {c['area_forma_pt2']:,.0f} | "
             f"{c['area_texto_pt2']:,.0f} | {c['contraste_vs_blanco']:.2f}:1 | "
@@ -894,7 +894,7 @@ def write_report(tokens: dict) -> None:
     for r in asim[:14]:
         rr = r["radios_pt"]
         a(
-            f"| {r['ancho_pt']}×{r['alto_pt']} | `{r['relleno'] or '—'}` | {rr['sup-izq']} | "
+            f"| {r['ancho_pt']}×{r['alto_pt']} | `{r['relleno'] or ''}` | {rr['sup-izq']} | "
             f"{rr['sup-der']} | {rr['inf-izq']} | {rr['inf-der']} | {r['donde']} |"
         )
     a("")
@@ -905,7 +905,7 @@ def write_report(tokens: dict) -> None:
         rad = list(r["radios_pt"].values())[0]
         ratio = rad / min(r["ancho_pt"], r["alto_pt"]) if min(r["ancho_pt"], r["alto_pt"]) else 0
         que = "píldora (radio = alto/2)" if ratio > 0.48 else "tarjeta / caja"
-        a(f"| {r['ancho_pt']}×{r['alto_pt']} | `{r['relleno'] or '—'}` | **{rad}** | {que} | {r['donde']} |")
+        a(f"| {r['ancho_pt']}×{r['alto_pt']} | `{r['relleno'] or ''}` | **{rad}** | {que} | {r['donde']} |")
     a(f"\nTotal de paths con esquinas curvas: **{len(tokens['formas']['radios'])}** "
       f"({len(asim)} asimétricos, {len(sim)} uniformes).\n")
 
@@ -925,7 +925,7 @@ def write_report(tokens: dict) -> None:
     a("|---|---|---|---|---|")
     for im in tokens["assets"]["imagenes"]:
         r = im["donde"][0]["rect_pt"][0] if im["donde"][0]["rect_pt"] else None
-        colocada = f"{r[2]-r[0]:.0f}×{r[3]-r[1]:.0f}" if r else "—"
+        colocada = f"{r[2]-r[0]:.0f}×{r[3]-r[1]:.0f}" if r else ""
         alfa = f"sí → `{im['compuesto_rgba']}`" if im["tiene_alfa"] else "no"
         a(f"| `{im['archivo']}` | {im['px'][0]}×{im['px'][1]} | {im['bytes']/1024:.0f} KB | {colocada} | {alfa} |")
     a(f"\n**{len(fotos)}** fotografías opacas + **{len(con_alfa)}** imágenes con canal alfa "
@@ -951,7 +951,7 @@ def write_report(tokens: dict) -> None:
     for v in tokens["assets"]["vectores"]:
         a(
             f"| `{v['archivo']}` | {v['ancho_pt']}×{v['alto_pt']} | {v['px'][0]}×{v['px'][1]} | "
-            f"{v['dpi']} | {'✓' if v['recortado'] else '—'} | {'✓' if v['svg'] else '—'} | {v['donde']} |"
+            f"{v['dpi']} | {'✓' if v['recortado'] else ''} | {'✓' if v['svg'] else ''} | {v['donde']} |"
         )
     a(f"\n**{len(tokens['assets']['vectores'])}** clusters.\n")
 
@@ -1016,7 +1016,7 @@ def write_report(tokens: dict) -> None:
         if pt in (26.2, 25.8, 18.4):  # G-TALKS: es logotipo, no escala de texto
             continue
         rem = pt / cuerpo
-        a(f"| {pt} | {rem:.2f}× | `{rem:.3g}rem` | {usos.get(pt, '—')} |")
+        a(f"| {pt} | {rem:.2f}× | `{rem:.3g}rem` | {usos.get(pt, '')} |")
     a("")
     a("La escalera se propone **en `rem` relativos al cuerpo**, no en px absolutos: la pieza es "
       "vertical de 612 pt y el sitio es responsive, así que lo que se conserva es la *proporción* "

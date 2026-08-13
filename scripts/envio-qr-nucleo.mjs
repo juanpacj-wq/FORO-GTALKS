@@ -1,6 +1,6 @@
 // El núcleo del envío del QR: a quién se le escribe, si toca reintentar, y el bucle que compone y
 // manda. Vive aparte de `envio-qr.mjs` para que se pueda EJERCER con un Graph falso, sin red, sin
-// credenciales y sin navegador — la misma inyección de dependencias que hace `graph-mailer.js` y
+// credenciales y sin navegador  la misma inyección de dependencias que hace `graph-mailer.js` y
 // por la misma razón: lo que no se puede probar, no se sabe si funciona.
 //
 // La CLI (`envio-qr.mjs`) cablea aquí las implementaciones de verdad; el arnés
@@ -45,7 +45,7 @@ export function resolverDestinos({ modo, destinatarios = [], audiencia = [] }) {
  * Si a esta persona hay que escribirle en esta corrida.
  *
  * `enviado` no se repite jamás. Un `fallido` por **timeout** y un `reservado` huérfano son estados
- * DESCONOCIDOS —el mensaje pudo haberse entregado— y solo se tocan con `--forzar`: la respuesta
+ * DESCONOCIDOS el mensaje pudo haberse entregado y solo se tocan con `--forzar`: la respuesta
  * está en la carpeta Enviados o en el message trace de Exchange, no en repetir el envío.
  */
 export function decidir({ previo, motivo = '', reintentar = false, forzar = false }) {
@@ -114,12 +114,12 @@ export async function procesar({
       forzar,
     })
     if (!decision.enviar) {
-      log(`  ·  ${alias.padEnd(16)} omitido — ${decision.razon}`)
+      log(`  ·  ${alias.padEnd(16)} omitido  ${decision.razon}`)
       resumen.omitidos++
       continue
     }
     if (hechos >= maximo) {
-      log(`  ·  ${alias.padEnd(16)} omitido — se alcanzó el tope de ${maximo}`)
+      log(`  ·  ${alias.padEnd(16)} omitido  se alcanzó el tope de ${maximo}`)
       resumen.omitidos++
       continue
     }
@@ -155,7 +155,7 @@ export async function procesar({
     //    reabre con `resolver()`, que deja su propia línea y no borra el histórico.
     if (decision.nuevo) {
       if (!libro.reservar(oid)) {
-        log(`  ·  ${alias.padEnd(16)} omitido — el libro rechazó la reserva`)
+        log(`  ·  ${alias.padEnd(16)} omitido  el libro rechazó la reserva`)
         resumen.omitidos++
         continue
       }

@@ -1,8 +1,8 @@
 // Lo que comparten los dos scripts del envío del QR: credenciales, normalización y la derivación
 // del alias que viaja en el código.
 //
-// Son DOS scripts a propósito —`envio-qr-audiencia.mjs` lee el directorio y `envio-qr.mjs` manda
-// correo— porque son dos privilegios distintos y no tienen por qué ejecutarse juntos. Entre ellos
+// Son DOS scripts a propósito `envio-qr-audiencia.mjs` lee el directorio y `envio-qr.mjs` manda
+// correo porque son dos privilegios distintos y no tienen por qué ejecutarse juntos. Entre ellos
 // solo viaja un archivo JSON revisable por un humano.
 
 import path from 'node:path'
@@ -37,7 +37,7 @@ export const INSTANTE_MANANA = new Date('2026-08-05T14:00:00Z')
  * La URL que codifica el QR del correo de una persona.
  *
  * No lleva token, ni firma, ni marca de tiempo, ni nada que caduque: son cinco parámetros fijos
- * más su usuario. El QR, por tanto, no expira **por sí mismo** — lo que puede dejar de funcionar
+ * más su usuario. El QR, por tanto, no expira **por sí mismo**  lo que puede dejar de funcionar
  * está del otro lado, en la Power App. Ver `docs/PLAN-ENVIO-QR.md` §Lo que ningún script puede decir.
  */
 export function urlDelCorreo(correo) {

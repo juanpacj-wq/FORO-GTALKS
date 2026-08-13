@@ -14,7 +14,7 @@
 // ── Cómo casa los nombres, y por qué así ─────────────────────────────────────
 //
 // Compara CONJUNTOS DE PALABRAS normalizadas (sin tildes, sin mayúsculas, sin la ñ frente a n),
-// no cadenas. El orden no importa —que es justo la diferencia entre los dos formatos— y las
+// no cadenas. El orden no importa que es justo la diferencia entre los dos formatos y las
 // coincidencias se clasifican en tres:
 //
 //   exacta    las mismas palabras, en cualquier orden. Es la única que se da por buena sola.
@@ -193,17 +193,17 @@ for (const r of resultados) {
   sinResolver++
   if (r.exactas.length > 1) {
     console.log(`   ✗ AMBIGUO: ${r.exactas.length} personas con ese mismo nombre exacto:`)
-    for (const c of r.exactas) console.log(`       · ${c.u.displayName} <${aliasDe(c.u).correo}> — ${c.u.jobTitle || 'sin cargo'}`)
+    for (const c of r.exactas) console.log(`       · ${c.u.displayName} <${aliasDe(c.u).correo}>  ${c.u.jobTitle || 'sin cargo'}`)
     continue
   }
   console.log('   ✗ SIN coincidencia exacta.')
   if (r.contenidas.length) {
     console.log('     Candidatos que CONTIENEN todas las palabras pedidas:')
-    for (const c of r.contenidas) console.log(`       · ${c.u.displayName} <${aliasDe(c.u).correo}> — ${c.u.jobTitle || 'sin cargo'}`)
+    for (const c of r.contenidas) console.log(`       · ${c.u.displayName} <${aliasDe(c.u).correo}>  ${c.u.jobTitle || 'sin cargo'}`)
   }
   if (r.parciales.length) {
     console.log('     Parecidos (revisar a mano):')
-    for (const c of r.parciales) console.log(`       · ${c.u.displayName} <${aliasDe(c.u).correo}> — ${c.u.jobTitle || 'sin cargo'}`)
+    for (const c of r.parciales) console.log(`       · ${c.u.displayName} <${aliasDe(c.u).correo}>  ${c.u.jobTitle || 'sin cargo'}`)
   }
   if (!r.contenidas.length && !r.parciales.length) console.log('     (nada parecido en el directorio)')
 }
@@ -229,7 +229,7 @@ const rutaCorreos = path.join(DIR_DATOS, `${base}-correos.txt`)
 const rutaJson = path.join(DIR_DATOS, `${base}-resueltos.json`)
 fs.writeFileSync(
   rutaCorreos,
-  resueltos.map((f) => `${f.alias.correo}  # ${f.u.displayName}${f.marcas.length ? ` — ${f.marcas.join(' · ')}` : ''}`).join('\n') + '\n',
+  resueltos.map((f) => `${f.alias.correo}  # ${f.u.displayName}${f.marcas.length ? `  ${f.marcas.join(' · ')}` : ''}`).join('\n') + '\n',
   { mode: 0o640 },
 )
 fs.writeFileSync(

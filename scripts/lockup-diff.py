@@ -5,7 +5,7 @@
     .venv-design/Scripts/python scripts/lockup-diff.py
 
 El lockup del foronumeral «1», «Foro: / Energía / en Acción», la regla y «Retos y
-oportunidades»— está compuesto en `invitacion gtalk 2026.pdf` y el CSS lo replica con cada cota
+oportunidades» está compuesto en `invitacion gtalk 2026.pdf` y el CSS lo replica con cada cota
 en múltiplos del cuerpo del titular (ver docs/SISTEMA-DE-DISENO.md §El lockup del foro). Este
 script comprueba que la réplica lo sea, y en cuánto se desvía.
 
@@ -24,15 +24,15 @@ Cómo, y por qué así:
 3. **No se mide con umbral binario sino estimando la COBERTURA de cada píxel.** Un umbral se
    mueve un par de píxeles según la densidad y el nivel de fondo, y los dos fondos son
    distintos: la pieza compone sobre `--gt-navy` y el sitio sobre `--gt-noche` con grano. De la
-   cobertura salen tres cosas comparables: el **centroide**subpíxel—, la **masa** de tinta
-  delata un cambio de peso o de tracking— y los **cantos al 50 %**, que sí son estables.
+   cobertura salen tres cosas comparables: el **centroide**subpíxel, la **masa** de tinta
+  delata un cambio de peso o de tracking y los **cantos al 50 %**, que sí son estables.
 
 4. **El nivel de fondo es el MÁS ALTO de los tramos de campo limpio**, no el de uno cualquiera ni
    la mediana de cada ventana. En la pieza el campo del bloque **no es uniforme**: el círculo
    `--gt-navy-deep` (`#1D2A4C`) cubre casi todo el lockup y el `--gt-navy` (`#1F335E`) asoma por el
    canto izquierdo. Si se toma el nivel del navy-deep, el navy queda por encima y registra como
    tintaen el canal celeste, 0.11 de cobertura falsa sobre un área grande, que arrastra el
-   centroide de «en Acción» quince centésimas del cuerpo—. Tomando el más alto, cualquier variante
+   centroide de «en Acción» quince centésimas del cuerpo. Tomando el más alto, cualquier variante
    del campo queda en cobertura 0. Se prueban varios tramos y se usan los que quepan en el
    recorte: a 390 px no hay margen a la izquierda del bloque donde poner uno.
 
@@ -96,7 +96,7 @@ CAMPOS = (
 TOLERANCIA_PX = 4.0
 # La ventana de la regla queda fuera del veredicto: es una franja fina en la que el campo pesa
 # más que la tinta y en la que entra el asta del «1», así que su centroide y su masa dependen
-# del recorte. Lo que importa de la reglasu ancho y su cota— se lee en los cantos.
+# del recorte. Lo que importa de la reglasu ancho y su cota se lee en los cantos.
 SOLO_CANTOS = {'regla'}
 
 

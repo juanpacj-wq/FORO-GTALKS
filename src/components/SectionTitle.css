@@ -23,7 +23,7 @@
 
 /* El riel se traza al entrar. Arranca en 0.12 y no en 0: aunque una línea de
    tiempo inactiva deja la animación sin aplicary entonces el riel se pinta
-   entero—, un estado inicial de cero anchura sería un dato oculto esperando
+   entero, un estado inicial de cero anchura sería un dato oculto esperando
    a fallar.                                                                  */
 @keyframes gt-riel-traza {
   from {
@@ -56,8 +56,8 @@
     gap: var(--gt-space-3);
   }
   /* Se suelta el límite de 22ch, pero NO hasta `none`: con `flex: none` el
-     título mide su max-content, así que un titular largo —«Expertos que
-     impulsan la conversación»— se iba a 587 px y desbordaba la pantalla a lo
+     título mide su max-content, así que un titular largo «Expertos que
+     impulsan la conversación» se iba a 587 px y desbordaba la pantalla a lo
      ancho en vez de envolver. El 100 % lo ata al contenedor.                 */
   .gt-titulo-seccion__texto {
     max-width: 100%;

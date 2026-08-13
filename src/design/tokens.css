@@ -6,7 +6,7 @@
    docs/SISTEMA-DE-DISENO.md y la medición cruda en design-extract/report.md.
 
    Lo que se añadió después para llevar el sistema de la hoja impresa a una
-   pantallael campo oscuro, los hairlines, el humo— NO son colores nuevos:
+   pantallael campo oscuro, los hairlines, el humo NO son colores nuevos:
    son mezclas declaradas de los medidos, con `color-mix`. Así la regla del
    proyecto («ningún color se inventa ni se cita de memoria») se mantiene: cada
    valor o está medido o es una mezcla trazable de dos valores medidos.
@@ -129,7 +129,7 @@
   --gt-borde: 1px;           /* 1 pt en 84 de los 87 trazos del documento     */
 
   /* La forma en «hoja»radio grande en dos esquinas opuestas y recto en las
-     otras dos— no cabe en un token: cada uso acota el radio al tamaño real de
+     otras dos no cabe en un token: cada uso acota el radio al tamaño real de
      su caja. La construyen PhotoFrame.css y Monogram.css a partir de
      --gt-radio-foto.                                                         */
 
@@ -148,7 +148,7 @@
      CONVENCIÓN, como las opacidades del grano y del duotono.
 
      Los retratos de los ponentes llegan de fuentes distintasfondo de
-     estudio, fondo de oficina, recortes de una foto de grupo— y ese desorden
+     estudio, fondo de oficina, recortes de una foto de grupo y ese desorden
      es lo que hace que una página de ponentes se vea improvisada. El sistema
      ya resolvió el mismo problema con el duotono navy→celeste de PhotoFrame,
      pero un duotono completo sobre la cara de una persona identificable es

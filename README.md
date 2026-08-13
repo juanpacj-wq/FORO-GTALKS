@@ -18,7 +18,7 @@ navega sin autenticarse, y la sesión de Microsoft Entra ID existe solo para la 
 Un slug de ponente que no exista redirige a `/ponentes`; cualquier otra ruta, a `/`.
 
 La agenda y los perfiles están enlazados en los dos sentidos: cada tramo de la línea del día lleva
-a su bloque del programay lo resalta al señalarlo, en ambas direcciones—, cada nombre del
+a su bloque del programay lo resalta al señalarlo, en ambas direcciones, cada nombre del
 programa lleva al perfil, y cada intervención del perfil vuelve a su bloque.
 
 ## De dónde sale el diseño
@@ -28,7 +28,7 @@ tipografía se inventa ni se cita de memoria**: todo está medido con
 `scripts/extract-pdf-design.py`, y el origen de cada token está documentado en
 [`docs/SISTEMA-DE-DISENO.md`](docs/SISTEMA-DE-DISENO.md).
 
-El contenido de los ponentesnombre, cargo y trayectoria— sale de `PERFIL DE LOS PONENTES.docx`,
+El contenido de los ponentesnombre, cargo y trayectoria sale de `PERFIL DE LOS PONENTES.docx`,
 también en la raíz, y se transcribe literal a `src/data/foro.ts`.
 
 ```bash
@@ -49,7 +49,7 @@ de iniciales, así que el sitio está terminado hoy y mejora solo a medida que l
 `retratos-origen/` no se versiona (originales de personas identificables); el derivado recortado
 de `public/img/ponentes/`, sí.
 
-Los colores que el sistema necesitó y las piezas no traenel campo oscuro, los hairlines, el humo—
+Los colores que el sistema necesitó y las piezas no traenel campo oscuro, los hairlines, el humo
 **no son colores nuevos**: son mezclas declaradas de los medidos, con `color-mix()`. Cada valor o
 está medido o es una mezcla trazable de dos que sí lo están.
 

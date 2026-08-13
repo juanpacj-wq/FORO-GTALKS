@@ -35,7 +35,7 @@ TimeoutStopSec=15s
 
 # --- Endurecimiento --------------------------------------------------------
 # Más estricto que el modelo del proyecto hermano: allí hay BD y uploads, aquí NO hay nada que
-# escribirel sitio es estático y las sesiones viven en memoria a propósito—, salvo el registro
+# escribirel sitio es estático y las sesiones viven en memoria a propósito, salvo el registro
 # de acceso. De ahí que ReadWritePaths tenga una sola ruta.
 NoNewPrivileges=true
 PrivateTmp=true

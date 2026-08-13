@@ -23,7 +23,7 @@
 #   cédula   versal 31 px (la de «C.C:», misma línea), base y=649, centrada en su raya x 750-1093
 #   nombre   base y=570 (4 px sobre su raya y=574), centrado en la raya x 255-1499. Su versal es
 #            36 px: la del cuerpo de la pieza es ~25 px y la del «C.C:» 31, y el nombre es el
-#            protagonista del documento — 36 px lo hace un escalón mayor que todo lo que lo
+#            protagonista del documento  36 px lo hace un escalón mayor que todo lo que lo
 #            rodea sin comerse el vano de 194 px. Si un nombre no cabe, el cuerpo BAJA por pasos
 #            hasta 28 px; por debajo, se aborta nombrando a la persona.
 #
@@ -77,8 +77,8 @@ MARGEN_RAYA_PX = 24            # aire mínimo entre el texto y cada extremo de s
 
 # Bandas del auto-chequeo: todo lo que el texto puede tocar. La Ñ sube por encima de la versal,
 # así que la banda del nombre empieza holgada por arriba; y la COLA DE LA Q baja por debajo de la
-# línea base y CRUZA la raya —como en cualquier diploma donde el nombre se escribe sobre una
-# línea—, así que la banda del nombre termina por debajo de la raya. El chequeo «no toca su raya»
+# línea base y CRUZA la raya como en cualquier diploma donde el nombre se escribe sobre una
+# línea, así que la banda del nombre termina por debajo de la raya. El chequeo «no toca su raya»
 # es solo de la cédula: dígitos y puntos no descienden nunca.
 BANDA_NOMBRE = dict(y0=500, y1=590, x0=RAYA_NOMBRE['x0'], x1=RAYA_NOMBRE['x1'])
 BANDA_CEDULA = dict(y0=610, y1=652, x0=RAYA_CEDULA['x0'], x1=RAYA_CEDULA['x1'])

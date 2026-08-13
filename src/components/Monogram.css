@@ -49,7 +49,7 @@
    `--gt-monograma-tinte` se declara aparte para que el contenedor pueda
    bajarlo en hover sin saber nada de cómo está construido el tratamiento.
 
-   Los tokens van hoy en 0 —el retrato se sirve a color original— así que
+   Los tokens van hoy en 0 el retrato se sirve a color original así que
    estas dos capas y el hover que las baja quedan inertes. Están escritos como
    fracción del token, no como literales, para que reactivar el tinte desde
    tokens.css los devuelva enteros.                                           */

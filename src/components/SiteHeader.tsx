@@ -50,7 +50,7 @@ function useScrollspy(activo: boolean): AnclaId | null {
 /**
  * `true` en cuanto la página baja del hero.
  *
- * Sobre el hero el header va transparenteel campo oscuro ya es su fondo—,
+ * Sobre el hero el header va transparenteel campo oscuro ya es su fondo,
  * pero más abajo pasa por encima de la lámina blanca del programa y necesita
  * su propio plano para que el texto blanco se siga leyendo.
  */

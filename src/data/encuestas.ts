@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
  * (ver `server/encuestas.js`).
  *
  * La interfaz solo anuncia lo que el servidor confirma la misma doctrina que
- * el correo de inscripción—: `abierta` existe únicamente cuando la respuesta
+ * el correo de inscripción: `abierta` existe únicamente cuando la respuesta
  * trajo la URL, y todo lo demás (aún no es la hora, preview sin servidor, red
  * caída, respuesta malformada) es `cerrada`. Fallar cerrado es la garantía:
  * ningún reloj de cliente, adelantado o no, puede fabricar el enlace, porque el

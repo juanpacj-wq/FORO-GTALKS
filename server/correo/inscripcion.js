@@ -2,8 +2,8 @@
  * El correo de inscripción: la política y la orquestación.
  *
  * Es la única pieza que conoce las reglas de negocio. Debajo tiene tres módulos con una sola
- * responsabilidad cada uno —`libro-inscripciones.js` (idempotencia), `graph-mailer.js`
- * (transporte) y `plantilla-inscripcion.js` (contenido)—, y por encima solo la expone
+ * responsabilidad cada uno `libro-inscripciones.js` (idempotencia), `graph-mailer.js`
+ * (transporte) y `plantilla-inscripcion.js` (contenido), y por encima solo la expone
  * `server/app.js` con tres funciones.
  *
  * ── La decisión, en orden ────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ export function leerConfiguracion(env = process.env) {
   const origen = String(env.PUBLIC_ORIGIN || '').replace(/\/+$/, '');
 
   // El ensayo NUNCA escribe en el libro real. Si lo hiciera, los `oid` del simulacro quedarían
-  // marcados y, al pasar a `lista`, esas mismas personas —las que hicieron el ensayo— NO
+  // marcados y, al pasar a `lista`, esas mismas personas las que hicieron el ensayo NO
   // recibirían el correo de verdad, porque ya constarían como atendidas. El sufijo lo hace
   // imposible por construcción, en vez de confiar en que alguien se acuerde de borrar el archivo.
   const libroBase = env.INSCRIPCION_LIBRO || LIBRO_POR_DEFECTO;

@@ -51,7 +51,7 @@ body {
   text-rendering: optimizeLegibility;
   /* `clip`, no `hidden`: hidden convierte al elemento en contenedor de scroll
     rompe `position: sticky` y deja inactivas las líneas de tiempo por
-     scroll—. `clip` recorta igual sin crear scrollport. La red de seguridad
+     scroll. `clip` recorta igual sin crear scrollport. La red de seguridad
      real es el check de reflow de a11y-test.                                 */
   overflow-x: clip;
 }
@@ -168,7 +168,7 @@ b {
 
   /* Con contraste alto el retrato va literal: si alguien pide más contraste,
      una cara teñida es exactamente lo contrario de lo que pidió. Hoy esto es
-     redundante —el defecto de tokens.css ya es 0— y se conserva a propósito:
+     redundante el defecto de tokens.css ya es 0 y se conserva a propósito:
      si algún día vuelve el tinte, no puede volver también aquí sin que nadie
      se dé cuenta.                                                            */
   :root {
@@ -192,7 +192,7 @@ b {
 
 /* Modo de alto contraste de Windows. El sistema descarta los fondos, así que
    todo lo que se dibuja con `background-color`los tramos de la línea del
-   día, el monograma, los chips— se volvería invisible: se les pone borde. Los
+   día, el monograma, los chips se volvería invisible: se les pone borde. Los
    símbolos van como máscara CSS y también hay que rescatarlos.               */
 @media (forced-colors: active) {
   .gt-linea__enlace,
@@ -346,7 +346,7 @@ b {
    Un solo botón, con dos variantes que no son estilos alternativos sino dos
    papeles distintos:
 
-   - El base es un remate de sección«ver los perfiles»— y por eso va en
+   - El base es un remate de sección«ver los perfiles» y por eso va en
      hairline: propone, no empuja. Plano celeste al pasar por encima.
    - `--solido` es para cuando el enlace ES el contenido de la página y no su
      remate: las encuestas, el login de la escarapela y la descarga del
@@ -389,7 +389,7 @@ b {
 }
 
 /* Plano celeste desde el reposo. El hover no puede «apagarlo»perdería
-   énfasis justo al tocarlo—, así que sube a --gt-celeste-alto, que existe
+   énfasis justo al tocarlo, así que sube a --gt-celeste-alto, que existe
    precisamente para estados sobre el campo oscuro. Navy sobre celeste: 7.22:1;
    sobre el aclarado, más.                                                    */
 .gt-boton--solido {
@@ -409,7 +409,7 @@ b {
    Se gira el glifo que el sistema ya usa en vez de escribir «↗» (U+2197). Ojo
    al motivo, que no es capricho: NINGUNA de las dos flechas está en el
    `unicode-range` declarado de Urbanistni siquiera «→», que ya pintan la
-   fuente del sistema el botón y la fila de ponente—, y de las dos, la que
+   fuente del sistema el botón y la fila de ponente, y de las dos, la que
    cualquier fuente de sistema tiene con seguridad es la horizontal.          */
 .gt-boton--externo::after {
   rotate: -45deg;
@@ -478,7 +478,7 @@ b {
    Una sola secuencia orquestada al cargar.
 
    Sobre los revelados por scroll, la regla exactay no la burda que me había
-   impuesto— es esta: **el estado oculto solo puede vivir en los keyframes,
+   impuesto es esta: **el estado oculto solo puede vivir en los keyframes,
    nunca en el CSS base, y solo puede ser un `transform`**. Comprobado al
    depurar el paralaje: cuando la línea de tiempo no se activa, la animación
    no se aplica en absoluto y el elemento se pinta con su CSS normal. Así que

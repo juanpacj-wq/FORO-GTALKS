@@ -44,7 +44,7 @@ _spec.loader.exec_module(medir)
 
 # Un píxel cuenta como distinto si algún canal se separa más que esto. 28/255 absorbe el
 # antialias de los cantos y del textola pieza es un export raster, no hay igualdad bit a
-# bit— sin absorber un desplazamiento real.
+# bit sin absorber un desplazamiento real.
 TOLERANCIA = 28
 
 
@@ -98,10 +98,10 @@ def comparar_curvas(a: dict, b: dict) -> dict:
             "medio": round(sum(ordenadas) / len(ordenadas), 2),
             # El p95 y el recuento de columnas fuera de 2px dicen si el máximo es un pico
             # aisladoel canto izquierdo, donde la curva va casi vertical y medio píxel
-            # horizontal son dos verticales— o una desviación de verdad.
+            # horizontal son dos verticales o una desviación de verdad.
             "p95": round(ordenadas[int(len(ordenadas) * 0.95)], 2),
             "fuera_2px": sum(1 for v in ordenadas if v > 2),
-            "cobertura": f"{round(pb[0][0]) if pb else '—'}–{round(pb[-1][0]) if pb else '—'}",
+            "cobertura": f"{round(pb[0][0]) if pb else ''}–{round(pb[-1][0]) if pb else ''}",
         }
     return res
 
@@ -186,13 +186,13 @@ def main() -> None:
         if not a:
             continue
         if not b:
-            L.append(f"| {k} | {a.get('x', '—')} | **sin medir** | {a['y']} | | "
-                     f"{a.get('ancho', '—')} | | {a['alto']} | | | |")
+            L.append(f"| {k} | {a.get('x', '')} | **sin medir** | {a['y']} | | "
+                     f"{a.get('ancho', '')} | | {a['alto']} | | | |")
             peores.append((999, k, "no se encontró en el render"))
             continue
         def par(campo):
             if campo not in a or campo not in b:
-                return "—", "—", 0
+                return "", "", 0
             return a[campo], f"{b[campo] - a[campo]:+.0f}", abs(b[campo] - a[campo])
         vx, dx, ax = par("x"); vy, dy, ay = par("y")
         vw, dw, aw = par("ancho"); vh, dh, ah = par("alto")

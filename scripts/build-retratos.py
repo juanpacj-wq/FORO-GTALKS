@@ -1,7 +1,7 @@
 """Procesa los retratos de los ponentes y escribe el manifiesto tipado.
 
 Las fotos llegan de fuentes distintasfondo de estudio, fondo de oficina,
-recortes de una foto de grupo— y en tamaños y formatos cualesquiera. Este
+recortes de una foto de grupo y en tamaños y formatos cualesquiera. Este
 script las normaliza a las cuatro piezas que el sitio necesita y, sobre todo,
 deja escrito en `src/design/retratos.ts` exactamente lo que produjo.
 
@@ -32,8 +32,8 @@ from PIL import Image, ImageFilter
 
 # La consola de Windows abre en cp1252 y este script imprime «→» y «·» por cada
 # foto. Sin esto revienta con UnicodeEncodeError EN MEDIO del lote: deja unos
-# derivados escritos, otros no, y el manifiesto sin reescribir —el peor estado
-# posible, porque `retratos.ts` deja de describir lo que hay en disco—.
+# derivados escritos, otros no, y el manifiesto sin reescribir el peor estado
+# posible, porque `retratos.ts` deja de describir lo que hay en disco.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -81,7 +81,7 @@ ZOOM_CUADRADO = 0.70
 #   ENCUADRE_CUADRADO = {"jose-fernando-prada": (0.55, 0.30, 0.9)}
 #
 # Vacíos hoy, y no por casualidad: el lote definitivo son diez retratos de
-# estudio del mismo encargo mismo fondo, misma distancia, sujeto centrado—,
+# estudio del mismo encargo mismo fondo, misma distancia, sujeto centrado,
 # así que el defecto acierta en los diez. Los overrides que hubo aquí eran para
 # una foto suelta y apaisada que ese lote sustituyó, y se quitaron con ella:
 # un encuadre a mano que sobrevive a la foto que lo justificaba descuadra la

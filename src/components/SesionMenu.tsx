@@ -8,7 +8,7 @@ import './SesionMenu.css'
  *
  * Muestra el nombre y el cargo de la persona autenticada, y da las dos salidas que hacen falta:
  * cambiar de cuentael tropiezo más probable de un ponente externo, que suele llegar ya
- * autenticado con su propio Microsoft— y cerrar sesión.
+ * autenticado con su propio Microsoft y cerrar sesión.
  *
  * Las dos acciones son enlaces de navegación, no `fetch`: cerrar sesión tiene que llevar al
  * front-channel logout de Microsoft para que la sesión muera también en Entra, y eso solo lo

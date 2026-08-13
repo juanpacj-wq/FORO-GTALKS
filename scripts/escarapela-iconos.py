@@ -21,7 +21,7 @@ Cómo, y por qué así:
    contorno hereda el rizado del bloque 8×8 de la compresión.
 3. **Marching squares a 0.5**, que da el contorno con subpíxel y cierra solo los agujeros (el
    hueco blanco del alfiler, el panel del calendario). Con `fill-rule="evenodd"` los cuadrados
-   de dentro del calendarioislas dentro del agujero— vuelven a pintarse sin tratarlos aparte.
+   de dentro del calendarioislas dentro del agujero vuelven a pintarse sin tratarlos aparte.
 4. **Douglas-Peucker a 0.3 px** de la pieza: por debajo del cuarto de píxel no hay información
    real que conservar, y por encima se empiezan a achatar las curvas del alfiler.
 
@@ -106,7 +106,7 @@ def marching_squares(g, nivel: float) -> list[list[tuple[float, float]]]:
 
     Los dos casos ambiguos (esquinas opuestas dentro) se resuelven por el promedio de las
     cuatro esquinas, que es lo que decide si el istmo del centro está dentro o fuera. Sin eso,
-    dos masas que se tocan en diagonalel hombro del grupo de personas— se unen o se parten
+    dos masas que se tocan en diagonalel hombro del grupo de personas se unen o se parten
     según el orden de recorrido, y el contorno deja de cerrar.
     """
     alto, ancho = len(g), len(g[0])

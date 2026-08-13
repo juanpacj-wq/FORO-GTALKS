@@ -9,7 +9,7 @@
 // 1. LECTURA. El QR del dorso no es el de una librería estándar: replica la pieza «Diseño de
 //    Código QR.png» (puntos separados, marcadores redondeados, la «G» al centro), y cada uno
 //    de esos gestos le quita margen al decodificador. Se capturan los PÍXELES REALES del panel
-//    renderizadolo que ve la cámara de un teléfono— y se decodifican con ZXing (zxing-wasm),
+//    renderizadolo que ve la cámara de un teléfono y se decodifican con ZXing (zxing-wasm),
 //    la misma familia de lectores de los escáneres reales, a dos densidades de captura
 //    (deviceScaleFactor 2 y 3). jsQR no sirve de árbitro aquí: es mucho más estricto que un
 //    lector real y solo acepta este estilo con puntos tangentes, que no son el diseño.

@@ -44,7 +44,7 @@ cargo y trayectoria. Se transcribe **literal** a `src/data/foro.ts`, igual que e
 
 **Va por entregas y las entregas NO son acumulativas: manda la última, y se re-transcribe entera.**
 La tercera (`IMagenes ponentes/PERFIL DE LOS PONENTES (2).docx`) trae las diez biografías y
-**reescribió siete** respecto de la anterior texto nuevo, no solo repartido distinto—, así que
+**reescribió siete** respecto de la anterior texto nuevo, no solo repartido distinto, así que
 parchear la diferencia habría dejado media página en la versión vieja. Como la carpeta del envío
 está ignorada por git, el texto adoptado vive versionado en `scripts/perfiles-fuente.txt`, y es
 contra esa copia contra la que se comprueba a diario; adoptar una entrega nueva es un acto
@@ -55,7 +55,7 @@ mismo nombre de archivo y añadió la ficha que faltaba, la de Erick Wehdeking A
 Dos cosas que enseñó esa última entrega y que valen para la siguiente: el nombre del archivo **no**
 avisa de que hay texto nuevo (lo avisa el arnés, comparando el `.docx` con la referencia), y el
 encabezado de una ficha nueva puede no seguir el formato de las demás llegó como «11. Erick
-Wehdeking Arcieri», numerado y sin cargo—, con lo que su biografía se pegaba a la de la persona
+Wehdeking Arcieri», numerado y sin cargo, con lo que su biografía se pegaba a la de la persona
 anterior sin que nada fallara. Por eso adoptar se hace **leyendo el diff ficha a ficha**, no a
 ciegas. Cerrados los pendientes #2 y #9 de
 [`docs/PENDIENTES-DE-CONTENIDO.md`](./docs/PENDIENTES-DE-CONTENIDO.md).
@@ -100,7 +100,7 @@ scripts/                     Extracción de diseño (Python) y verificación (Pl
 public/img/                  Assets extraídos de los PDF, todo SVG salvo las fotos
 public/fonts/                Urbanist autohospedada
 fotos-origen/                Los originales que NO salen de los PDF ni son
-                             retratos hoy solo la foto del hero—. Se versionan
+                             retratos hoy solo la foto del hero. Se versionan
 *.pdf                        Piezas gráficas oficiales fuente de verdad
 ```
 
@@ -232,7 +232,7 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   obvias y que ese arnés descubrió en la pieza vigente: va **a sangre** (el carné ES el lienzo de
   1080×1648, proporción **1024/1563** y radio de esquina **0**, al revés que la anterior); usa
   **seis tintas** y no dos ninguna es un token del sistema, y `.gt-carne` las redefine acotadas
-  a sí mismo—; el **peso** de cada texto sale del grosor de asta y no del ancho, que lo decide el
+  a sí mismo; el **peso** de cada texto sale del grosor de asta y no del ancho, que lo decide el
   tracking; y el **cuerpo** no se deduce dividiendo la versal por 0.70 (sale hasta un 8 % de más),
   se calibra con el Δ del propio bucle. Todo en `docs/SISTEMA-DE-DISENO.md` §La escarapela.
 - **Los tres iconos sólidos del carné se VECTORIZAN de la pieza**, no se dibujan a ojo:
@@ -242,7 +242,7 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   líneas, la regla blanca y «Retos y oportunidades» están compuestos como un solo dibujo en
   `invitacion gtalk 2026.pdf`, y lo que lo delata es la regla: **es la prolongación del serif
   inferior del «1»**, con su mismo grosor y su misma cota. Todas sus cotas van en múltiplos del
-  cuerpo del titularmedidas, en `src/pages/InicioPage.css` §Titular— y tres valores se apartan
+  cuerpo del titularmedidas, en `src/pages/InicioPage.css` §Titular y tres valores se apartan
   del sistema a propósito: peso 700 (no el black), tracking natural (no `--gt-tracking-display`) y
   el numeral en blanco pleno (no tono sobre tono). Tocarlo sin cerrar el bucle
   `lockup-compare.mjs` → `lockup-diff.py` es volver a componerlo a ojo. Detalle que no es obvio:
@@ -267,14 +267,14 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
 - **Lo que es enlace, dato u hora va en `--gt-acento`, no en `--gt-celeste` a mano.** El celeste
   sobre blanco da 1.72:1; `--gt-acento` cambia solo a `--gt-azul-medio` dentro de `.gt-lamina`.
 - **Un enlace que sale del sitio se marca con el botón `--externo`**la flecha del sistema girada
-  45°, no un glifo nuevo— y va siempre con `target="_blank"` y `rel="noopener noreferrer"`: sin
+  45°, no un glifo nuevo y va siempre con `target="_blank"` y `rel="noopener noreferrer"`: sin
   `noopener`, la pestaña de destino puede reescribir la de origen, y esta va con sesión
   corporativa. Lo comprueba `scripts/interactions-test.mjs`. Los dos de `/encuestas` llevaron un
   rato una línea debajo que nombraba el dominio de destino; **se quitó por petición del usuario**,
   así que la flecha es hoy la única señal. Si vuelve a hacer falta, que se derive del `href` y no
   se escriba a mano, para que no pueda quedarse mintiendo cuando cambie un formulario.
 - **Un `view-transition-name` tiene que ser único en el documento.** Lo lleva solo el retrato de
-  `SpeakerCard`una vez por persona— y nunca el de la agenda, donde la misma persona puede salir
+  `SpeakerCard`una vez por persona y nunca el de la agenda, donde la misma persona puede salir
   dos veces; si se repite, el navegador descarta la transición entera. Ver `transicionRetrato()`.
 - **El campo es oscuro y el papel es la excepción.** Todo vive sobre `--gt-noche`; las
   superficies claras se marcan con `.gt-lamina`, que además invierte el color de foco y de los
@@ -285,7 +285,7 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
 - **Toda biografía tiene entradilla, y por eso los párrafos son los de la PÁGINA.** El primero se
   compone como entradilla (`p:first-child:not(:only-child)`), así que una ficha que llegue en un
   bloque único se lee plana al lado de las demás eso fue una discrepancia real, con seis fichas
-  de diez sin entradilla—. Cuando pasa, se parte en `foro.ts` **por un punto y seguido de la
+  de diez sin entradilla. Cuando pasa, se parte en `foro.ts` **por un punto y seguido de la
   fuente**, donde deja de presentar a la persona y empieza a contar su trayectoria. Partir es
   composición, no copy: un espacio pasa a ser un salto de párrafo y no cambia ni una letra. Hoy
   lo necesitan tres fichas; las otras ocho llegan repartidas. Dos arneses lo sostienen y hay
@@ -301,12 +301,12 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   es **síncrona** a propósito, porque ahí es donde se cierra la carrera de dos pestañas entrando a
   la vez, y un `await` en medio abre ese hueco; y el libro es **estado, no un log**, así que vive
   en `/var/lib/gtalks/` y **logrotate no lo toca jamás** con `copytruncate`, el siguiente
-  reinicio le escribiría otra vez a todo el mundo—. Lo comprueba
+  reinicio le escribiría otra vez a todo el mundo. Lo comprueba
   `node scripts/inscripcion-test.mjs` contra un Graph falso, y hay que correrlo tras tocar
   cualquier cosa de `server/correo/`. Manual completo: `docs/SEGURIDAD.md` §Correo de inscripción.
 - **El cuerpo del correo ES la pieza `imagen correo.png` (raíz), otra entrega no acumulativa.**
-  Va incrustada **en línea** por `cid:` —nunca como imagen remota: Outlook las bloquea y serían
-  rastreo— y envuelta entera en el enlace a `PUBLIC_ORIGIN + /escarapela`, con un enlace textual
+  Va incrustada **en línea** por `cid:` nunca como imagen remota: Outlook las bloquea y serían
+  rastreo y envuelta entera en el enlace a `PUBLIC_ORIGIN + /escarapela`, con un enlace textual
   de respaldo debajo. La lee `cargarImagenCorreo()` **al arrancar**, no al enviar: si falta, no es
   un PNG o no cabe en los ~4 MB de `sendMail`, el envío queda apagado desde el arranque con aviso
   ruidoso. Tiene que estar **commiteada** (el despliegue empaqueta con `git archive`) y adoptar
@@ -317,8 +317,8 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   `INSCRIPCION_DESTINATARIOS`** con la que coincidió, y es esa cadena la que se envía. Así ninguna
   normalización, codificación ni homógrafo puede producir una dirección distinta, porque la
   dirección no se construye a partir de la entrada. Se comprueba al **reservar** y otra vez al
-  **enviar** —entre las dos hay un redirect y un llamador externo, así que con una sola la garantía
-  sería una convención entre funciones— y `graph-mailer.js` se niega por su cuenta a enviar a algo
+  **enviar** entre las dos hay un redirect y un llamador externo, así que con una sola la garantía
+  sería una convención entre funciones y `graph-mailer.js` se niega por su cuenta a enviar a algo
   que no sea **una** dirección. No hay `cc` ni `bcc` en el código, y no debe haberlos.
   `inscripcion-test.mjs` lo ejerce contra 32 identidades hostiles y exige que el conjunto de
   direcciones que reciben sea exactamente el de la lista. **El ensayo escribe en un libro con
@@ -332,20 +332,20 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   correo. El módulo no puede tocar el DOM (lo carga Node) ni el disco (lo empaqueta Vite): por eso
   `svgQrAutonomo` recibe la marca «G» por parámetro. Y una cota que no es cosmética: **el panel
   mide un número ENTERO de módulos**, porque a 810 px sobre 89.1 módulos salían 9.09 píxeles por
-  módulo y **ZXing dejaba de leer el código** medido, no supuesto—.
+  módulo y **ZXing dejaba de leer el código** medido, no supuesto.
 - **El envío masivo del QR sale UNA vez, y el cruce se aborta, no se anota.** `scripts/envio-qr.mjs`
   le manda a cada invitado su código personal con el ID de la **mañana**. Cinco defensas de
   construcción impiden el único fallo sin arreglo posible que a alguien le llegue el código de
-  otro—, y la última es que el script **decodifica con ZXing el PNG que acaba de generar** y, si no
+  otro, y la última es que el script **decodifica con ZXing el PNG que acaba de generar** y, si no
   dice la URL de esa persona, **aborta el proceso entero**. La audiencia se congela en un archivo
   revisable y el envío no consulta Graph. Detalle en `docs/SEGURIDAD.md` §Envío único del QR.
 - **Un envío masivo lanzado con el `.env` a secas enlaza a `localhost`.** El correo apunta a
-  `PUBLIC_ORIGIN + /escarapela`, y el `.env` de la estación dice `http://localhost:5173` — que ahí
+  `PUBLIC_ORIGIN + /escarapela`, y el `.env` de la estación dice `http://localhost:5173`  que ahí
   es lo correcto, porque el arranque lo valida contra `M365_REDIRECT_URI` y sin él no hay login
   local. No lo delata nada: ni el asunto, ni la pieza, ni el QR. Se descubrió minutos antes de la
   corrida real del 2026-08-04, con **ocho correos de prueba ya enviados con enlaces a localhost**.
   Ahora `envio-qr.mjs` **aborta** si `--confirmar` va con un origen que no sea `https://`, y la
-  forma de dárselo es en la línea de comando —tiene precedencia sobre `--env-file`—:
+  forma de dárselo es en la línea de comando tiene precedencia sobre `--env-file`:
   `PUBLIC_ORIGIN=https://cdp.gecelca.com.co node --env-file=.env scripts/envio-qr.mjs …`.
   El dominio es **`cdp.gecelca.com.co`**; `deploy/deploy.env` todavía dice `gtalks.gecelca.com.co`,
   que ni resuelve. Y al comprobarlo con `curl`, `/` da **404** sin cabeceras `Sec-Fetch-*`: es el
@@ -353,28 +353,28 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
 - **La pieza de ese correo es la suya, NO la de inscripción.** Reemplazar `imagen correo.png`
   cambiaría retroactivamente un correo que ya salió, y `inscripcion-test.mjs` seguiría en verde
   porque compara contra el archivo y no contra los bytes históricos.
-- **Ese correo CADUCA, y caduca por dos sitios a la vez.** Decía «mañana» —en el asunto y en el
-  titular de la pieza— y salió así el 4 de agosto, la víspera. El 5, para los rezagados, había que
+- **Ese correo CADUCA, y caduca por dos sitios a la vez.** Decía «mañana» en el asunto y en el
+  titular de la pieza y salió así el 4 de agosto, la víspera. El 5, para los rezagados, había que
   decir «hoy»: **se cambian los dos o ninguno**, porque con uno solo el mensaje se contradice
   (en la bandeja «HOY» y al abrirlo «¡Mañana…» en 36 px). El asunto vive en
   `plantilla-envio-qr.js`; el titular lo reescribe `scripts/pieza-correo-hoy.py` **generándolo, no
   retocándolo a mano**: solo sintetiza «Hoy» (el «¡» y el «tenemos» son píxeles originales
-  desplazados), ajusta la fuente por diferencia de píxeles contra «Mañana» —Urbanist 36/700, astas
-  de 4.57 px contra 4.55— y saca el hueco entre palabras de la propia fuente. `envio-qr-test.mjs`
+  desplazados), ajusta la fuente por diferencia de píxeles contra «Mañana» Urbanist 36/700, astas
+  de 4.57 px contra 4.55 y saca el hueco entre palabras de la propia fuente. `envio-qr-test.mjs`
   ata las dos puntas y se pone rojo si el asunto y la pieza hablan de días distintos.
 - **Y por eso hay DOS piezas del QR, que es la excepción a «manda la última».**
   `imagen correo qr.png` son los bytes que recibieron las 169 del día 4;
   `imagen correo qr hoy.png` es la que se usa. Sobrescribir la vieja haría que el repo afirmara
   que aquellas 169 recibieron algo que no recibieron, sin que ningún arnés lo gritara.
 - **A nadie se le mete al grupo con un `POST` a mano.** `scripts/personas-resolver.mjs` traduce
-  NOMBRES a direcciones —las listas llegan «APELLIDOS NOMBRES» y Entra guarda «Nombres
-  Apellidos»— exigiendo **una sola** coincidencia exacta contra todo el directorio, y
+  NOMBRES a direcciones las listas llegan «APELLIDOS NOMBRES» y Entra guarda «Nombres
+  Apellidos» exigiendo **una sola** coincidencia exacta contra todo el directorio, y
   `scripts/grupo-agregar.mjs` da el alta resolviendo **todas** antes de escribir ninguna. Dos
   detalles que costaron: la comprobación buena es **listar** los miembros, porque
   `GET /members/{oid}/$ref` devuelve 404 aunque la persona sí esté; y un nombre que no casa no se
   aproxima, se enseñan los candidatos y decide un humano.
 - **El envío no añade superficie HTTP, y así se queda.** No hay ruta para dispararlo, reenviarlo ni
-  consultarlo un botón de «reenviar» sería un generador de correo a discreción del cliente—; lo
+  consultarlo un botón de «reenviar» sería un generador de correo a discreción del cliente; lo
   único que cambió es un campo dentro de `/api/me`, y `gate-test.mjs` verifica que sigue siendo
   así. La interfaz **solo anuncia lo que el servidor confirma**: `pendiente` y `no_aplica` no
   pintan nada, porque nunca se anuncia un correo que quizá no salió.
@@ -382,7 +382,7 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   respuestas antes de que el foro termine, así que su URL **no está en el bundle**: vive en
   `server/encuestas.js` y `GET /api/encuestas` (público, solo lectura, `no-store`) la entrega
   cuando pasó `fecha.cierreIso` de `src/data/evento.json` la hora lleva su desfase `-05:00`
-  explícito, y sin él el arranque aborta—. El cliente (`src/data/encuestas.ts`) **falla cerrado**:
+  explícito, y sin él el arranque aborta. El cliente (`src/data/encuestas.ts`) **falla cerrado**:
   sin confirmación del servidor pinta el botón `aria-disabled` con su aviso, y programa el volteo
   restando dos relojes del servidor (`desde − ahora`), nunca con el local. Tocar cualquiera de las
   dos puntas se verifica con `gate-test.mjs` (frontera exacta con reloj inyectado, URL ausente en
@@ -390,8 +390,8 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
   volteo sin recargar). Manual: `docs/SEGURIDAD.md` §La encuesta de satisfacción abre por reloj.
 - **La regla que separa una encuesta abierta de una que abre por reloj es tener `url` o no.** Las
   que la traen en `ENCUESTAS` (`foro.ts`) se pintan como enlace y viajan en el bundle; la que **no**
-  la trae es la que retiene el servidor. Hoy son tres —oportunidades, preguntas pendientes para
-  panelistas, y satisfacción— y **la de satisfacción va SIEMPRE la última**, porque
+  la trae es la que retiene el servidor. Hoy son tres oportunidades, preguntas pendientes para
+  panelistas, y satisfacción y **la de satisfacción va SIEMPRE la última**, porque
   `interactions-test.mjs` la localiza con `:last-child`. Añadir una en medio obliga a mirar ese
   arnés: cuando llegó la segunda abierta, la de satisfacción pasó de ser la 2.ª a la 3.ª y los
   selectores por posición se quedaron apuntando a la tarjeta equivocada. Y el texto del botón tiene
@@ -408,21 +408,21 @@ bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit 
 - **La presidencia va sin línea de horas en el índice de ponentes.** Abrir y cerrar es protocolo,
   no programa, y «A cargo 9:00 a.m. y 4:10 p.m.» lo listaba como una intervención más;
   `SIN_RESUMEN` en `foro.ts` deja esa fila con nombre y cargo. Va **por slug y no por papel**
-  —filtrar «a cargo» sería hoy lo mismo, pero mañana escondería sin avisar a quien herede el
-  papel— y `resumenDe` devuelve `''`, así que quien la pinte tiene que contar con la cadena vacía
+  filtrar «a cargo» sería hoy lo mismo, pero mañana escondería sin avisar a quien herede el
+  papel y `resumenDe` devuelve `''`, así que quien la pinte tiene que contar con la cadena vacía
   y no envolverla a ciegas en su etiqueta. Lo fija `interactions-test.mjs` en dos mitades: diez
   filas con línea, y que la que falta sea exactamente esa.
 - **El certificado de participación se descarga de `/certificado`, y el servidor no compone
   ninguno.** Los PDF (nombre + cédula sobre la pieza `Certificado de participación.png`) se
   generan y verifican en la ESTACIÓN con el bucle
-  `certificados-audiencia.mjs` (congela 155 con oid — 134 el 10, ampliada el 12 con los 21
+  `certificados-audiencia.mjs` (congela 155 con oid  134 el 10, ampliada el 12 con los 21
   sin-QR de `asistentes.md`; se revisa A MANO) →
   `certificados-generar.py` (texto vectorial en Poppins Regular decisión del usuario tras
   descartar 13 candidatas con `certificado-fuente.py`; las cotas salen de «C.C:», el único
   texto-sobre-raya de la pieza) → `certificados-auditar.py` (la segunda opinión: capa de texto
   contra archivo contra audiencia; probada con sabotaje). El servidor solo aprende un manifiesto
-  `oid → archivo` (sin nombres ni cédulas) desde `CERTIFICADOS_DIR` — vacío no existe, a medias
-  ABORTA — y `GET /api/certificado` entrega ÚNICAMENTE el del oid de la sesión: sin parámetros,
+  `oid → archivo` (sin nombres ni cédulas) desde `CERTIFICADOS_DIR`  vacío no existe, a medias
+  ABORTA  y `GET /api/certificado` entrega ÚNICAMENTE el del oid de la sesión: sin parámetros,
   sin listado, con `revalidate`. La interfaz solo anuncia lo que `/api/me` confirma con el
   literal `disponible`; sin asistencia registrada, botón retenido con aviso emergente (Escape le
   gana a hover y foco: la clase `--suprimido` va DOBLADA porque `:focus-within` puntúa como

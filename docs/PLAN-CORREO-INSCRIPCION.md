@@ -2,8 +2,8 @@
 
 > **Estado: implementado el 2026-07-30**, con **una desviación deliberada**: la acotación del
 > remitente en Exchange (§0.3) **no se aplicó**. Requiere rol de *Organization Management*, que la
-> cuenta del proyecto no tiene —los cmdlets ni siquiera aparecen en su sesión de Exchange Online,
-> porque ahí los permisos filtran el catálogo—, y el usuario decidió no bloquear la entrega por
+> cuenta del proyecto no tiene los cmdlets ni siquiera aparecen en su sesión de Exchange Online,
+> porque ahí los permisos filtran el catálogo, y el usuario decidió no bloquear la entrega por
 > algo que solo protege un escenario de secreto filtrado en un sitio que vive un día. Queda
 > registrado en `docs/SEGURIDAD.md` §Riesgos aceptados. Todo lo demás se construyó tal como está
 > aquí descrito.
@@ -20,8 +20,8 @@ Este documento es el plan de esa función, de punta a punta: permisos en Entra, 
 entorno, despliegue, verificación y la evidencia que hay que poder poner sobre la mesa si alguien
 audita el envío.
 
-**Piloto acotado:** en esta primera etapa el correo se envía **únicamente** a tres buzones —
-`jcespedes@gecelca.com.co`, `llondono@gecelca.com.co` y `lrojas@gecelca.com.co`— y sale desde
+**Piloto acotado:** en esta primera etapa el correo se envía **únicamente** a tres buzones 
+`jcespedes@gecelca.com.co`, `llondono@gecelca.com.co` y `lrojas@gecelca.com.co` y sale desde
 `jcespedes@gecelca.com.co`. Cualquier otra cuenta que inicie sesión no recibe nada y **no** deja
 rastro en el libro de inscripciones (ver §2.4: es lo que permite abrir la lista después sin dejar
 a nadie fuera).
@@ -57,7 +57,7 @@ a nadie fuera).
 
 ---
 
-## Fase 0 — Lo que no es código, y bloquea
+## Fase 0  Lo que no es código, y bloquea
 
 ### 0.1 BLOQUEANTE: el unit de systemd niega toda salida a internet
 
@@ -91,12 +91,12 @@ Nueva app (p. ej. `G-TALKS · correo de inscripción`), en el tenant de GECELCA:
 | Paso | Detalle |
 |---|---|
 | Permiso | API permissions → Microsoft Graph → **Application permissions** → `Mail.Send` |
-| Consentimiento | «Grant admin consent» — es obligatorio, no lo puede dar el usuario |
+| Consentimiento | «Grant admin consent»  es obligatorio, no lo puede dar el usuario |
 | Credencial | Client secret con vida de 12 meses, expirando ~2 meses **después** del evento (misma regla que el secreto del login, `docs/SEGURIDAD.md` §Rotación) |
 | Sin redirect URI | Es un cliente daemon: no tiene flujo interactivo. Dejarlo sin plataformas configuradas |
 | Sin permisos delegados | Ni uno. Si hay alguno heredado del asistente de creación (`User.Read`), quitarlo |
 
-### 0.3 Acotar el permiso en Exchange Online — ⚠ NO APLICADO
+### 0.3 Acotar el permiso en Exchange Online  ⚠ NO APLICADO
 
 > **Desviación aceptada.** Esta sección se conserva porque sigue siendo lo correcto y porque es lo
 > que hay que hacer si el correo se abre a todo el tenant o el sitio pasa a vivir más de una
@@ -149,7 +149,7 @@ credenciales SMTP. Es, de lejos, la razón operativa más fuerte para usar Graph
 
 ---
 
-## Fase 1 — El contenido del correo sale de la misma fuente que el sitio
+## Fase 1  El contenido del correo sale de la misma fuente que el sitio
 
 El correo dice la fecha, el lugar y el nombre del foro. Esos datos ya viven en `EVENTO`
 (`src/data/foro.ts:14-25`), que es TypeScript compilado por Vite: el servidor, que es JS plano sin
@@ -169,12 +169,12 @@ el error sale con nombre propio en vez de mandar un correo con un `undefined` de
 
 > **Corrección sobre el plan original**, decidida al implementar: esa guardia **no aborta el
 > proceso**, apaga el envío y deja el sitio en pie. Abortar habría significado que vaciar la sede
-> en `evento.json` —una edición de contenido que no rompe la compilación— tumbara el foro entero,
+> en `evento.json` una edición de contenido que no rompe la compilación tumbara el foro entero,
 > que es público. El correo es un requisito del envío, no del sitio.
 
 ---
 
-## Fase 2 — El libro de inscripciones (la idempotencia)
+## Fase 2  El libro de inscripciones (la idempotencia)
 
 `server/correo/libro-inscripciones.js`. Es el módulo que garantiza «una vez y solo una».
 
@@ -215,9 +215,9 @@ de 4 KB se escribe atómicamente en Linux.
 
 El libro guarda `oid`, estado, marca de tiempo e identificador de la petición a Graph. **No guarda
 el correo.** Minimización de datos: para no repetir un envío basta el seudónimo, y quién recibió
-qué ya es reconstruible por dos vías mejores —el `message trace` de Exchange (que es el registro
+qué ya es reconstruible por dos vías mejores el `message trace` de Exchange (que es el registro
 autoritativo del envío) y `acceso.log`, que ya correlaciona `oid` ↔ UPN con su plazo de borrado
-documentado—. Un dato personal menos que custodiar, sin perder una sola respuesta que un auditor
+documentado. Un dato personal menos que custodiar, sin perder una sola respuesta que un auditor
 pueda pedir.
 
 ### 2.4 Quien no está en la lista no deja línea
@@ -236,7 +236,7 @@ que dejarlo escrito: es la primera pregunta que hace alguien revisando por qué 
 
 ---
 
-## Fase 3 — El transporte
+## Fase 3  El transporte
 
 `server/correo/graph-mailer.js`. Una sola responsabilidad: poner un mensaje en Graph.
 
@@ -261,8 +261,8 @@ export function crearMailer({ obtenerToken, baseUrl = 'https://graph.microsoft.c
   Es lo que permite casar una línea del libro con una entrada del `message trace` de Exchange sin
   ambigüedad.
 - **Tiempos y reintentos:** `AbortSignal.timeout(10_000)`. Un reintento único ante `429`/`503`/`504`
-  respetando `Retry-After` (con tope de 30 s); ante `4xx` que no sea 429, cero reintentos —un 403
-  no mejora repitiéndolo—. Después, `fallido`.
+  respetando `Retry-After` (con tope de 30 s); ante `4xx` que no sea 429, cero reintentos un 403
+  no mejora repitiéndolo. Después, `fallido`.
 - **Cola de concurrencia 1.** Los envíos se serializan en una cola en memoria. Graph limita a ~30
   mensajes por minuto y por buzón: con tres destinatarios sobra, pero el día que la lista se abra,
   la llegada del auditorio a la misma hora no puede convertirse en una tormenta de 429.
@@ -271,7 +271,7 @@ export function crearMailer({ obtenerToken, baseUrl = 'https://graph.microsoft.c
 
 ---
 
-## Fase 4 — La plantilla
+## Fase 4  La plantilla
 
 `server/correo/plantilla-inscripcion.js`, **función pura**: `componer({ nombre, evento, url })` →
 `{ asunto, html }`. Pura porque así se puede probar el escapado y el copy sin red ni Graph.
@@ -291,7 +291,7 @@ export function crearMailer({ obtenerToken, baseUrl = 'https://graph.microsoft.c
 
 ---
 
-## Fase 5 — La política y el enganche
+## Fase 5  La política y el enganche
 
 `server/correo/inscripcion.js`. Es la única pieza que conoce las reglas de negocio.
 
@@ -370,7 +370,7 @@ de «no configurado», y así debe ser. La ruta sigue siendo la única con sesi�
 
 ---
 
-## Fase 6 — Frontend
+## Fase 6  Frontend
 
 Poco código y muy medido: la interfaz solo refleja estado real del servidor, nunca lo supone.
 
@@ -391,7 +391,7 @@ Copy (es-CO, tuteo):
 
 **La carrera, y su única concesión:** el envío ocurre después del redirect, así que el primer
 `/api/me` de la SPA puede llegar a ver `pendiente`. Se resuelve con **una sola recomprobación a los
-6 s**, y solo si el estado era `pendiente` —no es un `poll`, no hay intervalo, no hay reintentos—.
+6 s**, y solo si el estado era `pendiente` no es un `poll`, no hay intervalo, no hay reintentos.
 Si sigue pendiente, no se pinta nada: no se anuncia un correo que quizá no salió.
 
 Nada de esto oculta contenido a la espera de un evento (regla de `CLAUDE.md`): el carné se pinta
@@ -399,7 +399,7 @@ igual, y esta línea aparece o no aparece.
 
 ---
 
-## Fase 7 — Entorno, systemd, rotación y despliegue
+## Fase 7  Entorno, systemd, rotación y despliegue
 
 | Archivo | Cambio |
 |---|---|
@@ -414,7 +414,7 @@ igual, y esta línea aparece o no aparece.
 
 ---
 
-## Fase 8 — Verificación
+## Fase 8  Verificación
 
 Un script nuevo y tres ampliaciones, siguiendo la costumbre de la casa: cada pieza trae su arnés.
 
@@ -427,7 +427,7 @@ Levanta un **Graph falso** con `node:http` y lo inyecta en `crearMailer`. Cubre:
 | Dos entradas del mismo `oid` | Un solo `sendMail`. **Es la prueba de la idempotencia** |
 | `oid` fuera de la lista | Cero llamadas y **cero líneas** en el libro (§2.4) |
 | Reinicio: recargar el libro desde disco | Tras `cargar()`, el `oid` ya inscrito no vuelve a enviar |
-| Libro truncado a cero | Vuelve a enviar — documenta el porqué de no rotarlo |
+| Libro truncado a cero | Vuelve a enviar  documenta el porqué de no rotarlo |
 | `429` con `Retry-After` | Un reintento, luego `enviado` |
 | `500` persistente | `fallido`, sin bucle, y el login intacto |
 | Nombre con `<script>` | Sale escapado en el HTML |
@@ -456,7 +456,7 @@ casando el `client-request-id` con la línea del libro.
 
 ---
 
-## Fase 9 — Puesta en marcha, en cuatro escalones
+## Fase 9  Puesta en marcha, en cuatro escalones
 
 Ninguno se salta, y entre uno y otro se mira el libro y el `message trace`.
 
@@ -469,7 +469,7 @@ Ninguno se salta, y entre uno y otro se mira el libro y el `message trace`.
 2. **Local, `lista` con UN solo correo** (`jcespedes@gecelca.com.co`). Es el primer envío real y
    es donde se descubre si `Mail.Send` quedó bien consentido. Aquí se lee el correo de verdad: en
    Outlook, en el móvil y en modo oscuro. Ojo: en local, `PUBLIC_ORIGIN` es `http://localhost:5173`,
-   así que el enlace del correo apuntará ahí — es lo esperado, y se corrige solo en el servidor.
+   así que el enlace del correo apuntará ahí  es lo esperado, y se corrige solo en el servidor.
 3. **Local, `lista` con los tres.** Cada persona entra una vez; se comprueba que recibe uno y solo
    uno, y que el segundo login no manda nada.
 4. **Servidor**, con `PUBLIC_ORIGIN` real.

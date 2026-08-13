@@ -59,7 +59,7 @@ export function contarFallo(map, sessionId) {
 /**
  * Mata la sesión de login: destruye la cookie y responde 401 JSON con el motivo. Como este
  * middleware vive solo en `/api/me`, el único caller es el fetch de la SPA nunca una
- * navegación—, así que ya no hay dos formatos de respuesta ni una segunda heurística de
+ * navegación, así que ya no hay dos formatos de respuesta ni una segunda heurística de
  * navegación que pueda divergir de la de app.js.
  */
 function matarSesion(req, res, reason) {

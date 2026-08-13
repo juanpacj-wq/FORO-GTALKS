@@ -150,7 +150,7 @@ if (pieza.provisional) {
 
 // El envío a TODOS con la pieza provisional es el error caro de este trabajo: 163 personas con el
 // arte equivocado y un libro que dice `enviado`, así que no hay segunda oportunidad. Una línea de
-// aviso en la consola no basta —se lee y se olvida—, y por eso aquí se ABORTA. Las pruebas en
+// aviso en la consola no basta se lee y se olvida, y por eso aquí se ABORTA. Las pruebas en
 // modo `lista` sí pueden salir con la provisional: para verificar el renderizado y el escaneo, el
 // arte da igual, y esperar a Comunicaciones habría dejado eso sin probar.
 if (modo === 'todos' && confirmar && pieza.provisional && !bandera('--con-pieza-provisional')) {
@@ -163,7 +163,7 @@ if (modo === 'todos' && confirmar && pieza.provisional && !bandera('--con-pieza-
 }
 
 // El `.env` de la ESTACIÓN tiene `PUBLIC_ORIGIN=http://localhost:5173`, que es lo correcto para
-// desarrollar —el flujo OIDC lo valida contra `M365_REDIRECT_URI` al arrancar— y una catástrofe
+// desarrollar el flujo OIDC lo valida contra `M365_REDIRECT_URI` al arrancar y una catástrofe
 // silenciosa para un envío masivo: los 165 correos llevarían un «Abre tu escarapela digital» que
 // apunta al portátil de quien los mandó. No se ve en el asunto, ni en la pieza, ni en el QR; solo
 // se descubre cuando alguien toca el enlace. Casi pasa el 2026-08-04.
@@ -249,8 +249,8 @@ async function generarQr(correo) {
   const url = urlDelCorreo(correo)
 
   // Un segundo intento si el primero no se deja leer. NO debilita la detección de cruces: un
-  // código cruzado es DETERMINISTA —el SVG lleva la URL equivocada y el reintento la volvería a
-  // llevar—, así que solo sobrevive al reintento lo que era un tropiezo del rasterizado. Y sin
+  // código cruzado es DETERMINISTA el SVG lleva la URL equivocada y el reintento la volvería a
+  // llevar, así que solo sobrevive al reintento lo que era un tropiezo del rasterizado. Y sin
   // esto, un tropiezo en la persona 120 de 163 abortaría la corrida entera.
   let r = await rasterizarUnaVez(url)
   if (r.leido !== url) {
@@ -304,7 +304,7 @@ console.log(`  enviados                    ${resumen.enviados}`)
 console.log(`  simulados                   ${resumen.simulados}`)
 console.log(`  fallidos                    ${resumen.fallidos}`)
 console.log(`  omitidos                    ${resumen.omitidos}`)
-console.log(`\n  Los PNG quedaron en ${dirQr} — ábrelos y mira unos cuantos al azar.`)
+console.log(`\n  Los PNG quedaron en ${dirQr}  ábrelos y mira unos cuantos al azar.`)
 console.log(`  El libro es ${rutaLibro}: RESPÁLDALO, es la memoria de «una sola vez».`)
 if (confirmar && modo !== 'simulacro') {
   console.log(`  Y cuadra el conteo con la carpeta Enviados de ${remitente}: ese es el registro autoritativo.`)
