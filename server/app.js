@@ -40,6 +40,7 @@ import {
 } from './correo/inscripcion.js';
 import { estadoEncuestas } from './encuestas.js';
 import { iniciarCertificados, estadoCertificado, rutaCertificado } from './certificados.js';
+import { iniciarDescargas, estadoDescargas, entregaDescarga } from './descargas.js';
 import {
   isConfigured as m365Configured, m365Config,
   getAuthCodeUrl, acquireTokenByCode, getLogoutUrl, obtenerPerfil,
@@ -426,6 +427,28 @@ export function buildAuthApp() {
     res.json(estadoEncuestas());
   });
 
+  // ── Descargas de /galeria: estado público + entrega de dos ZIP pre-armados ──
+  // Contenido público (las fotos que la página ya enseña y las presentaciones
+  // proyectadas), servido con la doctrina del certificado: el servidor no compone
+  // nada, solo entrega lo que la estación empaquetó y verificó. Sin parámetros
+  // libres: `:rol` solo resuelve contra el mapa validado al arranque, así que ni
+  // listados ni traversal son expresables. El estado va `no-store` por lo mismo
+  // que /api/encuestas: una caché compartida seguiría negando la descarga después
+  // de una subida.
+  app.get('/api/descargas', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(estadoDescargas());
+  });
+
+  app.get('/descargas/:rol', (req, res, next) => {
+    const entrega = entregaDescarga(req.params.rol);
+    if (!entrega) return next(); // cae al 404 JSON genérico: rol desconocido o función apagada
+    // `must-revalidate` y no `immutable`: un ZIP puede resubirse con más contenido.
+    res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+    // sendFile con Range implícito: un download de 1.3 GB que se corta se reanuda.
+    res.download(entrega.ruta, entrega.nombre);
+  });
+
   // ── Logout: destruye la cookie + front-channel a Microsoft ──────────────────
   app.get('/auth/logout', (req, res) => {
     const logoutUrl = getLogoutUrl();
@@ -497,6 +520,13 @@ export function buildAuthApp() {
     certs.activo
       ? `  [certificados] ${certs.personas} certificado(s) servibles desde ${certs.dir}`
       : '  [certificados] descarga DESACTIVADA (CERTIFICADOS_DIR vacío)',
+  );
+
+  const descargas = iniciarDescargas();
+  console.log(
+    descargas.activo
+      ? `  [descargas] ${descargas.roles.join(' + ')} servibles desde ${descargas.dir}`
+      : '  [descargas] función DESACTIVADA (DESCARGAS_DIR vacío)',
   );
 
   return app;
