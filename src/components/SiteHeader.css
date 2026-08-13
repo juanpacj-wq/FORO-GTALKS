@@ -216,7 +216,9 @@
   transform: scaleX(1);
 }
 
-@media (max-width: 52rem) {
+/* 64rem y no 52: con la pestaña de la galería el nav mide ~700 px, y entre 832
+   y 1024 px ya no cabía junto a la marca sin desbordar el contenedor.        */
+@media (max-width: 64rem) {
   .gt-header__nav {
     display: none;
   }

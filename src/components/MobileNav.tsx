@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { NavLink } from 'react-router-dom'
-import { ANCLAS, NAV } from '../data/navegacion'
+import { NAV, type Ancla } from '../data/navegacion'
 import SesionMenu from './SesionMenu'
 import './MobileNav.css'
 
@@ -16,12 +16,12 @@ const FOCUSABLES = 'a[href], button:not([disabled])'
 export default function MobileNav({
   abierto,
   onCerrar,
-  enHome,
+  anclas,
 }: {
   abierto: boolean
   onCerrar: () => void
-  /** En la home se listan también las anclas de sección. */
-  enHome: boolean
+  /** El riel de la página actual (home, galería): sus anclas se listan también aquí. */
+  anclas: readonly Ancla[]
 }) {
   const panel = useRef<HTMLDivElement>(null)
   const origenFoco = useRef<HTMLElement | null>(null)
@@ -98,9 +98,9 @@ export default function MobileNav({
             ))}
           </ul>
 
-          {enHome && (
+          {anclas.length > 0 && (
             <ul className="gt-navmovil__anclas">
-              {ANCLAS.map((a) => (
+              {anclas.map((a) => (
                 <li key={a.id}>
                   <a className="gt-navmovil__ancla" href={`#${a.id}`} onClick={onCerrar}>
                     {a.etiqueta}

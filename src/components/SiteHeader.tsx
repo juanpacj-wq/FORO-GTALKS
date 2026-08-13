@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { ANCLAS, NAV, type AnclaId } from '../data/navegacion'
+import { anclasDe, NAV, type Ancla } from '../data/navegacion'
 import { EVENTO } from '../data/foro'
 import Icono from './Icono'
 import MobileNav from './MobileNav'
@@ -8,41 +8,53 @@ import SesionMenu from './SesionMenu'
 import './SiteHeader.css'
 
 /**
- * Resalta la sección visible dentro de la home.
+ * Resalta la sección visible dentro de la página que tenga riel (la home y la
+ * galería, según `anclasDe`).
  *
- * En cada disparo del observer se recalcula la posición de las tres secciones y
- * se toma la última que ya cruzó el 40% superior del viewport. Se hace así, y
- * no quedándose con la entrada que disparó el callback, porque cuando dos
- * secciones entran a la vez el orden de las entradas no es fiable y el
- * resaltado parpadea.
+ * En cada recálculo se mide la posición de las secciones y se toma la última
+ * que ya cruzó el 40% superior del viewport. El recálculo va atado al SCROLL
+ * (con rAF), no a un IntersectionObserver: el observer solo dispara cuando una
+ * sección CRUZA su banda observada, pero la decisión usa otra línea ese 40%,
+ * y entre el último cruce y el reposo del scroll la respuesta correcta puede
+ * cambiar sin que haya evento. Con las secciones de /galeria eso dejaba el riel
+ * marcando «Descargar contenido» con «Resumen de jornada» ya arriba (medido por
+ * interactions-test); en la home no pasaba por pura geometría de sus secciones.
  */
-function useScrollspy(activo: boolean): AnclaId | null {
-  const [visible, setVisible] = useState<AnclaId | null>(null)
+function useScrollspy(anclas: readonly Ancla[]): string | null {
+  const [visible, setVisible] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!activo) {
+    if (anclas.length === 0) {
       setVisible(null)
       return
     }
 
-    const secciones = ANCLAS.map((a) => document.getElementById(a.id)).filter(
-      (el): el is HTMLElement => el !== null,
-    )
+    const secciones = anclas
+      .map((a) => document.getElementById(a.id))
+      .filter((el): el is HTMLElement => el !== null)
     if (secciones.length === 0) return
 
-    const observer = new IntersectionObserver(
-      () => {
-        const enPantalla = secciones
-          .map((el) => ({ id: el.id as AnclaId, top: el.getBoundingClientRect().top }))
-          .filter(({ top }) => top < window.innerHeight * 0.4)
-        setVisible(enPantalla.length ? enPantalla[enPantalla.length - 1].id : ANCLAS[0].id)
-      },
-      { rootMargin: '-40% 0px -55% 0px', threshold: [0, 1] },
-    )
+    let marco = 0
+    const recalcular = () => {
+      marco = 0
+      const enPantalla = secciones
+        .map((el) => ({ id: el.id, top: el.getBoundingClientRect().top }))
+        .filter(({ top }) => top < window.innerHeight * 0.4)
+      setVisible(enPantalla.length ? enPantalla[enPantalla.length - 1].id : anclas[0].id)
+    }
+    const alMoverse = () => {
+      if (!marco) marco = requestAnimationFrame(recalcular)
+    }
 
-    secciones.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [activo])
+    recalcular()
+    window.addEventListener('scroll', alMoverse, { passive: true })
+    window.addEventListener('resize', alMoverse)
+    return () => {
+      cancelAnimationFrame(marco)
+      window.removeEventListener('scroll', alMoverse)
+      window.removeEventListener('resize', alMoverse)
+    }
+  }, [anclas])
 
   return visible
 }
@@ -71,7 +83,8 @@ export default function SiteHeader() {
   const { pathname } = useLocation()
   const [menuAbierto, setMenuAbierto] = useState(false)
   const enHome = pathname === '/'
-  const seccionActiva = useScrollspy(enHome)
+  const anclas = anclasDe(pathname)
+  const seccionActiva = useScrollspy(anclas)
   const desplazado = useDesplazado()
 
   return (
@@ -111,10 +124,10 @@ export default function SiteHeader() {
           </button>
         </div>
 
-        {enHome && (
+        {anclas.length > 0 && (
           <nav className="gt-header__anclas" aria-label="Secciones de esta página">
             <ul className="gt-contenedor">
-              {ANCLAS.map((a) => (
+              {anclas.map((a) => (
                 <li key={a.id}>
                   <a
                     className="gt-header__ancla"
@@ -130,7 +143,7 @@ export default function SiteHeader() {
         )}
       </header>
 
-      <MobileNav abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} enHome={enHome} />
+      <MobileNav abierto={menuAbierto} onCerrar={() => setMenuAbierto(false)} anclas={anclas} />
     </>
   )
 }
