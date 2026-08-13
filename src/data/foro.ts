@@ -445,12 +445,12 @@ export interface Encuesta {
   descripcion: string
   /**
    * Texto del botón. Es lo único de aquí que NO es copy institucional: es
-   * microcopy nuevo, así que va en es-CO con tuteo y repite el verbo de su
-   * propia descripción («comparte» → «compartir», «cuéntanos» → «contar»).
+   * microcopy nuevo, así que va en es-CO con tuteo.
    *
-   * Los dos son distintos a propósito: dos enlaces con el mismo texto en la
-   * misma página son indistinguibles para quien navega saltando de enlace en
-   * enlace, que es como los recorre un lector de pantalla.
+   * Los tres son distintos a propósito y EMPIEZAN distinto: dos enlaces con el
+   * mismo texto en la misma página son indistinguibles para quien navega
+   * saltando de enlace en enlace, que es como los recorre un lector de
+   * pantalla, oyendo el principio de cada uno.
    */
   accion: string
   /**
@@ -464,24 +464,52 @@ export interface Encuesta {
    * `/api/encuestas`, que es quien decide.
    */
   url?: string
+  /**
+   * La tarjeta ya no recoge respuestas: las ANUNCIA. `/encuestas` la pinta
+   * como la lámina destacada de la página celeste, a todo lo ancho y sin
+   * ordinal, porque consultar resultados no es responder una encuesta y no
+   * es una de las que la entradilla invita a diligenciar.
+   */
+  resultados?: true
 }
 
 /**
- * Las tres encuestas del foro, en el orden en que las entregó Comunicaciones.
+ * Las tres tarjetas de `/encuestas`. Ya no son simétricas: el panel pasó y la
+ * de preguntas para panelistas dejó de recoger preguntas ahora ANUNCIA las
+ * respuestas (`resultados`); las otras dos siguen siendo encuestas por
+ * responder.
  *
  * **Dónde quedan las respuestas**: en Microsoft Forms, dentro del tenant de
  * GECELCA. Este proyecto no guarda ninguna, así que sigue sin necesitar base de
  * datos ni endpoint de escritura que era la otra mitad del pendiente #6.
  *
  * El título y la descripción van literales, como el resto del copy
- * institucional.
+ * institucional (salvo la tarjeta de resultados, cuyo copy es nuevo).
  *
- * **El orden importa y no es alfabético**: las dos primeras están abiertas
- * siempre y la de satisfacción va última porque es la única que abre por reloj.
- * `interactions-test.mjs` la localiza por posición, así que insertar una en
- * medio obliga a ajustar ese arnés no es opcional.
+ * **El orden importa y no es alfabético**: la de resultados abre la página
+ * porque es la noticia, y la de satisfacción va SIEMPRE la última porque es la
+ * única que abre por reloj y `interactions-test.mjs` la localiza por posición.
+ * Mover o insertar una obliga a ajustar ese arnés no es opcional.
  */
 export const ENCUESTAS: readonly Encuesta[] = [
+  {
+    id: 'preguntas-panelistas',
+    titulo: 'Preguntas pendientes para panelistas',
+    // El panel ya pasó y sus preguntas ya tienen respuesta: la tarjeta cambió
+    // de papel (2026-08-12) y entrega las respuestas en vez de recogerlas.
+    // Microcopy nuevo (es-CO), pedido literal del usuario.
+    descripcion: 'Consulta las respuestas entregadas por los panelistas a las preguntas que quedaron pendientes durante su intervención',
+    // «Ver» y no «Compartir…»: empieza distinto que los otros dos controles
+    // (ver `accion` en la interfaz).
+    accion: 'Ver respuestas',
+    // Sin `url` a propósito: las respuestas ya no viven en un Forms sino en la
+    // pieza «RTAS PREGUNTAS PENDIENTES PANELISTAS.pdf» (raíz), que la tarjeta
+    // enseña en su visor y entrega en PDF (2026-08-13, pedido del usuario).
+    // Los derivados los escribe scripts/build-respuestas.py en
+    // src/design/respuestas.ts; adoptar una entrega nueva es reemplazar la
+    // pieza y volver a correrlo.
+    resultados: true,
+  },
   {
     id: 'oportunidades-y-amenazas',
     titulo: 'Oportunidades y amenazas',
@@ -489,21 +517,6 @@ export const ENCUESTAS: readonly Encuesta[] = [
       'Comparte tu visión sobre las principales oportunidades y desafíos que identificas para GECELCA en el contexto actual del sector energético.',
     accion: 'Compartir mi perspectiva',
     url: 'https://forms.cloud.microsoft/r/xxc8PGp3Ly',
-  },
-  {
-    id: 'preguntas-panelistas',
-    titulo: 'Preguntas pendientes para panelistas',
-    descripcion:
-      'Si tu pregunta no alcanzó a ser respondida durante el panel, compártela aquí. La haremos llegar al panelista correspondiente.',
-    // «Enviar» y no «Compartir»: los otros dos controles ya empiezan por
-    // «Compartir mi…», y quien navega con lector de pantalla recorre la página
-    // saltando de enlace en enlace, oyendo el principio de cada uno.
-    accion: 'Enviar mi pregunta',
-    // Abierta SIEMPRE: se responde después del panel, pero no hay nada que
-    // retener a diferencia de la de satisfacción, esta no pregunta por la
-    // experiencia del evento, así que una respuesta temprana no la contamina.
-    // Por eso la URL sí viaja en el bundle, como la de oportunidades.
-    url: 'https://forms.cloud.microsoft/r/t2uUak9Vzu',
   },
   {
     id: 'satisfaccion',

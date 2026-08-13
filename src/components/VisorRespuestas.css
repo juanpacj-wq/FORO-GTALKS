@@ -1,0 +1,114 @@
+/* ==========================================================================
+   El visor de respuestas: un <dialog> con las páginas de la pieza apiladas.
+   Mismo lenguaje que el visor de la galería: pantalla completa sobre el
+   abisal, controles circulares en hairline, la única sombra del sistema.
+   ========================================================================== */
+
+.gt-respuestas {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gt-blanco);
+}
+
+.gt-respuestas::backdrop {
+  background: color-mix(in srgb, var(--gt-abisal) 94%, transparent);
+}
+
+body:has(.gt-respuestas[open]) {
+  overflow: hidden;
+}
+
+/* El marco acota el ancho de lectura y deja que las páginas desplacen DENTRO
+   del dialog: el clic que cierra es el del propio dialog (los costados). */
+.gt-respuestas__marco {
+  display: flex;
+  flex-direction: column;
+  width: min(56rem, 100%);
+  height: 100%;
+  margin-inline: auto;
+  /* Los clics del marco no cierran; los de los costados del dialog, sí. */
+  pointer-events: auto;
+}
+
+/* --- La barra: título, descarga y cierre ---------------------------------- */
+
+.gt-respuestas__barra {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-4);
+  padding: var(--gt-space-3) clamp(var(--gt-space-4), 3vw, var(--gt-space-6));
+  background: var(--gt-abisal);
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-respuestas__titulo {
+  margin-right: auto;
+  font-size: var(--gt-fs-h3);
+  font-weight: var(--gt-fw-bold);
+  letter-spacing: var(--gt-tracking-tight);
+}
+
+.gt-respuestas__cerrar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: 50%;
+  color: var(--gt-blanco);
+  font-size: var(--gt-fs-lead);
+  transition: background var(--gt-transicion), color var(--gt-transicion),
+    border-color var(--gt-transicion);
+}
+
+.gt-respuestas__cerrar:hover {
+  background: var(--gt-celeste);
+  border-color: var(--gt-celeste);
+  color: var(--gt-navy);
+}
+
+/* --- Las páginas ----------------------------------------------------------- */
+
+.gt-respuestas__paginas {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--gt-space-3), 2vw, var(--gt-space-6));
+  padding: clamp(var(--gt-space-4), 3vw, var(--gt-space-8));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.gt-respuestas__paginas img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--gt-radio-chico);
+  box-shadow: var(--gt-sombra-lamina);
+  /* La página es papel: el fondo va explícito por si el webp tarda. */
+  background: var(--gt-blanco);
+}
+
+/* En angosto la barra apila: el título a lo ancho y los controles debajo. */
+@media (max-width: 36rem) {
+  .gt-respuestas__barra {
+    flex-wrap: wrap;
+    row-gap: var(--gt-space-2);
+  }
+  .gt-respuestas__titulo {
+    flex-basis: 100%;
+  }
+  .gt-respuestas__descarga {
+    margin-right: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .gt-respuestas__cerrar {
+    border: var(--gt-borde) solid CanvasText;
+  }
+}

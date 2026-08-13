@@ -1,23 +1,29 @@
 /* ==========================================================================
    Encuestas
    --------------------------------------------------------------------------
-   La página es dos destinos y nada más, así que el diseño solo tiene tres
-   cosas que resolver: que las dos tarjetas se lean como la lista que la
-   entradilla acaba de anunciar, que se distingan entre sí, y que quede claro
-   que el enlace sale del sitio.
+   La página es un anuncio y dos destinos: la tarjeta de resultados del panel
+   que dejó de ser encuesta cuando el panel pasó abre a todo lo ancho como
+   la noticia de la página, y debajo van las dos encuestas por responder. El
+   diseño tiene tres cosas que resolver: que el anuncio SE DISTINGA de lo que
+   se responde, que las dos encuestas se lean como la lista que la entradilla
+   acaba de anunciar, y que quede claro que el enlace sale del sitio.
 
    Cada tarjeta es el mismo objeto que la caja destacada de la home y que los
    paneles de estado vacío: plano navy sobre el campo oscuro y la forma en
-   «hoja» del sistema. La segunda lleva la hoja al revés, como el par de fotos
-   de la homeuna `izq` y otra `der`: así las dos se miran en vez de
-   repetirse, y en móvil, apiladas, la alternancia sigue leyéndose como un par.
+   «hoja» del sistema. La del medio lleva la hoja al revés, como el par de
+   fotos de la homeuna `izq` y otra `der`: así las dos encuestas se miran en
+   vez de repetirse, y en móvil, apiladas, la alternancia sigue leyéndose.
+   La tarjeta de resultados invierte el campo entero: ver su bloque abajo.
    ========================================================================== */
 
 .gt-encuestas {
   display: grid;
   /* `min()` con 100%: sin él, a 320 px la pista mínima es más ancha que la
-     ventana y la tarjeta se sale (igual que en el índice de ponentes).        */
-  grid-template-columns: repeat(auto-fit, minmax(min(23rem, 100%), 1fr));
+     ventana y la tarjeta se sale (igual que en el índice de ponentes).
+     El mínimo de 26rem no es cosmético: a 76rem de contenedor caben DOS
+     pistas y no tres, que es lo que hace que las dos encuestas llenen la fila
+     bajo el anuncio en vez de dejar una columna fantasma a la derecha.       */
+  grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
   gap: clamp(1.25rem, 3vw, 2rem);
   margin-top: clamp(2.5rem, 5vw, 4rem);
 }
@@ -86,6 +92,106 @@
   display: none;
 }
 
+/* --- La tarjeta de resultados -----------------------------------------------
+   Las preguntas al panel ya tienen respuesta, y esta tarjeta es el anuncio.
+   Se destaca con lo que el sistema ya tiene: la lámina clara aquí en el
+   celeste pleno de las piezas, el plano que más área cubre en ellas, a todo
+   lo ancho de la rejilla y con el título un escalón por encima del de sus
+   vecinas. Ningún valor es nuevo: celeste, navy y tinta están medidos, y los
+   tamaños son los de la escala.
+
+   `.gt-lamina` (base.css) hace la mitad del trabajo invierte foco, acento y
+   hairlines; aquí solo se cambia el papel blanco por el celeste y se corrige
+   lo que esa mezcla desafina: el azul-medio del foco da 3.07:1 sobre celeste
+   y el humo del cuerpo ni llega, así que etiqueta, título y foco van en navy
+   (7.22:1) y el cuerpo en tinta (9.9:1), que son las dos tintas con las que
+   las piezas escriben sobre sus franjas celestes.
+
+   A lo ancho, la banda se compone en dos columnas título a la izquierda,
+   descripción y botón a la derecha: una tarjeta de tres renglones estirada a
+   76rem quedaría medio vacía. La fila del pie es el `1fr`: absorbe el alto
+   que sobre y deja el botón anclado abajo, alineado con el pie del título.   */
+
+/* Doble clase a propósito: `.gt-lamina` (base.css) queda DESPUÉS de este
+   archivo en el bundle de Vite, así que a igual especificidad ganaría el
+   papel blanco y su foco azul-medio (3.07:1 sobre celeste). Con (0,2,0) el
+   empate no depende del orden de empaquetado.                                */
+.gt-encuesta.gt-encuesta--respuestas {
+  grid-column: 1 / -1;
+  --gt-encuesta-hoja: clamp(2rem, 6vw, 4.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    'etiqueta etiqueta'
+    'titulo   texto'
+    'titulo   pie';
+  column-gap: clamp(2rem, 6vw, 5rem);
+  padding: clamp(2rem, 5vw, 4rem);
+  background: var(--gt-celeste);
+  --gt-foco: var(--gt-navy);
+  --gt-acento: var(--gt-navy);
+}
+
+.gt-encuesta--respuestas .gt-encuesta__orden {
+  grid-area: etiqueta;
+  color: var(--gt-navy);
+}
+
+/* Crece el cuerpo (h2 → h1), no el nivel: sigue siendo un h2 del documento. */
+.gt-encuesta--respuestas .gt-encuesta__titulo {
+  grid-area: titulo;
+  font-size: var(--gt-fs-h1);
+  color: var(--gt-navy);
+}
+
+.gt-encuesta--respuestas .gt-encuesta__texto {
+  grid-area: texto;
+  font-size: var(--gt-fs-lead);
+  color: var(--gt-tinta);
+}
+
+.gt-encuesta--respuestas .gt-encuesta__pie {
+  grid-area: pie;
+  align-self: end;
+}
+
+/* El botón invierte el sólido: sobre celeste, un botón celeste no existe.
+   Navy pleno con blanco encima (12.4:1), y el hover PROFUNDIZA en vez de
+   apagar: navy-deep, el círculo tras el numeral «1». Crece un punto con la
+   tarjeta (fs-sm → fs-body).                                                 */
+.gt-encuesta--respuestas .gt-encuesta__boton {
+  background: var(--gt-navy);
+  border-color: var(--gt-navy);
+  color: var(--gt-blanco);
+  font-size: var(--gt-fs-body);
+  padding-block: 1.05rem;
+}
+
+.gt-encuesta--respuestas .gt-encuesta__boton:hover {
+  background: var(--gt-navy-deep);
+  border-color: var(--gt-navy-deep);
+  color: var(--gt-blanco);
+}
+
+/* Angosta, la banda se apila en el mismo orden que sus vecinas. Las filas
+   vuelven a `auto` implícito: apilada, la del pie no tiene alto que sobre.
+   La doble clase se repite a propósito: una media query NO suma especificidad,
+   así que con una sola perdería contra la regla de arriba y la banda seguiría
+   a dos columnas en el teléfono con el título montado sobre el texto que es
+   exactamente como se descubrió esto, en la captura de 390 px.               */
+@media (max-width: 48rem) {
+  .gt-encuesta.gt-encuesta--respuestas {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas:
+      'etiqueta'
+      'titulo'
+      'texto'
+      'pie';
+  }
+}
+
 /* --- La encuesta que abre por reloj -----------------------------------------
    Mientras el evento no cierre, el botón de satisfacción no es un enlace: el
    servidor retiene la URL (server/encuestas.js) y aquí solo hay un botón
@@ -148,7 +254,10 @@
     break-inside: avoid;
   }
 
+  /* El título va aquí desde que la tarjeta de resultados lo pinta en navy
+     explícito: sobre papel, todo vuelve a la tinta negra. */
   .gt-encuesta__orden,
+  .gt-encuesta__titulo,
   .gt-encuesta__texto {
     color: #000 !important;
   }

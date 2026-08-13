@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import SectionTitle from '../components/SectionTitle'
+import VisorRespuestas from '../components/VisorRespuestas'
 import {
   ENCUESTAS,
   ENCUESTAS_INTRO,
@@ -11,29 +12,31 @@ import './PonentesPage.css'
 import './EncuestasPage.css'
 
 /**
- * Las tres encuestas del foro.
+ * Las tres tarjetas del foro: las respuestas del panel y dos encuestas.
  *
- * No hay formulario propio ni hace falta: las respuestas viven en Microsoft
+ * No hay formulario propio ni hace falta: las encuestas viven en Microsoft
  * Forms, dentro del tenant de GECELCA, así que el proyecto sigue sin base de
  * datos ni endpoint de escritura. El trabajo de esta página es entregar los
- * destinos diciendo qué se pregunta en cada uno.
+ * destinos diciendo qué hay en cada uno.
  *
- * Con una diferencia entre ellas: la de satisfacción pregunta por la
- * experiencia del foro, así que no abre hasta que el foro cierra. Su URL no
- * está en este bundle la retiene el servidor y la entrega `/api/encuestas`
- * pasada la hora de `evento.json`, y mientras tanto el botón va deshabilitado
- * con su aviso. Quien decide es el reloj del SERVIDOR: adelantar el del
- * teléfono no fabrica el enlace. Ver `BotonSatisfaccion` abajo.
+ * La primera ya no es una encuesta: el panel pasó y la tarjeta de preguntas
+ * para panelistas ENTREGA las respuestas (`resultados` en `foro.ts`): su botón
+ * abre el visor de la pieza —las páginas para leer de corrido y el PDF para
+ * llevar (2026-08-13, en vez de redirigir al Forms)—. Por eso se pinta
+ * destacada, lámina celeste a todo lo ancho y sin ordinal: la numeración es
+ * solo de lo que la entradilla invita a responder.
  *
- * Las otras dos oportunidades y las preguntas pendientes para panelistas van
- * abiertas siempre: traen su `url` y `PieEncuesta` las pinta como enlace. La
- * regla que separa unas de otras es esa y solo esa: **sin `url`, el servidor
- * decide**.
+ * De las dos encuestas, la de satisfacción pregunta por la experiencia del
+ * foro, así que no abre hasta que el foro cierra. Su URL no está en este
+ * bundle la retiene el servidor y la entrega `/api/encuestas` pasada la hora
+ * de `evento.json`, y mientras tanto el botón va deshabilitado con su aviso.
+ * Quien decide es el reloj del SERVIDOR: adelantar el del teléfono no fabrica
+ * el enlace. Ver `BotonSatisfaccion` abajo.
  *
- * Que el enlace sale del sitio lo marca la flecha en diagonal del botón
- * (`--externo`), y nada más: el aviso escrito debajo de cada botón se quitó por
- * petición del usuario. Los `target="_blank"` siguen con `rel="noopener
- * noreferrer"`.
+ * La regla que reparte los pies quedó en tres ramas: `resultados` abre el
+ * visor local; `url` es un enlace que sale del sitio (flecha `--externo`,
+ * `target="_blank"` con `rel="noopener noreferrer"`); y sin ninguna de las
+ * dos, el servidor decide.
  *
  * El contenido vive en `src/data/foro.ts`, como todo lo demás.
  */
@@ -115,7 +118,35 @@ function BotonSatisfaccion({ accion }: { accion: string }) {
   )
 }
 
+/**
+ * El pie de la tarjeta de resultados: abre el visor con las páginas de la
+ * pieza y su descarga. Es un botón y no un enlace porque no navega a ningún
+ * sitio el documento se enseña aquí mismo.
+ */
+function BotonRespuestas({ accion }: { accion: string }) {
+  const [abierto, setAbierto] = useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        className="gt-boton gt-boton--solido gt-encuesta__boton"
+        onClick={() => setAbierto(true)}
+      >
+        {accion}
+      </button>
+      {abierto && <VisorRespuestas alCerrar={() => setAbierto(false)} />}
+
+      {/* Sobre papel el visor no existe: se escribe dónde queda el documento. */}
+      <span className="gt-encuesta__url-papel">
+        Descarga: /docs/respuestas-panelistas.pdf
+      </span>
+    </>
+  )
+}
+
 function PieEncuesta({ encuesta }: { encuesta: Encuesta }) {
+  if (encuesta.resultados) return <BotonRespuestas accion={encuesta.accion} />
   return encuesta.url ? (
     <BotonEncuesta accion={encuesta.accion} url={encuesta.url} />
   ) : (
@@ -124,6 +155,10 @@ function PieEncuesta({ encuesta }: { encuesta: Encuesta }) {
 }
 
 export default function EncuestasPage() {
+  // La numeración es solo de las encuestas por responder: la tarjeta de
+  // resultados no es una de ellas y lleva etiqueta en vez de ordinal.
+  const porResponder = ENCUESTAS.filter((e) => !e.resultados)
+
   return (
     <section className="gt-pagina gt-grano">
       <div className="gt-contenedor">
@@ -133,14 +168,23 @@ export default function EncuestasPage() {
 
         <p className="gt-pagina__intro">{ENCUESTAS_INTRO}</p>
 
-        {/* La entradilla termina en dos puntos y anuncia una lista: esto es esa
-            lista, y los ordinales son los que la vuelven enumerable a la vista.
-            Van `aria-hidden` porque el `ul` ya la enumera para quien escucha. */}
+        {/* Los ordinales vuelven enumerable a la vista la lista que la
+            entradilla anuncia. Van `aria-hidden` porque el `ul` ya la enumera
+            para quien escucha; la etiqueta de la tarjeta de resultados también,
+            porque solo repite lo que su descripción ya dice. */}
         <ul className="gt-encuestas">
-          {ENCUESTAS.map((encuesta, i) => (
-            <li className="gt-encuesta" key={encuesta.id}>
+          {ENCUESTAS.map((encuesta) => (
+            <li
+              className={
+                'gt-encuesta' +
+                (encuesta.resultados ? ' gt-lamina gt-encuesta--respuestas' : '')
+              }
+              key={encuesta.id}
+            >
               <span className="gt-dato gt-encuesta__orden" aria-hidden="true">
-                {String(i + 1).padStart(2, '0')}
+                {encuesta.resultados
+                  ? 'Ya disponibles'
+                  : String(porResponder.indexOf(encuesta) + 1).padStart(2, '0')}
               </span>
 
               <h2 className="gt-encuesta__titulo">{encuesta.titulo}</h2>

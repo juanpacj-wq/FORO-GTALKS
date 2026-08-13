@@ -164,7 +164,7 @@ const CSP_SPA = [
 function cacheDe(ruta) {
   if (ruta.startsWith('/assets/')) return 'public, max-age=31536000, immutable'; // llevan hash
   if (ruta.startsWith('/fonts/')) return 'public, max-age=86400, must-revalidate';
-  if (/\.(webp|png|svg|jpg|jpeg|ico)$/.test(ruta)) return 'public, max-age=3600, must-revalidate';
+  if (/\.(webp|png|svg|jpg|jpeg|ico|pdf)$/.test(ruta)) return 'public, max-age=3600, must-revalidate';
   return 'no-store';
 }
 
