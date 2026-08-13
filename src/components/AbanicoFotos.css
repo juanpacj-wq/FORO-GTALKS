@@ -1,0 +1,222 @@
+/* ==========================================================================
+   El abanico de la galería
+   --------------------------------------------------------------------------
+   Un mazo de fotografías desplegado en arco sobre el campo oscuro. Los números
+   de la geometría (grados por paso, escala, brillo) son CONVENCIÓN y viven en
+   AbanicoFotos.tsx, porque el arrastre los interpola en JS; aquí va todo lo
+   que no depende de la distancia al centro.
+
+   La sombra es la única del sistema (--gt-sombra-lamina): el mazo es un objeto
+   físico sobre el campo, exactamente el papel que esa sombra ya cumple con la
+   lámina del programa. No se inventa una segunda.
+   ========================================================================== */
+
+.gt-abanico {
+  /* La tarjeta mide lo que la ventana deje, y la ventana manda por TRES lados,
+     no por uno. 3:2 es la proporción real de la cámara del evento (7008×4672):
+     las 76 apaisadas entran enteras y solo las 4 verticales se recortan aquí
+     el visor las enseña completas.
+
+     · 54rem es el techo de escritorio. Fue 44 hasta que el mando subió a la
+       cabecera: con los controles compartiendo fila con la entradilla, la zona
+       muerta a la derecha desapareció y el alto que ocupaba el mando bajo el
+       mazo pasó a ser del mazo (pedido del usuario, 2026-08-12).
+     · El ancho útil menos 3rem deja a los vecinos asomar por los cantos en
+       móvil: sin esa resta la tarjeta ocupaba el ancho entero y el abanico se
+       leía como una foto suelta.
+     · El tercer término es el mismo criterio del hero: título, entradilla CON
+       el mando, y el mazo tienen que caber en la PRIMERA pantalla, contando el
+       riel de anclas del header. 31rem es lo que ocupan los de arriba más el
+       aire del escenario medido sobre la captura a 1440×900, como la cota
+       anterior; lo que quede de alto es de la tarjeta (×3/2 para pasar de
+       alto a ancho). El suelo de 20rem evita que una ventana muy baja lo
+       colapse a nada: ahí se acepta el scroll.                               */
+  --gt-abanico-ancho: min(
+    54rem,
+    calc(100vw - 2 * var(--gt-margen) - 3rem),
+    max(20rem, calc((100svh - 31rem) * 3 / 2))
+  );
+  --gt-abanico-alto: calc(var(--gt-abanico-ancho) * 2 / 3);
+
+  margin-top: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+/* --- La cabecera: entradilla + mando en una fila --------------------------
+   La entradilla mide lo que va a usar y el mando se alinea al canto derecho,
+   sobre su misma línea de base óptica. Es la zona que quedaba muerta a la
+   derecha de la entradilla, ahora con los controles dentro de la primera
+   pantalla a cualquier alto de ventana: están ANTES del mazo, no debajo.     */
+
+.gt-abanico__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--gt-space-4) var(--gt-space-8);
+}
+
+.gt-abanico__intro {
+  max-width: 52ch;
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.5;
+}
+
+@media print {
+  .gt-abanico__intro {
+    color: #000 !important;
+  }
+}
+
+.gt-abanico__escenario {
+  position: relative;
+  /* El aire de arriba y abajo es lo que las tarjetas giradas necesitan para no
+     cortarse contra el recorte del propio escenario. */
+  height: calc(var(--gt-abanico-alto) + clamp(3rem, 7vw, 5.5rem));
+  /* La fuga de las «páginas» (rotateY) no existe sin perspectiva. En el padre
+     y no en cada tarjeta: un solo punto de fuga para todo el mazo. */
+  perspective: 1800px;
+  /* Las tarjetas de los extremos salen del ancho de la ventana a propósito;
+     `clip` las recorta sin crear un scrollport (misma razón que en body). */
+  overflow: clip;
+  /* El gesto horizontal es del abanico; el vertical sigue siendo de la página. */
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.gt-abanico__escenario--arrastrando {
+  cursor: grabbing;
+}
+
+.gt-abanico__tarjeta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--gt-abanico-ancho);
+  aspect-ratio: 3 / 2;
+  /* El pivote del arco: 230% del alto por debajo del canto superior. Girar
+     sobre un punto tan lejano desplaza y ladea a la vez el barrido de un mazo
+     de cartas; el transform lo compone el TSX porque el arrastre lo
+     interpola. */
+  transform-origin: 50% 230%;
+  padding: 0;
+  border-radius: var(--gt-radio-caja);
+  overflow: hidden;
+  box-shadow: var(--gt-sombra-lamina);
+  transition: transform var(--gt-dur-media) var(--gt-ease),
+    filter var(--gt-dur-media) var(--gt-ease);
+  will-change: transform;
+}
+
+/* Mientras dura el arrastre las tarjetas siguen al dedo, no a la transición. */
+.gt-abanico__escenario--arrastrando .gt-abanico__tarjeta {
+  transition: none;
+}
+
+.gt-abanico__tarjeta img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* El arrastre pasa por encima de la imagen: sin esto, el navegador inicia
+     un drag nativo de la foto y se come el gesto. */
+  pointer-events: none;
+  transition: scale var(--gt-dur-media) var(--gt-ease);
+}
+
+/* La activa es un botón que amplía: el acercamiento leve al pasar es la misma
+   señal que ya dan las celdas de la rejilla. */
+.gt-abanico__tarjeta--activa:hover img {
+  scale: 1.03;
+}
+
+.gt-abanico__escenario--arrastrando .gt-abanico__tarjeta {
+  cursor: grabbing;
+}
+
+/* El anillo de foco del sistema quedaría oculto por las tarjetas vecinas, que
+   se apilan por encima de los cantos de la activa: va por dentro.            */
+.gt-abanico__tarjeta:focus-visible {
+  outline: 2px solid var(--gt-foco);
+  outline-offset: -4px;
+}
+
+/* --- El mando ---------------------------------------------------------------
+   La hora y el lugar en la jornada, anterior, siguiente. La hora va en acento
+   porque es un dato, como las horas de la agenda.                            */
+
+.gt-abanico__mando {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-4);
+  /* Un pelo de aire contra el canto inferior de la entradilla, para que los
+     círculos no floten a media altura de la última línea. */
+  padding-bottom: 0.2rem;
+}
+
+.gt-abanico__paso {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: 50%;
+  color: var(--gt-celeste);
+  font-size: var(--gt-fs-body);
+  transition: background var(--gt-transicion), color var(--gt-transicion),
+    border-color var(--gt-transicion), opacity var(--gt-transicion);
+}
+
+/* La flecha del sistema («→», la misma del botón), girada para «anterior». */
+.gt-abanico__paso:not(.gt-abanico__paso--siguiente) span {
+  display: block;
+  rotate: 180deg;
+}
+
+/* Sin estado deshabilitado: el mazo es circular y los dos sentidos siempre
+   tienen destino. */
+.gt-abanico__paso:hover {
+  background: var(--gt-celeste);
+  border-color: var(--gt-celeste);
+  color: var(--gt-navy);
+}
+
+.gt-abanico__pie {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gt-space-3);
+  /* Reserva para «12:00 p.m. · 80 / 80»: sin ella, cada cambio de hora movería
+     los dos botones de sitio bajo el cursor. */
+  min-width: 10.5rem;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.gt-abanico__hora {
+  color: var(--gt-acento);
+  font-weight: var(--gt-fw-semibold);
+}
+
+.gt-abanico__cuenta {
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-sm);
+}
+
+/* Modo de alto contraste de Windows: sin fondos, una tarjeta sin borde es un
+   rectángulo invisible que aún se puede pulsar. */
+@media (forced-colors: active) {
+  .gt-abanico__tarjeta,
+  .gt-abanico__paso {
+    border: var(--gt-borde) solid CanvasText;
+  }
+}
+
+/* Sobre papel el abanico no es nada: la rejilla de abajo ya enseña las fotos. */
+@media print {
+  .gt-abanico {
+    display: none !important;
+  }
+}

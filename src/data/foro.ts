@@ -529,6 +529,26 @@ export const ENCUESTA_SATISFACCION_AVISO =
 export const ENCUESTAS_INTRO =
   'Tu opinión es clave para seguir fortaleciendo GECELCA. Participa en las siguientes encuestas y comparte tu perspectiva sobre los temas abordados durante el foro y tu experiencia en este espacio.'
 
+/**
+ * Entradilla de `/galeria`. Microcopy nuevo (es-CO). Las fotos y sus horas NO
+ * viven aquí: las escribe `scripts/build-galeria.py` en `src/design/galeria.ts`,
+ * en el orden real de la jornada.
+ */
+export const GALERIA_INTRO =
+  'Así se vivió la primera edición del foro. Recorre el abanico en el orden en que transcurrió la jornada del registro de la mañana al cierre de la tarde o abre cualquier fotografía a pantalla completa desde la rejilla.'
+
+/**
+ * La sección «Descargar contenido» de /galeria. El texto es microcopy nuevo
+ * (es-CO); los pesos y conteos que acompañan a cada botón NO viven aquí: los
+ * anuncia el servidor desde el manifiesto del empaquetador
+ * (`GET /api/descargas`), y sin esa confirmación los botones quedan retenidos
+ * con DESCARGAS_AVISO.
+ */
+export const DESCARGAS_INTRO =
+  'Llévate el foro contigo: las fotografías originales de la jornada y las presentaciones que compartieron los ponentes, cada una en un solo archivo comprimido.'
+
+export const DESCARGAS_AVISO = 'Este paquete estará disponible muy pronto.'
+
 // ---------------------------------------------------------------------- helpers
 
 // La clave se declara `string` a propósito: `PONENTES` es `as const`, así que

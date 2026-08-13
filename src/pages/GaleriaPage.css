@@ -1,0 +1,144 @@
+/* ==========================================================================
+   /galeria  las secciones de la página. El abanico y el visor traen su CSS
+   al lado de su componente, como todo en src/components/.
+   ========================================================================== */
+
+/* --- Descargar contenido -----------------------------------------------------
+   La entradilla y los dos botones comparten fila en escritorio: el texto mide
+   lo que va a usar (52ch) y los botones se alinean a la derecha, cada uno con
+   su línea de dato debajo el peso REAL del manifiesto, no un copy. En
+   angosto, el `flex-wrap` los apila en el orden natural.                      */
+
+.gt-galeria__descargas {
+  margin-top: var(--gt-seccion);
+}
+
+.gt-galeria__descargas-cuerpo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  margin-top: clamp(1.5rem, 3vw, 2rem);
+}
+
+.gt-galeria__descargas-texto {
+  /* 46ch y no 52: con la medida larga, texto y botones sumaban unos píxeles
+     más que el contenedor a 1440 y el par de botones caía a su propia fila,
+     dejando media pantalla vacía a la derecha de la entradilla. */
+  max-width: 46ch;
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-lead);
+  font-weight: var(--gt-fw-light);
+  line-height: 1.5;
+}
+
+.gt-descargas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(var(--gt-space-4), 3vw, var(--gt-space-8));
+}
+
+.gt-descarga {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gt-space-3);
+}
+
+.gt-descarga__meta {
+  color: var(--gt-humo);
+}
+
+/* El aviso del botón retenido: el mismo papel-sobre-campo de las encuestas
+   (.gt-lamina pone fondo y tinta; aquí, posición y cuerpo). Siempre en el DOM
+   aria-describedby lo anuncia aunque no se vea; hover, foco o el toque
+   (--avisando) lo muestran.                                                  */
+.gt-descarga__gate {
+  position: relative;
+}
+
+.gt-descarga__aviso {
+  position: absolute;
+  bottom: calc(100% + var(--gt-space-2));
+  left: 0;
+  z-index: 1;
+  width: max-content;
+  max-width: 100%;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radio-chico);
+  font-size: var(--gt-fs-xs);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--gt-transicion), visibility 0s var(--gt-dur-rapida);
+}
+
+.gt-descarga__gate:hover .gt-descarga__aviso,
+.gt-descarga__gate:focus-within .gt-descarga__aviso,
+.gt-descarga__gate--avisando .gt-descarga__aviso {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity var(--gt-transicion);
+}
+
+/* --- Resumen de jornada ------------------------------------------------------ */
+
+.gt-galeria__indice {
+  margin-top: var(--gt-seccion);
+}
+
+.gt-galeria__rejilla {
+  display: grid;
+  /* La pista mínima cede a la MITAD del ancho útil, no al ancho entero: con
+     `min(13rem, 100%)` un teléfono quedaba en una columna de 80 fotos 21 000
+     px de página, medidos en la captura. Con la mitad menos el gap, el móvil
+     compone SIEMPRE a dos columnas y el escritorio sigue en sus cinco. */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(min(13rem, calc(50% - var(--gt-space-3))), 1fr)
+  );
+  gap: var(--gt-space-3);
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.gt-galeria__celda {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border-radius: var(--gt-radio-chico);
+  overflow: hidden;
+}
+
+.gt-galeria__celda img {
+  width: 100%;
+  /* La rejilla compone a 3:2 la proporción real de la cámara y recorta las
+     cuatro verticales; el visor las enseña enteras. */
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  transition: scale var(--gt-dur-media) var(--gt-ease);
+}
+
+.gt-galeria__celda:hover img,
+.gt-galeria__celda:focus-visible img {
+  scale: 1.04;
+}
+
+@media (forced-colors: active) {
+  .gt-galeria__celda {
+    border: var(--gt-borde) solid CanvasText;
+  }
+}
+
+/* Sobre papel la rejilla ES la galería: fluye en varias columnas y no corta
+   una foto por la mitad de página. */
+@media print {
+  .gt-galeria__rejilla {
+    display: block;
+    columns: 3;
+    gap: 0.25cm;
+  }
+  .gt-galeria__rejilla li {
+    break-inside: avoid;
+    margin-bottom: 0.25cm;
+  }
+}

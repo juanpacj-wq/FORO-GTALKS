@@ -6,6 +6,7 @@ import PonentePerfilPage from './pages/PonentePerfilPage'
 import EscarapelaPage from './pages/EscarapelaPage'
 import EncuestasPage from './pages/EncuestasPage'
 import CertificadoPage from './pages/CertificadoPage'
+import GaleriaPage from './pages/GaleriaPage'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/escarapela" element={<EscarapelaPage />} />
         <Route path="/encuestas" element={<EncuestasPage />} />
         <Route path="/certificado" element={<CertificadoPage />} />
+        <Route path="/galeria" element={<GaleriaPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

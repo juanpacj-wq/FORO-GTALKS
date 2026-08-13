@@ -1,0 +1,119 @@
+/* ==========================================================================
+   El visor de la galería: un <dialog> a pantalla completa sobre el campo.
+   ========================================================================== */
+
+.gt-visor {
+  /* El dialog nativo trae tamaño, borde y fondo propios: se anulan y la caja
+     pasa a ser la pantalla entera. */
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  padding: clamp(var(--gt-space-4), 4vw, var(--gt-space-12));
+  border: 0;
+  background: transparent;
+  color: var(--gt-blanco);
+}
+
+.gt-visor::backdrop {
+  /* El abisal del sistema, casi opaco: la página se adivina, no compite. */
+  background: color-mix(in srgb, var(--gt-abisal) 94%, transparent);
+}
+
+/* El fondo no debe desplazarse mientras el visor está abierto. */
+body:has(.gt-visor[open]) {
+  overflow: hidden;
+}
+
+.gt-visor__figura {
+  display: grid;
+  place-items: center;
+  gap: var(--gt-space-4);
+  width: 100%;
+  height: 100%;
+  grid-template-rows: minmax(0, 1fr) auto;
+  /* Los clics de la figura no cierran; solo los del propio dialog (backdrop). */
+  pointer-events: none;
+}
+
+.gt-visor__figura img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  /* Entera, sin recorte: el visor existe justamente para eso. */
+  object-fit: contain;
+  border-radius: var(--gt-radio-chico);
+  box-shadow: var(--gt-sombra-lamina);
+}
+
+.gt-visor__pie {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gt-space-4);
+  color: var(--gt-humo);
+  font-size: var(--gt-fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.gt-visor__hora {
+  color: var(--gt-celeste);
+  font-weight: var(--gt-fw-semibold);
+}
+
+/* --- Controles ------------------------------------------------------------ */
+
+.gt-visor__cerrar,
+.gt-visor__paso {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: 50%;
+  color: var(--gt-blanco);
+  font-size: var(--gt-fs-lead);
+  /* Plano propio: sobre una foto clara un glifo suelto desaparece. */
+  background: color-mix(in srgb, var(--gt-abisal) 72%, transparent);
+  transition: background var(--gt-transicion), color var(--gt-transicion),
+    border-color var(--gt-transicion), opacity var(--gt-transicion);
+}
+
+.gt-visor__cerrar:hover,
+.gt-visor__paso:hover {
+  background: var(--gt-celeste);
+  border-color: var(--gt-celeste);
+  color: var(--gt-navy);
+}
+
+.gt-visor__cerrar {
+  top: clamp(var(--gt-space-4), 3vw, var(--gt-space-8));
+  right: clamp(var(--gt-space-4), 3vw, var(--gt-space-8));
+}
+
+.gt-visor__paso {
+  top: 50%;
+  translate: 0 -50%;
+  font-size: var(--gt-fs-body);
+}
+
+.gt-visor__paso--anterior {
+  left: clamp(var(--gt-space-2), 2vw, var(--gt-space-8));
+}
+
+.gt-visor__paso--anterior span {
+  display: block;
+  rotate: 180deg;
+}
+
+.gt-visor__paso--siguiente {
+  right: clamp(var(--gt-space-2), 2vw, var(--gt-space-8));
+}
+
+@media (forced-colors: active) {
+  .gt-visor__cerrar,
+  .gt-visor__paso {
+    border: var(--gt-borde) solid CanvasText;
+  }
+}

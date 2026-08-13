@@ -71,6 +71,7 @@ const RUTAS_SPA = [
   /^\/escarapela$/,
   /^\/encuestas$/,
   /^\/certificado$/,
+  /^\/galeria$/,
 ];
 const destinoSeguro = (p) => (RUTAS_SPA.some((r) => r.test(p)) ? p : '/');
 
