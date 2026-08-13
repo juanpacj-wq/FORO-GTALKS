@@ -123,16 +123,23 @@ console.log('\nAltura de arranque')
 // altura que /escarapela. El recorte del padding vive en `.gt-pagina` (PonentesPage.css) y
 // ninguna página lo redefine; aquí se mide sobre píxeles renderizados el canto superior del
 // h1 de cada una, no el CSS que se cree que aplica.
+// Se mide la distancia del canto INFERIOR del header al h1, no el top absoluto:
+// /galeria lleva riel de anclas y su header es más alto, así que el top absoluto
+// difiere en exactamente esa fila sin que el arranque de la página cambie.
 const alturaH1 = async (ruta) => {
   await desktop.goto(base + ruta, { waitUntil: 'networkidle' })
-  return desktop.locator('h1').first().evaluate((el) => Math.round(el.getBoundingClientRect().top))
+  return desktop.evaluate(() => {
+    const h1 = document.querySelector('h1')
+    const header = document.querySelector('.gt-header')
+    return Math.round(h1.getBoundingClientRect().top - header.getBoundingClientRect().bottom)
+  })
 }
 const alturas = {}
-for (const ruta of ['/escarapela', '/ponentes', '/encuestas', '/certificado']) {
+for (const ruta of ['/escarapela', '/ponentes', '/encuestas', '/certificado', '/galeria']) {
   alturas[ruta] = await alturaH1(ruta)
 }
 check(
-  'las cuatro páginas del chasis arrancan a la altura de /escarapela',
+  'las cinco páginas del chasis arrancan a la misma distancia del header',
   new Set(Object.values(alturas)).size === 1,
   JSON.stringify(alturas),
 )
@@ -236,16 +243,25 @@ if (sinBio) {
 }
 
 // La página de encuestas entrega tres destinos, y no son simétricos: la
-// de satisfacción abre por reloj el servidor retiene la URL hasta el cierre
-// del evento (server/encuestas.js) y preview NO tiene /api/encuestas, así que
-// aquí se ve exactamente el estado «cerrada» (fail-closed). Se verifica cada
-// estado por lo que se puede romper sin que se note: cerrada, que el botón sea
-// un botón deshabilitado con su aviso y no un enlace a ninguna parte; abierta
+// PRIMERA ya no es una encuesta anuncia las respuestas del panel y va
+// destacada a todo lo ancho (`resultados` en foro.ts) y la de satisfacción
+// abre por reloj el servidor retiene la URL hasta el cierre del evento
+// (server/encuestas.js) y preview NO tiene /api/encuestas, así que aquí se ve
+// exactamente el estado «cerrada» (fail-closed). Se verifica cada estado por
+// lo que se puede romper sin que se note: cerrada, que el botón sea un botón
+// deshabilitado con su aviso y no un enlace a ninguna parte; abierta
 // (interceptando /api/encuestas), que el enlace lleve el `rel` seguro sin
 // `noopener` la pestaña de destino puede reescribir la de origen; y el paso
 // de una a otra SIN recargar, que es la promesa de «se habilita sola a las 4».
-console.log('\nEncuestas (cerrada: preview no tiene /api/encuestas)')
+console.log('\nEncuestas (cerrada: /api/encuestas cortado a propósito)')
 const AVISO_SATISFACCION = 'Se habilitará esta encuesta cuando finalice el evento.'
+// El corte lo hace el arnés y no el entorno: `vite preview` HEREDA el proxy de
+// /api de vite.config.ts, así que si hay un server local levantado en :3000
+// pasado el cierre del evento, con la URL ya liberada esta sección vería la
+// encuesta abierta y fallaría por el entorno, no por el código. Pasó el
+// 2026-08-12: abortar la petición reproduce el fail-closed (fetch que revienta
+// → botón retenido) sin importar qué esté corriendo al lado.
+await desktop.route('**/api/encuestas', (ruta) => ruta.abort())
 await desktop.goto(base + '/encuestas', { waitUntil: 'networkidle' })
 const encuestas = await desktop.$$eval('.gt-encuesta', (tarjetas) =>
   tarjetas.map((t) => {
@@ -268,33 +284,61 @@ const encuestas = await desktop.$$eval('.gt-encuesta', (tarjetas) =>
 )
 
 check('hay 3 encuestas', encuestas.length === 3, `hay ${encuestas.length}`)
-const [oportunidades, panelistas, satisfaccion] = encuestas
+const [panelistas, oportunidades, satisfaccion] = encuestas
 
-// Las dos primeras están abiertas SIEMPRE y se comprueban igual: enlace https
-// que sale del sitio con el `rel` seguro. La de satisfacción es la única que no
-// es un enlace, y va la última a propósito.
-for (const abierta of [oportunidades, panelistas]) {
-  check(
-    `«${abierta.enlace?.nombre}» apunta a un formulario`,
-    Boolean(abierta.enlace?.href.startsWith('https://')),
-    abierta.enlace?.href ?? '(sin enlace)',
-  )
-  check(
-    `«${abierta.enlace?.nombre}» abre fuera con rel seguro`,
-    abierta.enlace?.target === '_blank' &&
-      abierta.enlace?.rel.includes('noopener') &&
-      abierta.enlace?.rel.includes('noreferrer'),
-    `target=${abierta.enlace?.target} rel=${abierta.enlace?.rel}`,
-  )
-}
+// La de oportunidades es hoy el único enlace que sale del sitio: https con el
+// `rel` seguro. Las respuestas del panel se enseñan AQUÍ (visor con descarga,
+// 2026-08-13) y la de satisfacción abre por reloj: ninguna de las dos navega.
+check(
+  `«${oportunidades.enlace?.nombre}» apunta a un formulario`,
+  Boolean(oportunidades.enlace?.href.startsWith('https://')),
+  oportunidades.enlace?.href ?? '(sin enlace)',
+)
+check(
+  `«${oportunidades.enlace?.nombre}» abre fuera con rel seguro`,
+  oportunidades.enlace?.target === '_blank' &&
+    oportunidades.enlace?.rel.includes('noopener') &&
+    oportunidades.enlace?.rel.includes('noreferrer'),
+  `target=${oportunidades.enlace?.target} rel=${oportunidades.enlace?.rel}`,
+)
+
+// «Ver respuestas» dejó de redirigir al Forms: es un botón ACTIVO (sin
+// aria-disabled, a diferencia del retenido de satisfacción) que abre el visor
+// de la pieza con sus 8 páginas y la descarga del PDF.
+check(
+  '«Ver respuestas» ya no es un enlace al Forms: es un botón activo',
+  panelistas.enlace === null && panelistas.boton?.inactivo === null,
+  JSON.stringify(panelistas.boton),
+)
+await desktop.click('.gt-encuesta--respuestas button.gt-boton')
+check(
+  'y abre el visor de respuestas',
+  await esperarA(async () => (await desktop.locator('dialog.gt-respuestas[open]').count()) === 1),
+)
+check(
+  'con las 8 páginas de la pieza',
+  (await desktop.locator('.gt-respuestas__paginas img').count()) === 8,
+)
+check(
+  'y la descarga del PDF completo',
+  (await desktop
+    .locator('.gt-respuestas a[href="/docs/respuestas-panelistas.pdf"][download]')
+    .count()) === 1,
+)
+await desktop.keyboard.press('Escape')
+check(
+  'Escape cierra el visor de respuestas',
+  await esperarA(async () => (await desktop.locator('dialog.gt-respuestas[open]').count()) === 0),
+)
+
 check(
   'la de satisfacción NO es un enlace: no hay URL que seguir',
   satisfaccion.enlace === null,
   satisfaccion.enlace?.href ?? '',
 )
 check(
-  'y es la ÚNICA sin enlace: las otras dos no dependen del reloj',
-  encuestas.filter((e) => e.enlace === null).length === 1,
+  'sin enlace van solo la de resultados (visor propio) y la de satisfacción (reloj)',
+  encuestas.filter((e) => e.enlace === null).length === 2,
 )
 check(
   'su botón está deshabilitado pero recibe foco (aria-disabled)',
@@ -317,6 +361,15 @@ check(
   )
 }
 
+// El anuncio de resultados es la PRIMERA tarjeta y es la destacada: si la
+// clase se cae, la banda vuelve a ser una encuesta navy más sin que nada falle.
+check(
+  'la tarjeta de respuestas abre la página como lámina destacada',
+  await desktop.$eval('.gt-encuesta:first-child', (t) =>
+    t.classList.contains('gt-encuesta--respuestas'),
+  ),
+)
+
 // El aviso se VE al pasar el mouse (en móvil lo muestra el toque; con teclado,
 // el foco vía :focus-within). Oculto sigue en el DOM para el lector, así que lo
 // que se comprueba es visibility, no existencia.
@@ -325,6 +378,8 @@ const avisoVisible = () =>
 check('el aviso arranca oculto a la vista', (await avisoVisible()) === 'hidden')
 await desktop.hover('.gt-boton--inactivo')
 check('y el hover lo muestra', (await avisoVisible()) === 'visible')
+// El corte era solo para fijar el estado «cerrada»: se retira antes de seguir.
+await desktop.unroute('**/api/encuestas')
 
 // ── Abierta: /api/encuestas entrega la URL y el botón es el enlace de siempre.
 console.log('\nEncuestas (abierta: /api/encuestas interceptado)')
@@ -395,6 +450,129 @@ console.log('\nEncuestas (el volteo a la hora del cierre, sin recargar)')
   check('y a la hora del servidor el enlace aparece SIN recargar', true)
   check('con más de una consulta al servidor', consultas >= 2, `consultas=${consultas}`)
   await volteo.close()
+}
+
+// ───────────────────────────────────────────────────────────── galería
+console.log('\nGalería: abanico, visor y rejilla')
+await desktop.goto(base + '/galeria', { waitUntil: 'networkidle' })
+
+check('el abanico arranca en la primera foto', (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '1 / 80')
+// El mazo es CIRCULAR: en la primera foto el lado izquierdo va lleno con las
+// últimas (80, 79, …), así que las 11 ranuras están montadas desde el arranque.
+check('y aun así el abanico está lleno por los dos lados', (await desktop.locator('.gt-abanico__tarjeta').count()) === 11)
+
+await desktop.click('.gt-abanico__paso:not(.gt-abanico__paso--siguiente)')
+check(
+  '«anterior» desde la primera da la vuelta a la 80',
+  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '80 / 80'),
+)
+await desktop.click('.gt-abanico__paso--siguiente')
+check(
+  'y «siguiente» desde la 80 vuelve a la 1',
+  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '1 / 80'),
+)
+
+await desktop.click('.gt-abanico__paso--siguiente')
+check(
+  'avanzar mueve el contador y la hora',
+  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '2 / 80'),
+)
+
+// La tarjeta central abre el visor; Escape lo cierra y devuelve el foco.
+await desktop.click('.gt-abanico__tarjeta--activa')
+check('la tarjeta central abre el visor', await esperarA(() => desktop.locator('dialog.gt-visor[open]').count()))
+await desktop.keyboard.press('ArrowRight')
+check(
+  'la flecha derecha navega dentro del visor',
+  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes('3 / 80')),
+)
+await desktop.keyboard.press('Escape')
+check('Escape cierra el visor', await esperarA(async () => (await desktop.locator('dialog.gt-visor[open]').count()) === 0))
+
+// La rejilla es el índice: cualquier celda abre el visor sobre esa foto.
+check('la rejilla lista las 80 fotos', (await desktop.locator('.gt-galeria__celda').count()) === 80)
+await desktop.locator('.gt-galeria__celda').nth(9).click()
+check(
+  'una celda de la rejilla abre el visor sobre su foto',
+  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes('10 / 80')),
+)
+await desktop.keyboard.press('Escape')
+
+// La vuelta también en el visor: izquierda desde la 1 es la 80.
+await desktop.locator('.gt-galeria__celda').first().click()
+await esperarA(async () => (await desktop.locator('dialog.gt-visor[open]').count()) === 1)
+await desktop.keyboard.press('ArrowLeft')
+check(
+  'el visor también da la vuelta: izquierda desde la 1 es la 80',
+  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes('80 / 80')),
+)
+await desktop.keyboard.press('Escape')
+
+// El riel de anclas: el mismo scrollspy de la home, con las secciones de aquí.
+console.log('\nGalería: riel de anclas y descargas')
+check(
+  'el riel lista las 3 secciones',
+  (await desktop.locator('.gt-header__ancla').allTextContents()).join('|') ===
+    'Galería de imágenes|Descargar contenido|Resumen de jornada',
+)
+await desktop.click('.gt-header__ancla[href="#resumen-de-jornada"]')
+check(
+  'el scrollspy marca Resumen de jornada como activa',
+  await esperarA(async () => (await anclaActiva()) === 'Resumen de jornada'),
+  `leído: ${await anclaActiva()}`,
+)
+
+// Sin confirmación del servidor, los botones van RETENIDOS: la página nunca
+// ofrece un enlace que va a dar 404. Se intercepta la respuesta «apagada»
+// (la forma real de estadoDescargas con DESCARGAS_DIR vacío) en vez de confiar
+// en el ambiente: `vite preview` hereda el proxy de /api, así que con el server
+// local arriba el estado ambiente puede ser cualquiera de los dos.
+{
+  const sinDescargas = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await sinDescargas.route('**/api/descargas', (ruta) =>
+    ruta.fulfill({ json: { imagenes: null, presentaciones: null } }),
+  )
+  await sinDescargas.goto(base + '/galeria', { waitUntil: 'networkidle' })
+  check(
+    'sin confirmación: los dos botones de descarga van retenidos',
+    (await sinDescargas.locator('.gt-descarga .gt-boton--inactivo[aria-disabled="true"]').count()) === 2,
+  )
+  check('y ninguno es un enlace', (await sinDescargas.locator('.gt-descarga a').count()) === 0)
+  check(
+    'y cada botón lleva su aviso como descripción accesible',
+    (await sinDescargas.locator('.gt-descarga .gt-boton--inactivo[aria-describedby]').count()) === 2 &&
+      (await sinDescargas.locator('#gt-descarga-aviso-imagenes').textContent()) ===
+        (await sinDescargas.locator('#gt-descarga-aviso-presentaciones').textContent()),
+  )
+  await sinDescargas.close()
+}
+
+// Con el estado confirmado (interceptado, como /api/encuestas), son enlaces de
+// descarga y el peso que enseñan es el del manifiesto.
+{
+  const conDescargas = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await conDescargas.route('**/api/descargas', (ruta) =>
+    ruta.fulfill({
+      json: {
+        imagenes: { bytes: 1414662873, elementos: 80 },
+        presentaciones: { bytes: 30206836, elementos: 4 },
+      },
+    }),
+  )
+  await conDescargas.goto(base + '/galeria', { waitUntil: 'networkidle' })
+  const imagenes = conDescargas.locator('.gt-descarga a[href="/descargas/imagenes"]')
+  const presentaciones = conDescargas.locator('.gt-descarga a[href="/descargas/presentaciones"]')
+  check('confirmado: «Descargar imágenes» es un enlace de descarga',
+    (await imagenes.count()) === 1 && (await imagenes.getAttribute('download')) !== null)
+  check('confirmado: «Descargar presentaciones» también',
+    (await presentaciones.count()) === 1 && (await presentaciones.getAttribute('download')) !== null)
+  check(
+    'y el peso anunciado sale del manifiesto',
+    ((await conDescargas.locator('.gt-descarga__meta').allTextContents()).join('|') ===
+      '80 fotografías originales · 1,3 GB|4 presentaciones · 29 MB'),
+    (await conDescargas.locator('.gt-descarga__meta').allTextContents()).join('|'),
+  )
+  await conDescargas.close()
 }
 
 // La escarapela sin sesión: preview no tiene /api/me, que es exactamente el estado anónimo.

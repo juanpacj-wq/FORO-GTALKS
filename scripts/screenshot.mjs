@@ -21,6 +21,7 @@ const routes = [
   ['escarapela', '/escarapela'],
   ['encuestas', '/encuestas'],
   ['certificado', '/certificado'],
+  ['galeria', '/galeria'],
 ]
 
 mkdirSync(outDir, { recursive: true })
@@ -46,6 +47,20 @@ for (const viewport of [
     // Las fuentes tienen font-display: swap; sin esperarlas la captura sale
     // con la tipografía de reserva y las medidas no son las reales.
     await page.evaluate(() => document.fonts.ready)
+    // Y un paseo hasta el fondo antes de disparar: la rejilla de /galeria va
+    // con loading="lazy", y la captura fullPage no pasa por el viewport real,
+    // así que sin recorrer la página las fotos de abajo salen como huecos.
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight) {
+        window.scrollTo({ top: y, behavior: 'instant' })
+        await new Promise((r) => setTimeout(r, 60))
+      }
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      // `complete` no basta: con decoding="async" una imagen puede estar
+      // cargada y aún sin decodificar, y la captura la pinta como hueco.
+      // decode() fuerza las dos cosas y falla inofensivo si ya estaba.
+      await Promise.allSettled([...document.images].map((img) => img.decode()))
+    })
     await page.waitForTimeout(300)
     await page.screenshot({
       path: `${outDir}/${prefix}-${name}-${viewport.name}.png`,

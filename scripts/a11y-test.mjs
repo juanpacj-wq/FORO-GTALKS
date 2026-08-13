@@ -24,6 +24,7 @@ const RUTAS = [
   '/escarapela',
   '/encuestas',
   '/certificado',
+  '/galeria',
 ]
 
 let fallos = 0
@@ -129,6 +130,13 @@ const AUDITORIA = () => {
 
   // --- enlaces y botones sin nombre accesible ---
   for (const el of document.querySelectorAll('a[href], button')) {
+    // Lo que está fuera del árbol de accesibilidad no necesita nombre: un
+    // aria-hidden (propio o heredado) con tabindex="-1" es la forma correcta
+    // de un atajo solo-puntero las tarjetas laterales del abanico, y exigirle
+    // nombre sería pedirle un letrero a algo que ningún lector va a anunciar.
+    // Si le falta el tabindex, sigue siendo un problema: un aria-hidden
+    // enfocable es un tabulador que cae en el vacío.
+    if (el.closest('[aria-hidden="true"]') && el.tabIndex === -1) continue
     const nombre =
       (el.getAttribute('aria-label') ?? '').trim() ||
       el.textContent.trim() ||

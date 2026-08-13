@@ -64,7 +64,7 @@ const SUBRECURSO = (dest) => ({
 // ─────────────────────────────────────── navegaciones: públicas, con cabeceras
 console.log('\nNavegación sin sesión → el sitio se sirve, con la CSP puesta')
 
-for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas', '/certificado']) {
+for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas', '/certificado', '/galeria']) {
   const r = await pedir(ruta, { headers: NAVEGA })
   const csp = r.headers['content-security-policy'] || ''
   check(`${ruta} se sirve (200, HTML)`, r.status === 200 && (r.headers['content-type'] || '').includes('text/html'), String(r.status))
@@ -248,6 +248,54 @@ console.log('\nEncuesta de satisfacción → la URL solo existe tras el cierre d
   // un POST pueda hacerle. El CSRF lo intercepta cross-site; same-origin, no existe.
   const post = await pedir('/api/encuestas', { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } })
   check('POST /api/encuestas no existe', post.status === 404, String(post.status))
+}
+
+// ─────────────────────────────────── descargas de /galeria: público y coherente
+// Contenido público servido con la doctrina del certificado: el servidor solo
+// entrega lo que la estación empaquetó, y la página solo anuncia lo que este
+// endpoint confirme. Aquí se comprueba la COHERENCIA entre las dos puntas: cada
+// rol anunciado entrega su ZIP como adjunto (HEAD, que el de fotos pesa 1.3 GB),
+// y lo no anunciado o inventado cae al 404 genérico.
+console.log('\nDescargas de /galeria → estado público, entrega coherente')
+{
+  const r = await pedir('/api/descargas', { headers: SUBRECURSO('empty') })
+  check('/api/descargas responde 200 JSON', r.status === 200 && (r.headers['content-type'] || '').includes('json'), String(r.status))
+  check('y no se cachea', (r.headers['cache-control'] || '').includes('no-store'), r.headers['cache-control'] || '')
+  check('y no fija cookies', r.headers['set-cookie'] === undefined, String(r.headers['set-cookie'] || ''))
+
+  const estado = JSON.parse(r.cuerpo)
+  for (const rol of ['imagenes', 'presentaciones']) {
+    const anunciado = estado[rol]
+    if (anunciado) {
+      check(
+        `«${rol}» anunciado con bytes y elementos`,
+        Number(anunciado.bytes) > 0 && Number(anunciado.elementos) > 0,
+        JSON.stringify(anunciado),
+      )
+      const zip = await pedir(`/descargas/${rol}`, { method: 'HEAD' })
+      check(
+        `y /descargas/${rol} entrega el ZIP como adjunto`,
+        zip.status === 200 &&
+          (zip.headers['content-disposition'] || '').startsWith('attachment') &&
+          Number(zip.headers['content-length']) === Number(anunciado.bytes),
+        `${zip.status} · ${zip.headers['content-disposition'] || '(sin disposición)'}`,
+      )
+      check(
+        `y /descargas/${rol} se reanuda por rangos`,
+        (zip.headers['accept-ranges'] || '') === 'bytes',
+        zip.headers['accept-ranges'] || '(sin accept-ranges)',
+      )
+    } else {
+      const zip = await pedir(`/descargas/${rol}`, { method: 'HEAD' })
+      check(`«${rol}» no anunciado: su descarga no existe (404)`, zip.status === 404, String(zip.status))
+    }
+  }
+
+  const inventado = await pedir('/descargas/otra-cosa', { method: 'HEAD' })
+  check('un rol inventado cae al 404 genérico', inventado.status === 404, String(inventado.status))
+
+  const post = await pedir('/api/descargas', { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } })
+  check('POST /api/descargas no existe', post.status === 404, String(post.status))
 }
 
 // ──────────────────────────────────────────── el login sigue vivo, y es explícito
