@@ -456,26 +456,35 @@ console.log('\nEncuestas (el volteo a la hora del cierre, sin recargar)')
 console.log('\nGalería: abanico, visor y rejilla')
 await desktop.goto(base + '/galeria', { waitUntil: 'networkidle' })
 
-check('el abanico arranca en la primera foto', (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '1 / 80')
+// Cuántas fotos hay NO se escribe aquí: sale del manifiesto generado, que es la
+// misma fuente que pinta la página (y sigue siendo independiente del DOM, así
+// que «la rejilla lista las N» no es una tautología). Con «80» clavado, retirar
+// tres fotos ponía en rojo medio arnés sin que nada estuviera roto.
+const TOTAL = (
+  readFileSync(new URL('../src/design/galeria.ts', import.meta.url), 'utf8').match(/^ {4}id: '/gm) ?? []
+).length
+check('el manifiesto de la galería trae fotos', TOTAL > 0, `${TOTAL}`)
+
+check('el abanico arranca en la primera foto', (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === `1 / ${TOTAL}`)
 // El mazo es CIRCULAR: en la primera foto el lado izquierdo va lleno con las
-// últimas (80, 79, …), así que las 11 ranuras están montadas desde el arranque.
+// últimas (N, N-1, …), así que las 11 ranuras están montadas desde el arranque.
 check('y aun así el abanico está lleno por los dos lados', (await desktop.locator('.gt-abanico__tarjeta').count()) === 11)
 
 await desktop.click('.gt-abanico__paso:not(.gt-abanico__paso--siguiente)')
 check(
-  '«anterior» desde la primera da la vuelta a la 80',
-  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '80 / 80'),
+  `«anterior» desde la primera da la vuelta a la ${TOTAL}`,
+  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === `${TOTAL} / ${TOTAL}`),
 )
 await desktop.click('.gt-abanico__paso--siguiente')
 check(
-  'y «siguiente» desde la 80 vuelve a la 1',
-  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '1 / 80'),
+  `y «siguiente» desde la ${TOTAL} vuelve a la 1`,
+  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === `1 / ${TOTAL}`),
 )
 
 await desktop.click('.gt-abanico__paso--siguiente')
 check(
   'avanzar mueve el contador y la hora',
-  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === '2 / 80'),
+  await esperarA(async () => (await desktop.locator('.gt-abanico__cuenta').textContent()).trim() === `2 / ${TOTAL}`),
 )
 
 // La tarjeta central abre el visor; Escape lo cierra y devuelve el foco.
@@ -484,41 +493,64 @@ check('la tarjeta central abre el visor', await esperarA(() => desktop.locator('
 await desktop.keyboard.press('ArrowRight')
 check(
   'la flecha derecha navega dentro del visor',
-  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes('3 / 80')),
+  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes(`3 / ${TOTAL}`)),
 )
 await desktop.keyboard.press('Escape')
 check('Escape cierra el visor', await esperarA(async () => (await desktop.locator('dialog.gt-visor[open]').count()) === 0))
 
 // La rejilla es el índice: cualquier celda abre el visor sobre esa foto.
-check('la rejilla lista las 80 fotos', (await desktop.locator('.gt-galeria__celda').count()) === 80)
+check(`la rejilla lista las ${TOTAL} fotos`, (await desktop.locator('.gt-galeria__celda').count()) === TOTAL)
 await desktop.locator('.gt-galeria__celda').nth(9).click()
 check(
   'una celda de la rejilla abre el visor sobre su foto',
-  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes('10 / 80')),
+  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes(`10 / ${TOTAL}`)),
 )
 await desktop.keyboard.press('Escape')
 
-// La vuelta también en el visor: izquierda desde la 1 es la 80.
+// La vuelta también en el visor: izquierda desde la 1 es la última.
 await desktop.locator('.gt-galeria__celda').first().click()
 await esperarA(async () => (await desktop.locator('dialog.gt-visor[open]').count()) === 1)
 await desktop.keyboard.press('ArrowLeft')
 check(
-  'el visor también da la vuelta: izquierda desde la 1 es la 80',
-  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes('80 / 80')),
+  `el visor también da la vuelta: izquierda desde la 1 es la ${TOTAL}`,
+  await esperarA(async () => ((await desktop.locator('.gt-visor__pie').textContent()) ?? '').includes(`${TOTAL} / ${TOTAL}`)),
 )
 await desktop.keyboard.press('Escape')
 
 // El riel de anclas: el mismo scrollspy de la home, con las secciones de aquí.
 console.log('\nGalería: riel de anclas y descargas')
 check(
-  'el riel lista las 3 secciones',
+  'el riel lista las 4 secciones',
   (await desktop.locator('.gt-header__ancla').allTextContents()).join('|') ===
-    'Galería de imágenes|Descargar contenido|Resumen de jornada',
+    'Presentaciones|Galería de imágenes|Descargar imágenes|Resumen de la jornada',
+  (await desktop.locator('.gt-header__ancla').allTextContents()).join('|'),
 )
+
+// El ORDEN es el pedido (2026-08-13): las presentaciones abren, las fotografías
+// se descargan después de verlas. Se comprueba sobre los títulos y no sobre los
+// ids porque es lo que lee la persona, y de paso ata el copy de cada sección.
+check(
+  'las cuatro secciones van en el orden pedido',
+  (await desktop.locator('.gt-galeria .gt-titulo-seccion__texto').allTextContents()).join('|') ===
+    'Descarga las presentaciones de tus ponentes|Galería de imágenes|Descargar imágenes|Resumen de la jornada',
+  (await desktop.locator('.gt-galeria .gt-titulo-seccion__texto').allTextContents()).join('|'),
+)
+check(
+  'y el h1 de la página es el título de la primera',
+  (await desktop.locator('.gt-galeria h1').textContent()) ===
+    'Descarga las presentaciones de tus ponentes',
+)
+
 await desktop.click('.gt-header__ancla[href="#resumen-de-jornada"]')
 check(
-  'el scrollspy marca Resumen de jornada como activa',
-  await esperarA(async () => (await anclaActiva()) === 'Resumen de jornada'),
+  'el scrollspy marca Resumen de la jornada como activa',
+  await esperarA(async () => (await anclaActiva()) === 'Resumen de la jornada'),
+  `leído: ${await anclaActiva()}`,
+)
+await desktop.click('.gt-header__ancla[href="#descargar-presentaciones"]')
+check(
+  'y vuelve a marcar Presentaciones al subir a la primera',
+  await esperarA(async () => (await anclaActiva()) === 'Presentaciones'),
   `leído: ${await anclaActiva()}`,
 )
 
@@ -554,7 +586,7 @@ check(
   await conDescargas.route('**/api/descargas', (ruta) =>
     ruta.fulfill({
       json: {
-        imagenes: { bytes: 1414662873, elementos: 80 },
+        imagenes: { bytes: 1395641241, elementos: 77 },
         presentaciones: { bytes: 30206836, elementos: 4 },
       },
     }),
@@ -567,9 +599,10 @@ check(
   check('confirmado: «Descargar presentaciones» también',
     (await presentaciones.count()) === 1 && (await presentaciones.getAttribute('download')) !== null)
   check(
+    // El orden del DOM es el de las secciones: presentaciones primero.
     'y el peso anunciado sale del manifiesto',
     ((await conDescargas.locator('.gt-descarga__meta').allTextContents()).join('|') ===
-      '80 fotografías originales · 1,3 GB|4 presentaciones · 29 MB'),
+      '4 presentaciones · 29 MB|77 fotografías originales · 1,3 GB'),
     (await conDescargas.locator('.gt-descarga__meta').allTextContents()).join('|'),
   )
   await conDescargas.close()

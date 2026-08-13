@@ -3,14 +3,25 @@
    al lado de su componente, como todo en src/components/.
    ========================================================================== */
 
-/* --- Descargar contenido -----------------------------------------------------
-   La entradilla y los dos botones comparten fila en escritorio: el texto mide
-   lo que va a usar (52ch) y los botones se alinean a la derecha, cada uno con
-   su línea de dato debajo el peso REAL del manifiesto, no un copy. En
-   angosto, el `flex-wrap` los apila en el orden natural.                      */
+/* --- Las dos secciones de descarga -------------------------------------------
+   Una por paquete desde el 2026-08-13: las presentaciones abren la página y las
+   fotografías van tras el abanico. Comparten esta hoja porque componen igual,
+   la entradilla y el botón en una fila: el texto mide lo que va a usar (46ch) y
+   el botón se alinea a la derecha, con su línea de dato debajo el peso REAL
+   del manifiesto, no un copy. En angosto, el `flex-wrap` los apila en el orden
+   natural.                                                                    */
 
-.gt-galeria__descargas {
+.gt-galeria__descargas,
+.gt-galeria__titulo-abanico {
   margin-top: var(--gt-seccion);
+}
+
+/* La primera sección de la página no lleva vano: su título ES el h1, y el arnés
+   exige que /galeria arranque a la misma distancia del header que las otras
+   cuatro páginas del chasis (interactions-test.mjs §Altura de arranque, medido
+   sobre píxeles renderizados). */
+.gt-galeria__descargas--arranque {
+  margin-top: 0;
 }
 
 .gt-galeria__descargas-cuerpo {
@@ -81,7 +92,7 @@
   transition: opacity var(--gt-transicion);
 }
 
-/* --- Resumen de jornada ------------------------------------------------------ */
+/* --- Resumen de la jornada --------------------------------------------------- */
 
 .gt-galeria__indice {
   margin-top: var(--gt-seccion);

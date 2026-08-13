@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
  */
 export interface DescargaRol {
   bytes: number
-  /** Cuántos archivos trae el ZIP: 80 fotografías, 4 presentaciones… */
+  /** Cuántos archivos trae el ZIP: 77 fotografías, 4 presentaciones… */
   elementos: number
 }
 

@@ -551,14 +551,25 @@ export const GALERIA_INTRO =
   'Así se vivió la primera edición del foro. Recorre el abanico en el orden en que transcurrió la jornada del registro de la mañana al cierre de la tarde o abre cualquier fotografía a pantalla completa desde la rejilla.'
 
 /**
- * La sección «Descargar contenido» de /galeria. El texto es microcopy nuevo
- * (es-CO); los pesos y conteos que acompañan a cada botón NO viven aquí: los
- * anuncia el servidor desde el manifiesto del empaquetador
- * (`GET /api/descargas`), y sin esa confirmación los botones quedan retenidos
- * con DESCARGAS_AVISO.
+ * Las dos secciones de descarga de /galeria, una por paquete: las
+ * presentaciones abren la página y las fotografías van después del abanico,
+ * junto a lo que se acaba de ver (2026-08-13, pedido del usuario).
+ *
+ * Son dos entradillas y no una partida en dos porque la de antes nombraba los
+ * DOS paquetes en una sola frase («las fotografías originales y las
+ * presentaciones»): al separar las secciones, esa frase habría anunciado en
+ * cada sitio un archivo que allí no está.
+ *
+ * El texto es microcopy nuevo (es-CO); los pesos y conteos que acompañan a cada
+ * botón NO viven aquí: los anuncia el servidor desde el manifiesto del
+ * empaquetador (`GET /api/descargas`), y sin esa confirmación los botones
+ * quedan retenidos con DESCARGAS_AVISO.
  */
-export const DESCARGAS_INTRO =
-  'Llévate el foro contigo: las fotografías originales de la jornada y las presentaciones que compartieron los ponentes, cada una en un solo archivo comprimido.'
+export const DESCARGAS_PRESENTACIONES_INTRO =
+  'Aquí encuentras el contenido presentado durante el foro. Descarga las presentaciones que compartieron los ponentes, reunidas en un solo archivo comprimido.'
+
+export const DESCARGAS_IMAGENES_INTRO =
+  'Llévate el foro contigo: las fotografías originales de la jornada, a plena resolución y en un solo archivo comprimido.'
 
 export const DESCARGAS_AVISO = 'Este paquete estará disponible muy pronto.'
 

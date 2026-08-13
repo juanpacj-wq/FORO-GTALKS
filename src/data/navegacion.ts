@@ -24,10 +24,18 @@ const ANCLAS_POR_RUTA: Record<string, readonly Ancla[]> = {
     { id: 'sobre-el-foro', etiqueta: 'Sobre el foro' },
     { id: 'agenda', etiqueta: 'Agenda' },
   ],
+  // Las dos descargas dejaron de compartir sección el 2026-08-13 (pedido del
+  // usuario): las presentaciones abren la página y las fotografías van después
+  // del abanico, junto a lo que se acaba de ver. La etiqueta de la primera es
+  // más corta que su título («Descarga las presentaciones de tus ponentes»)
+  // porque esto es un ÍNDICE, en versalita y en una fila que no debe empujar a
+  // las demás fuera del riel; el título completo lo lee quien llega a la
+  // sección.
   '/galeria': [
+    { id: 'descargar-presentaciones', etiqueta: 'Presentaciones' },
     { id: 'galeria-de-imagenes', etiqueta: 'Galería de imágenes' },
-    { id: 'descargar-contenido', etiqueta: 'Descargar contenido' },
-    { id: 'resumen-de-jornada', etiqueta: 'Resumen de jornada' },
+    { id: 'descargar-imagenes', etiqueta: 'Descargar imágenes' },
+    { id: 'resumen-de-jornada', etiqueta: 'Resumen de la jornada' },
   ],
 }
 

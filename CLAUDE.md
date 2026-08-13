@@ -118,9 +118,9 @@ python -m venv .venv-design
 .venv-design/Scripts/python scripts/build-retratos.py       # retratos-origen/ → public/img/ponentes/
 .venv-design/Scripts/python scripts/build-foto-hero.py      # fotos-origen/ → la foto del hero, 1x y 2x
 .venv-design/Scripts/pip install pillow-heif                # solo para la galería: los HEIC del teléfono
-.venv-design/Scripts/python scripts/build-galeria.py        # Contenido Memorias del evento/ →
+.venv-design/Scripts/python scripts/build-galeria.py        # el lote de fotos (galeria_fuente.py) →
                                                             # public/img/galeria/ + src/design/galeria.ts
-.venv-design/Scripts/python scripts/descargas-empaquetar.py # los dos ZIP de «Descargar contenido»
+.venv-design/Scripts/python scripts/descargas-empaquetar.py # los dos ZIP que descarga /galeria
                                                             # → .datos/descargas/ (se suben con
                                                             # deploy/descargas-subir.sh, NUNCA por git)
 .venv-design/Scripts/python scripts/build-respuestas.py     # RTAS PREGUNTAS ... PANELISTAS.pdf →
@@ -203,7 +203,7 @@ bash deploy/ensayo-local.sh            # paquete determinista + coreografía de 
 bash deploy/ensayo-local.sh --completo # además: compila desde el paquete, poda, y comprueba
                                        # que el server arranque podado con la identidad cerrada
 bash deploy/deploy.sh --estado         # (ya con deploy/deploy.env) qué commit está desplegado
-bash deploy/descargas-subir.sh         # sube los ZIP de «Descargar contenido» a DESCARGAS_DIR
+bash deploy/descargas-subir.sh         # sube los ZIP que descarga /galeria a DESCARGAS_DIR
                                        # (ssh + sha256 + RESTART; el manifiesto carga al arrancar)
 ```
 
@@ -461,8 +461,11 @@ bash deploy/descargas-subir.sh         # sube los ZIP de «Descargar contenido»
   `deploy/certificados-subir.sh` y exige RESTART. Manual: `docs/SEGURIDAD.md` §El certificado y
   `docs/PLAN-CERTIFICADO-WEB.md`.
 - **La galería (`/galeria`) no lista archivos: lee un manifiesto GENERADO, y las fotos del
-  evento jamás tocan git en crudo.** `Contenido Memorias del evento/` (raíz, ignorada: ~1.5 GB de
-  originales de 33 MP con EXIF de cámara) se procesa con `scripts/build-galeria.py`, que
+  evento jamás tocan git en crudo.** La carpeta del lote (raíz, ignorada: ~1.5 GB de originales
+  de 33 MP con EXIF de cámara; **el nombre se busca entre los `NOMBRES_ORIGEN` de
+  `scripts/galeria_fuente.py`**, porque ya cambió una vez y dejó los dos scripts apuntando al
+  vacío sin que nadie se enterara hasta que hubo que regenerar) se procesa con
+  `scripts/build-galeria.py`, que
   **deduplica por SHA-256** el lote real traía la misma toma con tres nombres distintos, ordena
   por `DateTimeOriginal` del EXIF (hora local con desfase `-05:00`; el nombre del archivo va en
   UTC y engaña), hornea la orientación y escribe webp SIN metadatos más `src/design/galeria.ts`,
@@ -476,11 +479,22 @@ bash deploy/descargas-subir.sh         # sube los ZIP de «Descargar contenido»
   solo-puntero; el teclado ya tiene los botones y el vivo, y el auditor de a11y exime justo esa
   combinación y nada más. El visor es un `<dialog>` nativo, donde las 4 verticales se ven enteras
   (el abanico y la rejilla componen a 3:2, la proporción real de la cámara). **El mazo y el visor
-  son CIRCULARES**: tras la 80 viene la 1 y viceversa, el abanico va siempre lleno por los dos
+  son CIRCULARES**: tras la última viene la 1 y viceversa, el abanico va siempre lleno por los dos
   lados (ventana por `mod(indice + o)`, key por foto para que el paso transicione aunque cruce el
   empalme) y los botones no conocen `disabled`. Se verifica con `interactions-test.mjs` (abanico,
   vuelta en las dos puntas, visor, rejilla) y `a11y-test.mjs`; la sombra del mazo es
   `--gt-sombra-lamina`, no una segunda sombra. Detalle: `docs/SISTEMA-DE-DISENO.md` §La galería.
+- **Retirar una foto es una línea en `EXCLUIDAS` (`scripts/galeria_fuente.py`), y se retira por
+  HASH.** El censo que la aplica lo comparten `build-galeria.py` y `descargas-empaquetar.py`, así
+  que una foto sale a la vez del abanico, del resumen y del ZIP: mientras cada script llevaba su
+  propio censo, el fallo era mudo (desaparecía de la página y seguía viajando dentro de 1.3 GB
+  que nadie vuelve a abrir). Por hash y no por nombre porque **la misma toma llega con hasta tres
+  nombres**, y retirar uno habría dejado entrar a su gemela por la otra puerta. Una exclusión que
+  no encuentra su foto **ABORTA**, en vez de seguir con una lista que ya no dice nada. Después de
+  tocarla hay que correr **los dos** scripts y volver a subir el paquete
+  (`deploy/descargas-subir.sh` + RESTART): el ZIP viejo seguiría anunciando y entregando lo de
+  antes. Y los arneses no llevan el total escrito a mano lo leen del manifiesto, porque con «80»
+  clavado retirar tres fotos ponía en rojo medio arnés sin que nada estuviera roto.
 - **/galeria lleva riel de anclas, y el riel ya no es solo de la home.** Las anclas viven POR RUTA
   en `anclasDe()` (`navegacion.ts`); una ruta sin entrada no lleva riel. Dos consecuencias que no
   son obvias: el **scrollspy recalcula por scroll (rAF), no por IntersectionObserver** el
@@ -488,7 +502,14 @@ bash deploy/descargas-subir.sh         # sube los ZIP de «Descargar contenido»
   viewport) y entre el último cruce y el reposo el riel se quedaba marcando la sección anterior;
   en la home no pasaba por pura geometría; y el arnés de «altura de arranque» mide la distancia
   del canto INFERIOR del header al h1, porque el header con riel es más alto y el top absoluto
-  difiere en exactamente esa fila sin que el arranque cambie.
+  difiere en exactamente esa fila sin que el arranque cambie. Desde el 2026-08-13 son **cuatro**
+  secciones (pedido del usuario): las presentaciones abren la página, luego la galería, luego la
+  descarga de imágenes y al final el resumen. Dos consecuencias: el **h1 es el título de la
+  PRIMERA sección** (el arnés mide el primer h1 del documento, así que un título anterior al h1
+  desplazaría la medida y rompería el arranque común de las cinco páginas), y por eso esa sección
+  lleva `--arranque`, que le quita el vano. En el riel la primera se lee «Presentaciones» y no su
+  título entero: es un índice en versalita, y el título completo empujaría a las otras tres fuera
+  de la fila.
 - **Las descargas de /galeria siguen la doctrina del certificado, sin la parte de identidad.**
   Los dos ZIP (fotografías originales ~1.3 GB y presentaciones) se arman en la ESTACIÓN
   (`scripts/descargas-empaquetar.py`, dedupe por SHA-256 y ZIP_STORED), se suben por ssh

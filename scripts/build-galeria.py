@@ -14,7 +14,10 @@ perderse una que sí. Tres decisiones que no son obvias:
   · Se deduplica por CONTENIDO (SHA-256), no por nombre: el lote real trae la
     misma toma como `DSC04053.JPG` y como `20260805_165109782_iOS.jpg`, y otra
     vez como `DSC04083 (1).JPG`. Confiar en el nombre habría publicado la misma
-    foto tres veces.
+    foto tres veces. El censo (y la lista de fotos retiradas, y el nombre de la
+    carpeta del lote) viven en `galeria_fuente.py`, que comparte con
+    `descargas-empaquetar.py`: son las dos puntas de lo mismo y no pueden
+    discrepar.
   · El orden y la hora salen del EXIF `DateTimeOriginal`, que en este lote viene
     en hora local con su desfase `-05:00` explícito. El nombre del archivo NO
     sirve: los exportes de OneDrive van en UTC y las DSC ni siquiera llevan hora.
@@ -22,8 +25,9 @@ perderse una que sí. Tres decisiones que no son obvias:
     serie de la cámara y fecha exacta, y no tiene por qué viajar a un repo
     público. La orientación se hornea antes con `exif_transpose`.
 
-Entrada:  Contenido Memorias del evento/   (ignorada por git: son originales a
-          plena resolución de personas identificables, y pesan ~1.5 GB)
+Entrada:  la carpeta del lote (ver NOMBRES_ORIGEN en galeria_fuente.py; está
+          ignorada por git: son originales a plena resolución de personas
+          identificables, y pesan ~1.5 GB)
 
 Salida:   public/img/galeria/<id>.webp     lado mayor 1600 · visor y carrusel
           public/img/galeria/<id>-m.webp   lado mayor 800  · rejilla y abanico
@@ -32,13 +36,14 @@ Salida:   public/img/galeria/<id>.webp     lado mayor 1600 · visor y carrusel
     .venv-design/Scripts/python scripts/build-galeria.py
 """
 
-import hashlib
 import sys
 from datetime import datetime
 from pathlib import Path
 
 from PIL import Image, ImageFilter, ImageOps
 from pillow_heif import register_heif_opener
+
+from galeria_fuente import EXTENSIONES_FOTO, carpeta_origen, censo
 
 # La consola de Windows abre en cp1252 y este script imprime «→» por cada foto.
 # Sin esto revienta con UnicodeEncodeError EN MEDIO del lote (ver
@@ -49,11 +54,8 @@ if hasattr(sys.stdout, "reconfigure"):
 register_heif_opener()
 
 RAIZ = Path(__file__).resolve().parent.parent
-ORIGEN = RAIZ / "Contenido Memorias del evento"
 DESTINO = RAIZ / "public" / "img" / "galeria"
 MANIFIESTO = RAIZ / "src" / "design" / "galeria.ts"
-
-EXTENSIONES = (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif")
 
 # Los mismos parámetros que build-assets.py, upscale-photos.py y
 # build-retratos.py. Si un día hay que cambiar la calidad, se cambia en todos.
@@ -141,30 +143,16 @@ PIE = """]
 
 
 def main() -> None:
-    if not ORIGEN.is_dir():
-        raise SystemExit(
-            f"Falta la carpeta de origen «{ORIGEN.name}/». Déjala en la raíz con "
-            "las fotos del evento tal como llegan; este script hace el resto."
-        )
+    ORIGEN = carpeta_origen()
 
-    archivos = sorted(p for p in ORIGEN.iterdir() if p.suffix.lower() in EXTENSIONES)
-    if not archivos:
-        raise SystemExit(f"«{ORIGEN.name}/» está vacía: no hay nada que procesar.")
+    # El censo (dedupe por contenido + fotos retiradas) es el compartido: se
+    # descarta ANTES de decodificar nada y el informe dice quién sobró y por qué.
+    unicos, duplicados, excluidos = censo(ORIGEN, EXTENSIONES_FOTO, retirar=True)
+    if not unicos:
+        raise SystemExit(f"«{ORIGEN.name}/» no deja ninguna foto publicable.")
 
-    # Primero el censo: hash → primer archivo que lo trajo. Así los duplicados
-    # se descartan ANTES de decodificar nada y el informe dice quién sobró.
-    vistos: dict[str, Path] = {}
-    duplicados: list[tuple[Path, Path]] = []
-    for archivo in archivos:
-        h = hashlib.sha256(archivo.read_bytes()).hexdigest()
-        if h in vistos:
-            duplicados.append((archivo, vistos[h]))
-        else:
-            vistos[h] = archivo
-
-    unicos = list(vistos.values())
-    print(f"{len(archivos)} archivos → {len(unicos)} fotos únicas "
-          f"({len(duplicados)} duplicados exactos descartados)\n")
+    print(f"«{ORIGEN.name}/» → {len(unicos)} fotos únicas "
+          f"({len(duplicados)} duplicados exactos, {len(excluidos)} retiradas)\n")
 
     # Ahora sí: decodificar, ordenar por hora de toma y derivar.
     lote: list[tuple[datetime, Path, Image.Image]] = []
@@ -218,6 +206,11 @@ def main() -> None:
         print(f"\nDuplicados descartados ({len(duplicados)}):")
         for sobra, queda in duplicados:
             print(f"  {sobra.name} = {queda.name}")
+
+    if excluidos:
+        print(f"\nRetiradas a mano ({len(excluidos)}, ver EXCLUIDAS en galeria_fuente.py):")
+        for archivo, motivo in excluidos:
+            print(f"  {archivo.name}  {motivo}")
 
     print(f"\nsrc/design/galeria.ts: {len(entradas)} fotos · "
           f"public/img/galeria/: {total_kb / 1024:.1f} MB")

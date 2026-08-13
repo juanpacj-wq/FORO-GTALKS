@@ -838,7 +838,7 @@ ingreso igual en los dos estados.
 
 ## La galería
 
-`/galeria` enseña las 80 fotografías de la jornada con dos vistas del mismo manifiesto: el
+`/galeria` enseña las 77 fotografías de la jornada con dos vistas del mismo manifiesto: el
 **abanico** (`AbanicoFotos.tsx`, el elemento firma de la página) y la **rejilla índice**
 (`GaleriaPage.css`), unidas por un único visor (`VisorFotos.tsx`, un `<dialog>` nativo).
 La referencia visual del abanico es un mazo de páginas desplegado en arco una tarjeta
@@ -853,9 +853,16 @@ La misma división que en el resto del sistema:
   los exportes de OneDrive va en UTC y las DSC ni llevan hora). Los duplicados se descartan por
   **SHA-256 del contenido** el lote traía la misma toma como `DSC04053.JPG`, como
   `20260805_165109782_iOS.jpg` y como copia «(1)»: 91 archivos, 80 fotos. La proporción 3:2 de
-  tarjetas y celdas es la nativa de la cámara del evento (7008×4672): las 76 apaisadas entran
+  tarjetas y celdas es la nativa de la cámara del evento (7008×4672): las apaisadas entran
   enteras; las 4 verticales se recortan en el abanico y la rejilla y se ven completas en el
   visor.
+- **Retiradas a mano (`EXCLUIDAS` en `scripts/galeria_fuente.py`):** de esas 80 se publican 77.
+  Tres salieron el 2026-08-13 a petición del usuario (dos del podio y una de un par casi
+  idéntico, de las que se quedó la mejor encuadrada). Se retiran por **hash**, no por nombre,
+  porque una misma toma llega con varios nombres; y la lista la leen a la vez el manifiesto de la
+  página y el ZIP de descargas, que es lo que impide que una foto retirada del carrusel siga
+  viajando dentro de 1.3 GB. Una exclusión que no encuentra su foto **aborta**: una lista que ya
+  no dice nada es peor que ninguna.
 - **Convención (declarada en la cabecera de `AbanicoFotos.tsx`):** la geometría del mazo. Grados
   por paso, fuga en profundidad, escala y brillo son un juego de cinco constantes con nombre, no
   literales repartidos por el CSS, para que calibrar el gesto sea tocar cinco líneas.
@@ -910,24 +917,37 @@ sistema; la galería no introduce ningún color ni radio nuevo.
 
 La página se recorre con el **riel de anclas de la home** mismo componente, mismas formas: punto
 que se llena, tipografía de dato, generalizado a anclas POR RUTA (`anclasDe()` en
-`navegacion.ts`): «Galería de imágenes», «Descargar contenido» y «Resumen de jornada». Al
+`navegacion.ts`). Son **cuatro** secciones desde el 2026-08-13, cuando las dos descargas dejaron
+de compartir una: «Descarga las presentaciones de tus ponentes» (que abre la página y cuyo título
+es el **h1**, como en el resto del chasis), «Galería de imágenes», «Descargar imágenes» ya
+después del abanico, pegada a lo que se acaba de ver y «Resumen de la jornada». En el riel la
+primera se lee «Presentaciones»: es un índice en versalita, y su título entero empujaría a las
+otras tres fuera de la fila. Al
 generalizarlo se corrigió un defecto del scrollspy que la home nunca destapó: el
 IntersectionObserver solo dispara cuando una sección **cruza** su banda observada, pero la
 decisión usa otra línea (el 40 % del viewport), así que entre el último cruce y el reposo del
 scroll el riel podía quedarse marcando la sección anterior. Ahora recalcula **por scroll con
 rAF**, que dispara mientras algo se mueve, que es exactamente cuando la respuesta puede cambiar.
 
-«Descargar contenido» compone la entradilla (46ch: con 52 los botones caían a otra fila a 1440)
-y los dos botones sólidos con su **línea de dato debajo**: «80 fotografías originales · 1,3 GB»
-sale del manifiesto del empaquetador vía `GET /api/descargas`, no de un copy. Sin confirmación
-del servidor, los botones van retenidos (`--inactivo`) con el aviso de las encuestas  el patrón
-entero de `BotonSatisfaccion`, aviso en lámina incluido. La rejilla índice pasó a llamarse
-«Resumen de jornada» para leerse igual en el riel y en su título.
+Las dos secciones de descarga componen igual (comparten hoja): entradilla a 46ch (con 52 el botón
+caía a otra fila a 1440) y el botón sólido con su **línea de dato debajo**. «77 fotografías
+originales · 1,3 GB» sale del manifiesto del empaquetador vía `GET /api/descargas`, no de un
+copy. Sin confirmación del servidor, los botones van retenidos (`--inactivo`) con el aviso de las
+encuestas  el patrón entero de `BotonSatisfaccion`, aviso en lámina incluido. Cada una tiene su
+**propia** entradilla: la de cuando compartían sección nombraba los dos paquetes en una frase, y
+al separarlas habría anunciado en cada sitio un archivo que allí no está. La rejilla índice se
+llama «Resumen de la jornada» para leerse igual en el riel y en su título.
+
+La primera sección lleva `--arranque`, que le quita el vano: su título es el h1 y
+`interactions-test.mjs` exige que /galeria arranque a la misma distancia del header que las otras
+cuatro páginas del chasis, medido sobre píxeles.
 
 ### El pipeline
 
-`Contenido Memorias del evento/` (raíz, **ignorada por git**: ~1.5 GB de originales de 33 MP,
-personas identificables, EXIF con número de serie de cámara) → `scripts/build-galeria.py` →
+La carpeta del lote (raíz, **ignorada por git**: ~1.5 GB de originales de 33 MP, personas
+identificables, EXIF con número de serie de cámara; se busca entre los `NOMBRES_ORIGEN` de
+`galeria_fuente.py`, porque ya cambió de nombre una vez y dejó los dos scripts sin correr) →
+`scripts/build-galeria.py` →
 `public/img/galeria/<id>.webp` (lado mayor 1600, visor y 2x del centro) + `<id>-m.webp` (800,
 rejilla y laterales), **sin metadatos** y con la orientación horneada, más el manifiesto tipado
 `src/design/galeria.ts` (mismo patrón que `retratos.ts`: quien sabe qué fotos hay es quien las

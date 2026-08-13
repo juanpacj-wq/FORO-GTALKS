@@ -405,8 +405,9 @@ Notas que no son obvias:
 
 ## Las descargas de /galeria: público, pero con la doctrina del certificado
 
-La sección «Descargar contenido» de `/galeria` entrega dos ZIP las fotografías originales de la
-jornada (~1.3 GB) y las presentaciones de los ponentes. Es **contenido público**: las mismas
+`/galeria` entrega dos ZIP, uno por sección desde el 2026-08-13 («Descarga las presentaciones de
+tus ponentes» abre la página; «Descargar imágenes» va tras el abanico): las fotografías
+originales de la jornada (~1.3 GB) y las presentaciones de los ponentes. Es **contenido público**: las mismas
 fotos que la página ya enseña y el material que se proyectó ante la audiencia. No hay sesión, y
 no debe haberla. Lo que se conserva del patrón del certificado es lo que lo hace seguro:
 

@@ -10,9 +10,13 @@ solo aprende el manifiesto al arrancar.
 Tres decisiones que no son obvias:
 
   · Las fotos se DEDUPLICAN por SHA-256 antes de empaquetar, con el mismo censo
-    de build-galeria.py: el lote trae la misma toma hasta con tres nombres
-    (DSC vs exporte de OneDrive vs copia «(1)») y un ZIP con 91 archivos de los
-    que 11 son repetidos regala 200 MB y desordena a quien lo abra.
+    de build-galeria.py literalmente el mismo, importado de galeria_fuente.py:
+    el lote trae la misma toma hasta con tres nombres (DSC vs exporte de
+    OneDrive vs copia «(1)») y un ZIP con 91 archivos de los que 11 son
+    repetidos regala 200 MB y desordena a quien lo abra. Compartir el censo es
+    lo que garantiza que el ZIP y la página lleven las MISMAS fotos: una
+    retirada del carrusel que siguiera viajando dentro de 1.3 GB no la vería
+    nadie.
   · Todo va en ZIP_STORED (sin comprimir): JPG, HEIC y PPTX ya están
     comprimidos por dentro; deflate solo quemaría minutos de CPU para ganar
     kilobytes.
@@ -21,8 +25,8 @@ Tres decisiones que no son obvias:
     anuncia el peso REAL junto a cada botón: el «1,6 GB» que ve la persona sale
     de aquí, no de un copy.
 
-Entrada:  Contenido Memorias del evento/   (ignorada por git)
-          presentaciones/                  (ignorada por git)
+Entrada:  la carpeta del lote de fotos (ver galeria_fuente.py, ignorada por git)
+          presentaciones/                                  (ignorada por git)
 
 Salida:   .datos/descargas/fotografias-foro-gtalks-2026.zip
           .datos/descargas/presentaciones-foro-gtalks-2026.zip
@@ -31,12 +35,13 @@ Salida:   .datos/descargas/fotografias-foro-gtalks-2026.zip
     .venv-design/Scripts/python scripts/descargas-empaquetar.py
 """
 
-import hashlib
 import json
 import sys
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
+
+from galeria_fuente import EXTENSIONES_FOTO, carpeta_origen, censo
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -44,43 +49,35 @@ if hasattr(sys.stdout, "reconfigure"):
 RAIZ = Path(__file__).resolve().parent.parent
 DESTINO = RAIZ / ".datos" / "descargas"
 
-# rol → (carpeta de origen, nombre del zip, carpeta interna, extensiones admitidas)
+# rol → (de dónde salen, nombre del zip, carpeta interna, extensiones, ¿aplica la
+# lista de retiradas?). El origen es una FUNCIÓN porque el del lote de fotos se
+# resuelve entre varios nombres posibles (ha cambiado ya una vez), y solo ese rol
+# pasa por EXCLUIDAS: las presentaciones no se retiran una a una.
 ROLES = {
     "imagenes": (
-        RAIZ / "Contenido Memorias del evento",
+        carpeta_origen,
         "fotografias-foro-gtalks-2026.zip",
         "Fotografías Foro G-TALKS 2026",
-        (".jpg", ".jpeg", ".png", ".heic", ".heif", ".webp"),
+        EXTENSIONES_FOTO,
+        True,
     ),
     "presentaciones": (
-        RAIZ / "presentaciones",
+        lambda: RAIZ / "presentaciones",
         "presentaciones-foro-gtalks-2026.zip",
         "Presentaciones Foro G-TALKS 2026",
         (".pptx", ".ppt", ".pdf"),
+        False,
     ),
 }
 
 
-def censo(carpeta: Path, extensiones: tuple[str, ...]) -> tuple[list[Path], list[tuple[Path, Path]]]:
-    """Archivos únicos por contenido, y quién sobró. El mismo censo que
-    build-galeria.py: el hash decide, no el nombre."""
-    vistos: dict[str, Path] = {}
-    duplicados: list[tuple[Path, Path]] = []
-    for archivo in sorted(p for p in carpeta.iterdir() if p.suffix.lower() in extensiones):
-        h = hashlib.sha256(archivo.read_bytes()).hexdigest()
-        if h in vistos:
-            duplicados.append((archivo, vistos[h]))
-        else:
-            vistos[h] = archivo
-    return list(vistos.values()), duplicados
-
-
 def empaquetar(rol: str) -> dict:
-    carpeta, nombre_zip, interna, extensiones = ROLES[rol]
+    origen, nombre_zip, interna, extensiones, retirar = ROLES[rol]
+    carpeta = origen()
     if not carpeta.is_dir():
         raise SystemExit(f"Falta la carpeta de origen «{carpeta.name}/» para el rol «{rol}».")
 
-    unicos, duplicados = censo(carpeta, extensiones)
+    unicos, duplicados, excluidos = censo(carpeta, extensiones, retirar=retirar)
     if not unicos:
         raise SystemExit(f"«{carpeta.name}/» no trae nada empaquetable para «{rol}».")
 
@@ -91,9 +88,12 @@ def empaquetar(rol: str) -> dict:
 
     bytes_zip = ruta_zip.stat().st_size
     print(f"{rol}: {len(unicos)} archivo(s) → {nombre_zip} · {bytes_zip / 1024 / 1024:.0f} MB"
-          + (f" · {len(duplicados)} duplicado(s) exactos fuera" if duplicados else ""))
+          + (f" · {len(duplicados)} duplicado(s) exactos fuera" if duplicados else "")
+          + (f" · {len(excluidos)} retirada(s)" if excluidos else ""))
     for sobra, queda in duplicados:
         print(f"    {sobra.name} = {queda.name}")
+    for archivo, motivo in excluidos:
+        print(f"    RETIRADA {archivo.name}  {motivo}")
 
     return {"archivo": nombre_zip, "bytes": bytes_zip, "elementos": len(unicos)}
 
