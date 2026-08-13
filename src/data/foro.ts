@@ -566,7 +566,7 @@ export const GALERIA_INTRO =
  * quedan retenidos con DESCARGAS_AVISO.
  */
 export const DESCARGAS_PRESENTACIONES_INTRO =
-  'Aquí encuentras el contenido presentado durante el foro. Descarga las presentaciones que compartieron los ponentes, reunidas en un solo archivo comprimido.'
+  'Aquí encuentras el contenido proyectado durante el foro. Descarga las presentaciones que compartieron los ponentes, reunidas en un solo archivo comprimido.'
 
 export const DESCARGAS_IMAGENES_INTRO =
   'Llévate el foro contigo: las fotografías originales de la jornada, a plena resolución y en un solo archivo comprimido.'
