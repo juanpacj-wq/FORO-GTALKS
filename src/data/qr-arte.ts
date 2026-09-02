@@ -41,22 +41,29 @@ const CLARO_LOGO = 0.1
 /** Ancho de la «G» en el centro: 16 % del lado del código (medido en la pieza). */
 const ANCHO_MARCA = 0.16
 
-/** Proporción del viewBox de `marca-g.svg`: 46.24 de alto por 51.62 de ancho. */
-const ASPECTO_MARCA = 46.24 / 51.62
+/**
+ * Proporción alto/ancho del viewBox de `marca-g.svg`: 896 por 896, la caja de tinta de la «G»
+ * de la marca 2026 medida por `scripts/build-marca-gecelca.py` (es un cuadrado exacto). La marca
+ * anterior, extraída de los PDF del foro, medía 46.24 / 51.62.
+ */
+const ASPECTO_MARCA = 896 / 896
 
 /** Aire blanco alrededor del código, y radio del panel, como fracción del lado del código. En la
  *  escarapela el panel mide `padding: 3cqw` con el QR a `60cqw`: 3/60 = 5 % en ambos casos. */
 const AIRE_PANEL = 0.05
 
 /**
- * Tinta del código: `--gt-azul-gecelca`. El QR de la pieza mide `#023F86`, que es este azul con
- * el antialias de un PNG pequeño encima.
+ * Tinta del código: `--gt-azul-gecelca`, el azul de la marca GECELCA 2026 medido en los raster
+ * de Comunicaciones (`scripts/build-marca-gecelca.py`). Hasta agosto de 2026 era `#004a96`, el
+ * azul de los PDF del foro (el QR de la pieza «Diseño de Código QR.png» medía `#023F86`, aquel
+ * azul con el antialias de un PNG pequeño encima); los correos que ya salieron llevan el viejo y
+ * no se retocan.
  *
  * Está escrito aquí porque un correo no tiene `tokens.css` y `var(--…)` no existe en Outlook.
  * Que sea el MISMO azul que pinta la escarapela no se deja a la buena fe: `qr-test.mjs` lee el
  * `color` computado de `.gt-carne__qr` en el navegador y lo compara con esta constante.
  */
-export const QR_TINTA = '#004a96'
+export const QR_TINTA = '#0053a3'
 /** Papel del panel: `--gt-blanco`. */
 export const QR_PAPEL = '#ffffff'
 

@@ -5,6 +5,7 @@
 //   node scripts/screenshot.mjs shots     # captura ahí
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
+import { ID_FIXTURE, instalarMocks } from './fixture-carta.mjs'
 
 const outDir = process.argv[2] ?? 'shots'
 const base = process.argv[3] ?? 'http://localhost:4173'
@@ -105,5 +106,29 @@ for (const viewport of [
   })
   console.log(`${prefix}-escarapela-dorso-${viewport.name}.png`)
   await conSesion.close()
+
+  // La carta de presentación: la tarjeta pública y el panel, con los fixtures de
+  // scripts/fixture-carta.mjs (preview no tiene BD). El panel se captura en su
+  // detalle (`?perfil=`), que es donde está todo: formulario, foto, QR y previa.
+  for (const [name, route] of [
+    ['carta', `/carta_presentacion/${ID_FIXTURE}`],
+    ['cdpadmin', `/cdpadmin?perfil=${ID_FIXTURE}`],
+  ]) {
+    const carta = await browser.newPage({ viewport })
+    await instalarMocks(carta)
+    await carta.goto(base + route, { waitUntil: 'networkidle' })
+    await carta.evaluate(() => document.fonts.ready)
+    if (name === 'carta') {
+      await carta.click('.gt-qr-tarjeta__abrir')
+      await carta.waitForTimeout(200)
+    }
+    await carta.evaluate(async () => {
+      await Promise.allSettled([...document.images].map((img) => img.decode()))
+    })
+    await carta.waitForTimeout(300)
+    await carta.screenshot({ path: `${outDir}/${prefix}-${name}-${viewport.name}.png`, fullPage: true })
+    console.log(`${prefix}-${name}-${viewport.name}.png`)
+    await carta.close()
+  }
 }
 await browser.close()

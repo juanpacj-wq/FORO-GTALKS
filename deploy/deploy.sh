@@ -233,6 +233,10 @@ echo "raiz_csp=$(curl -sS -D - -o /dev/null --max-time 5 -H 'Sec-Fetch-Dest: doc
 echo "api=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' "$B/api/me" 2>/dev/null || echo 000)"
 echo "login=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' "$B/auth/login" 2>/dev/null || echo 000)"
 echo "login_destino=$(curl -sS -o /dev/null -w '%{redirect_url}' --max-time 5 -H 'Sec-Fetch-Dest: document' -H 'Sec-Fetch-Mode: navigate' "$B/auth/login" 2>/dev/null || echo '')"
+# La carta de presentación: lo que /health declara y lo que las dos puertas contestan.
+echo "carta_salud=$(curl -sS --max-time 5 "$B/health" 2>/dev/null | grep -o '"carta":{[^}]*}' || echo '')"
+echo "carta_admin=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' "$B/api/carta/admin/perfiles" 2>/dev/null || echo 000)"
+echo "carta_publico=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' "$B/api/carta/perfiles/00000000-0000-4000-8000-000000000000" 2>/dev/null || echo 000)"
 REMOTO
 )"
 val() { printf '%s\n' "$SALUD" | sed -n "s/^$1=//p" | head -1; }
@@ -247,6 +251,29 @@ val() { printf '%s\n' "$SALUD" | sed -n "s/^$1=//p" | head -1; }
 	https://login.microsoftonline.com/*) echo "   302 /auth/login → Microsoft (el login de la escarapela vive)" ;;
 	*) echo "   FALLO: /auth/login redirige a '$(val login_destino)', se esperaba login.microsoftonline.com" >&2; FALLO=1 ;;
 esac || { echo "   FALLO: /auth/login devolvió $(val login), se esperaba 302" >&2; FALLO=1; }
+
+# La carta de presentación. Ramifica por lo que /health declara: con el módulo configurado se
+# exige la BD de pie, el esquema al día, el panel cerrado (401) y la tarjeta inexistente en 404;
+# sin configurar, las dos puertas tienen que ser 404 (el módulo no existe) y se avisa. Cualquier
+# otra combinación es un despliegue a medias, y eso revierte.
+CARTA="$(val carta_salud)"
+case "$CARTA" in
+	*'"configurada":true'*)
+		case "$CARTA" in *'"bd":"ok"'*) echo "   carta: bd ok" ;; *) echo "   FALLO: carta configurada pero la BD no está ok: $CARTA" >&2; FALLO=1 ;; esac
+		case "$CARTA" in *'"migraciones":"al_dia"'*) echo "   carta: migraciones al día" ;; *) echo "   FALLO: carta con migraciones que no están al día: $CARTA" >&2; FALLO=1 ;; esac
+		[ "$(val carta_admin)" = "401" ] && echo "   401 /api/carta/admin/perfiles (el panel exige sesión)" ||
+			{ echo "   FALLO: /api/carta/admin/perfiles devolvió $(val carta_admin), se esperaba 401 EL PANEL PODRÍA ESTAR EXPUESTO" >&2; FALLO=1; }
+		[ "$(val carta_publico)" = "404" ] && echo "   404 /api/carta/perfiles/<nadie> (la tarjeta inexistente no existe)" ||
+			{ echo "   FALLO: /api/carta/perfiles/<nadie> devolvió $(val carta_publico), se esperaba 404" >&2; FALLO=1; }
+		;;
+	*'"configurada":false'*)
+		echo "   AVISO: la carta de presentación está APAGADA en este servidor (DB_* vacías)"
+		[ "$(val carta_admin)" = "404" ] && [ "$(val carta_publico)" = "404" ] && echo "   404 /api/carta/* (el módulo no existe)" ||
+			{ echo "   FALLO: módulo apagado pero /api/carta/* contesta $(val carta_admin)/$(val carta_publico), se esperaba 404/404" >&2; FALLO=1; }
+		;;
+	*)
+		echo "   FALLO: /health no declara el estado de la carta ('$CARTA'): ¿servidor anterior a la función?" >&2; FALLO=1 ;;
+esac
 
 # Borde público: prueba que nginx, TLS y DNS también están. Si esta estación no alcanza
 # la URL, se avisa y NO se cuenta como fallo del sitio: la ruta de red de tu portátil no

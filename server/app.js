@@ -26,7 +26,6 @@
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,6 +48,14 @@ import {
   SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS, SESSION_COOKIE_SECURE,
   SESSION_VIDA_ABSOLUTA_MS, SESSION_PRELOGIN_MS, PUBLIC_ORIGIN, AUTH_RATE_LIMIT,
 } from './auth/entra-config.js';
+import { estaAutenticado } from './auth/sesion.js';
+import { asyncH } from './auth/guardias.js';
+import { crearLimitador } from './limites.js';
+import { iniciarCarta, estadoCarta, estadoSaludCarta, htmlConOg } from './carta/index.js';
+
+// El predicado vive en auth/sesion.js desde que los guardias de la carta lo necesitan sin
+// importar app.js (import circular). Se re-exporta para no mover a los arneses que lo importan.
+export { estaAutenticado };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.resolve(__dirname, '..', 'dist');
@@ -64,6 +71,10 @@ const aEscarapela = (auth) => `/escarapela?auth=${auth}`;
  * trucos: `//evil.com`, `/\evil`, `/%2f%2f…` y los CRLF fallan el match por construcción, así que
  * la clase entera de open redirect desaparece sin depender de cómo normalice `res.redirect`.
  */
+/** Un UUID v4 en minúsculas: el id público de una carta de presentación. */
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const RUTA_TARJETA = new RegExp(`^/carta_presentacion/${UUID}$`);
+
 const RUTAS_SPA = [
   /^\/$/,
   /^\/ponentes$/,
@@ -72,6 +83,8 @@ const RUTAS_SPA = [
   /^\/encuestas$/,
   /^\/certificado$/,
   /^\/galeria$/,
+  /^\/cdpadmin$/,
+  RUTA_TARJETA,
 ];
 const destinoSeguro = (p) => (RUTAS_SPA.some((r) => r.test(p)) ? p : '/');
 
@@ -99,31 +112,18 @@ function esNavegacion(req) {
   if (SIN_FALLBACK_SPA.some((p) => req.path.startsWith(p))) return false;
   const modo = req.get('sec-fetch-mode');
   if (modo) return modo === 'navigate' && req.get('sec-fetch-dest') === 'document';
-  return (req.get('accept') || '').includes('text/html'); // clientes sin Sec-Fetch
-}
-
-/**
- * Predicado ÚNICO de sesión válida, usado por el gate, por /api/me y por la revalidación.
- * Antes había dos distintos (`session.user` vs `session.user.oid`) y una sesión con `oid` vacío
- * era «autenticada» para /api/me y rechazada por el gate.
- *
- * Incluye la vida ABSOLUTA: con `rolling: true` no existe tope superior, y una pestaña abierta
- * renovaría la sesión indefinidamente.
- */
-export function estaAutenticado(sess) {
-  const u = sess?.user;
-  if (!u?.oid) return false;
-  const inicio = Date.parse(u.loginAt || '');
-  if (Number.isFinite(inicio) && Date.now() - inicio > SESSION_VIDA_ABSOLUTA_MS) return false;
-  return true;
+  // Clientes sin Sec-Fetch. La tarjeta de presentación es la EXCEPCIÓN acotada: su enlace se
+  // comparte por Teams y WhatsApp, y los rastreadores de vista previa piden la URL sin
+  // `Sec-Fetch-*` y a veces sin `Accept: text/html`. Sin esta línea recibirían el 404 JSON y
+  // la vista previa saldría como una URL pelada, sin el nombre ni la foto que el Open Graph
+  // dinámico les prepara. Solo la forma exacta `/carta_presentacion/<uuid>`: nada más se abre.
+  if (RUTA_TARJETA.test(req.path)) return true;
+  return (req.get('accept') || '').includes('text/html');
 }
 
 function clearAuthTransients(s) {
   delete s.pkceVerifier; delete s.authState; delete s.authNonce;
 }
-
-// Envuelve un handler async y enruta el throw al error-handler de Express.
-const asyncH = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 /** CSRF de mutadores. Tres correcciones sobre la versión anterior:
  *  - cubre CUALQUIER método que no sea de lectura (antes PATCH quedaba fuera),
@@ -238,25 +238,20 @@ export function buildAuthApp() {
 
   app.use(csrfMiddleware);
 
+  // La carta de presentación digital: el módulo se decide AQUÍ, antes de las rutas, porque
+  // /health y /api/me anuncian su estado. Con las DB_* vacías no existe (router sin montar,
+  // /api/carta/* → 404 genérico, `carta: 'no_aplica'` en /api/me). Ver server/carta/index.js.
+  const carta = iniciarCarta();
+
   // ── Healthcheck. nginx lo restringe a 127.0.0.1: no tiene por qué ser público. ──
   app.get('/health', (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), carta: estadoSaludCarta() });
   });
 
-  const limitador = (nombre) => rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: AUTH_RATE_LIMIT,
-    standardHeaders: 'draft-7',
-    legacyHeaders: false,
-    // Cortacircuitos, NO política de seguridad: con NAT corporativo, un límite que tolere las
-    // ~300 llegadas simultáneas de la sede no detiene a nadie decidido. Sirve para cortar un
-    // bucle desbocado o un cliente roto. El dial se sube el día del evento (AUTH_RATE_LIMIT).
-    handler: (req, res) => {
-      console.warn(`[rate-limit] ${nombre} agotado desde ${req.ip}`);
-      res.status(429).json({ error: 'Demasiados intentos', codigo: 'demasiados_intentos' });
-    },
-  });
+  // Cortacircuitos, NO política de seguridad: ver server/limites.js. El dial se sube el día
+  // del evento (AUTH_RATE_LIMIT).
+  const limitador = (nombre) => crearLimitador({ nombre, limite: AUTH_RATE_LIMIT });
 
   // ── Paso 1: arranca el login OIDC ──────────────────────────────────────────
   app.get('/auth/login', limitador('auth/login'), async (req, res) => {
@@ -408,6 +403,10 @@ export function buildAuthApp() {
       // apagada, cuando la persona no asistió y cuando el oid no existe  a la interfaz le da
       // igual cuál de los tres, y a un curioso también debe darle igual.
       certificado: estadoCertificado(oid),
+      // La carta de presentación: `admin` solo con el rol configurado Y el módulo encendido;
+      // `no_aplica` para todo lo demás. La autorización REAL la hace el servidor en cada ruta
+      // (auth/guardias.js): esto solo decide si la interfaz pinta el enlace del panel.
+      carta: estadoCarta(roles),
     });
   });
 
@@ -477,6 +476,11 @@ export function buildAuthApp() {
     });
   });
 
+  // ── La carta de presentación: /api/carta/* solo cuando el módulo existe ──────
+  // Va ANTES de los estáticos y del fallback: sin montar, todo /api/carta/* cae al 404 genérico
+  // por la valla de `SIN_FALLBACK_SPA`, que es exactamente «el módulo no existe».
+  if (carta.activa) app.use('/api/carta', carta.router);
+
   // ── SPA estática, pública ────────────────────────────────────────────────────
   if (!fs.existsSync(path.join(DIST_DIR, 'index.html'))) {
     console.warn(`  ⚠  No existe ${DIST_DIR}\\index.html corre \`npm run build\` antes de servir en producción.`);
@@ -494,12 +498,24 @@ export function buildAuthApp() {
 
   // Fallback SPA: solo para navegaciones. Un /no-existe.png pedido por un <img> cae al 404 JSON
   // en vez de recibir HTML con 200.
-  app.use((req, res, next) => {
+  app.use(asyncH(async (req, res, next) => {
     if (!esNavegacion(req)) return next();
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Security-Policy', CSP_SPA);
+    // La tarjeta de presentación sale con su Open Graph dinámico (título, descripción y foto
+    // de ESA persona) para que Teams y WhatsApp pinten la vista previa. Misma CSP, mismo
+    // no-store, misma puerta: solo cambia el `<title>` y las `og:*` del index.html. Si el módulo
+    // está apagado, el perfil no existe o la BD no contesta a tiempo, sale el index.html intacto
+    // y la SPA pinta su «no disponible». Ver server/carta/og.js.
+    if (carta.activa && RUTA_TARJETA.test(req.path)) {
+      const html = await htmlConOg(req.path.slice('/carta_presentacion/'.length));
+      if (html !== null) {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+      }
+    }
     res.sendFile(path.join(DIST_DIR, 'index.html'));
-  });
+  }));
 
   // ── 404 propio ───────────────────────────────────────────────────────────────
   app.use((req, res) => {
@@ -547,6 +563,10 @@ export function buildAuthApp() {
       ? `  [descargas] ${descargas.roles.join(' + ')} servibles desde ${descargas.dir}`
       : '  [descargas] función DESACTIVADA (DESCARGAS_DIR vacío)',
   );
+
+  // La carta de presentación. La línea dice el estado de la BD y del esquema, y el nombre del
+  // ROL que administra, nunca el de la persona: esto va a journald.
+  console.log(carta.linea);
 
   return app;
 }

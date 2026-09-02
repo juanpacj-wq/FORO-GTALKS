@@ -14,8 +14,18 @@ navega sin autenticarse, y la sesión de Microsoft Entra ID existe solo para la 
 | `/ponentes/:slug`   | Perfil: retrato, trayectoria y sus intervenciones derivadas de la agenda | contenido real |
 | `/escarapela`       | El carné del asistente: réplica de `Carnet-foro-1.jpg (1).jpeg` con los datos de la sesión, foto local y QR de asistencia al dorso. Sin sesión, invita a entrar | contenido real |
 | `/encuestas`        | Las dos encuestas del foro, enlazadas a Microsoft Forms      | contenido real |
+| `/certificado`      | El certificado de participación, PDF pre-generado por asistente | contenido real |
+| `/galeria`          | Memorias del evento: presentaciones, fotografías y descargas | contenido real |
+| `/carta_presentacion/:id` | La **carta de presentación digital** de una persona de GECELCA (foto, cargo, contacto, redes, vCard, QR). Pública; se llega por QR o enlace. Un id que no exista o esté retirado pinta «no disponible» sin redirigir | módulo `carta` |
+| `/cdpadmin`         | El panel de las cartas: crear, editar, activar o retirar, foto y descarga del QR. Solo para el App Role `LOGIN_JEFA` de Entra | módulo `carta` |
 
 Un slug de ponente que no exista redirige a `/ponentes`; cualquier otra ruta, a `/`.
+
+La carta de presentación es un módulo aparte dentro del mismo proceso (`server/carta/`,
+`src/carta/`): la única pieza del sitio con base de datos (el esquema `carta` de `PortalG3`, SQL
+Server, fotos incluidas). Con las cinco `DB_*` vacías **no existe**; a medias, el arranque aborta.
+Cómo se enciende: [`docs/RUNBOOK-CARTA.md`](docs/RUNBOOK-CARTA.md); qué protege:
+[`docs/SEGURIDAD.md`](docs/SEGURIDAD.md) §La carta de presentación digital.
 
 La agenda y los perfiles están enlazados en los dos sentidos: cada tramo de la línea del día lleva
 a su bloque del programay lo resalta al señalarlo, en ambas direcciones, cada nombre del
@@ -148,6 +158,14 @@ npm run build     # tsc --noEmit + vite build
 npm run preview   # sirve dist/ sin identidad (verificación visual y scripts)
 npm start         # sirve dist/ con la identidad el entorno lo pone systemd
 npm run start:local # igual, pero leyendo el .env del repo (desarrollo)
+
+# La carta de presentación: el esquema `carta` en SQL Server. NUNCA se migra solo.
+node --env-file=.env scripts/carta-migrar.mjs --estado      # qué falta, sin tocar nada
+node --env-file=.env scripts/carta-migrar.mjs --confirmar   # aplica las pendientes (dev: DB_NAME
+                                                            # termina en _dev; producción exige
+                                                            # además --bd <DB_NAME>)
+.venv-design/Scripts/python scripts/build-marca-gecelca.py  # marca-origen/ → logo-gecelca.svg y
+                                                            # marca-g.svg (la marca 2026, medida)
 ```
 
 ## Verificación
@@ -167,9 +185,16 @@ node scripts/sesion-test.mjs              # menú de sesión y carné, simulando
 node scripts/qr-test.mjs                  # el QR estilizado del dorso SE LEE: píxeles reales
                                           # decodificados con ZXing a dos densidades
 
+node scripts/carta-server-test.mjs        # la carta, PURA: config, migraciones, validación,
+                                          # vCard, foto, guardias, OG y la matriz HTTP con un
+                                          # repositorio falso (sin BD ni servidor)
+node --env-file=.env scripts/carta-db-test.mjs   # la carta contra PortalG3_dev: CRUD, foto,
+                                          # auditoría y cortacircuitos; limpia lo que crea
+
 npm run build && npm run start:local      # el server real, en otra terminal → :3000
 node scripts/gate-test.mjs                # matriz pública: 200+CSP, 401 /api/me, CSRF,
-                                          # login OIDC sin prompt=none, cabeceras
+                                          # login OIDC sin prompt=none, cabeceras, y la carta
+                                          # (se corre dos veces: con DB_* y con DB_* vacías)
 
 npm run dev:auth && npm run dev           # los dos servidores de desarrollo
 node scripts/login-test.mjs               # recorrido real del login desde /escarapela,

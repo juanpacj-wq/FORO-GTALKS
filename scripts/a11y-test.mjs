@@ -7,6 +7,7 @@
 //   npm run build && npm run preview   # en una terminal
 //   node scripts/a11y-test.mjs         # en otra
 import { chromium } from 'playwright'
+import { ID_FIXTURE, instalarMocks } from './fixture-carta.mjs'
 
 const base = process.argv[2] ?? 'http://localhost:4173'
 // Los dos perfiles son a propósito. Lo fueron primero porque
@@ -25,6 +26,12 @@ const RUTAS = [
   '/encuestas',
   '/certificado',
   '/galeria',
+  // La carta de presentación, con los fixtures de scripts/fixture-carta.mjs (preview no
+  // tiene BD ni sesión): la tarjeta pública y el detalle del panel, que es donde vive el
+  // primer formulario del sitio. `instalarMocks` solo atiende en estas dos rutas; en las
+  // demás deja pasar, así que el resto de la auditoría sigue siendo la anónima.
+  `/carta_presentacion/${ID_FIXTURE}`,
+  `/cdpadmin?perfil=${ID_FIXTURE}`,
 ]
 
 let fallos = 0
@@ -169,11 +176,18 @@ for (const channel of ['msedge', 'chrome']) {
 if (!browser) throw new Error('No hay Edge ni Chrome disponibles')
 
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+await instalarMocks(page)
 
 for (const ruta of RUTAS) {
   console.log(`\n${ruta}`)
   await page.goto(base + ruta, { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
+  // La tarjeta pública se audita con el QR desplegado: es su único estado con lámina y
+  // texto que en reposo no está en el DOM.
+  if (ruta.startsWith('/carta_presentacion/')) {
+    await page.click('.gt-qr-tarjeta__abrir')
+    await page.waitForTimeout(150)
+  }
   const { problemas, h1, lang } = await page.evaluate(AUDITORIA)
 
   check('idioma declarado es-CO', lang === 'es-CO', lang)
@@ -262,6 +276,7 @@ console.log('\n/escarapela con sesión')
 for (const ancho of [320, 390]) {
   console.log(`\nReflow a ${ancho} px`)
   const estrecha = await browser.newPage({ viewport: { width: ancho, height: 800 } })
+  await instalarMocks(estrecha)
   for (const ruta of RUTAS) {
     await estrecha.goto(base + ruta, { waitUntil: 'networkidle' })
     await estrecha.evaluate(() => document.fonts.ready)

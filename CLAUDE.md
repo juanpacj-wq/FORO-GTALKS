@@ -3,8 +3,11 @@
 > **Ojo con el contexto heredado**: esta carpeta está dentro del repo `COMUNICACIONES`, cuyo
 > `CLAUDE.md` describe una app de perfiles digitales con QR (Express + SQLite + npm workspaces).
 > **Nada de eso aplica aquí.** Este es un proyecto aparte, con **su propio repositorio git**
-> (`origin` → `github.com/juanpacj-wq/FORO-GTALKS`) y su propio `package.json`. No hay base de
-> datos, ni workspaces, ni migraciones. El CI del repo padre no cubre esta carpeta.
+> (`origin` → `github.com/juanpacj-wq/FORO-GTALKS`) y su propio `package.json`. No hay
+> workspaces ni SQLite. **Sí hay UNA base de datos, y solo para un módulo**: la carta de
+> presentación digital (`server/carta/`, `src/carta/`) escribe en el esquema `carta` de
+> `PortalG3` (SQL Server), con sus propias migraciones en `server/carta/sql/`. El resto del sitio
+> no la toca. El CI del repo padre no cubre esta carpeta.
 
 ## Qué es
 
@@ -64,8 +67,13 @@ ciegas. Cerrados los pendientes #2 y #9 de
 valor sale medido de los PDFs con `scripts/extract-pdf-design.py`.
 
 El *cross-check* con PORTALES GECELCA ya se hizo, y **no coincide**: allí los azules son `#0046A0` /
-`#002F6D` y aquí, medidos, son `#004A96` / `#1F335E`. La tipografía sí coincide (Urbanist). Manda
-lo medido en estas piezas.
+`#002F6D` y aquí, medidos en los PDF, son `#004A96` / `#1F335E`. La tipografía sí coincide
+(Urbanist). Manda lo medido en estas piezas, **con una excepción posterior a los PDF: la marca
+GECELCA cambió en agosto de 2026.** Comunicaciones entregó los raster nuevos (solo JPG/PNG, sin
+vector) y de ahí salen, medidos y vectorizados por `scripts/build-marca-gecelca.py`, los dos SVG
+de `public/img/` y el token `--gt-azul-gecelca` = `#0053A3` (verde `#009950`, sin token: da
+3.70:1 sobre blanco). Los raster viven en `marca-origen/` (ignorada). Detalle en
+`docs/SISTEMA-DE-DISENO.md` §La marca cambió en 2026-08.
 
 ## Estructura
 
@@ -85,10 +93,20 @@ src/components/              Chasis y primitivas, cada una con su CSS al lado
                              como línea de tiempo de una sola pista, índice
                              de la agenda y resaltado cruzado con ella
                              AbanicoFotos.tsx es el elemento firma de /galeria
-src/pages/                   Las 6 páginas
+src/pages/                   Las 8 páginas (6 del foro + la tarjeta y el panel de la carta)
 src/data/evento.json         Los hechos del evento. UN archivo, DOS lectores:
                              foro.ts lo importa y server/correo/ lo lee
 server/                      Identidad Entra ID + servido de dist/: app.js, auth/
+                             auth/sesion.js (estaAutenticado), auth/guardias.js
+                             (requiereSesion, requiereRol, soloRol), limites.js
+server/carta/                La carta de presentación digital: config, bd (pool
+                             mssql con cortacircuitos), migraciones, validacion
+                             (pura), vcard (pura), foto (sharp), repositorio,
+                             og (Open Graph dinámico), rutas e index. sql/ trae
+                             las migraciones NNN-slug.sql
+src/carta/                   Su interfaz: Tarjeta, QrTarjeta, el formulario
+                             (Campo, FormularioPerfil, SubidaFoto) y api.ts
+docs/RUNBOOK-CARTA.md        Cómo se enciende el módulo en el servidor, paso a paso
 server/correo/               El correo de inscripción del primer login.
                              Cuatro módulos, una responsabilidad cada uno:
                              libro (idempotencia), mailer (Graph), plantilla
@@ -192,8 +210,19 @@ node scripts/lockup-compare.mjs        # el lockup del hero de 320 a 1920: que n
 .venv-design/Scripts/python scripts/lockup-diff.py       # invitacion gtalk 2026.pdf vs render:
                                        # centroide, masa y cantos de tinta de cada elemento
 
+# La carta de presentación (sin servidor):
+node scripts/carta-server-test.mjs     # PURO: config, migraciones, validación, vCard, foto,
+                                       # guardias, OG y la matriz HTTP con repositorio falso
+node --env-file=.env scripts/carta-db-test.mjs      # contra PortalG3_dev (exige _dev): CRUD,
+                                       # foto, auditoría, cortacircuitos; limpia lo que crea
+node --env-file=.env scripts/carta-migrar.mjs --estado        # el esquema: qué falta
+node --env-file=.env scripts/carta-migrar.mjs --confirmar     # aplica (prod: --bd <DB_NAME>)
+.venv-design/Scripts/python scripts/build-marca-gecelca.py    # marca-origen/ → los dos SVG de la
+                                       # marca GECELCA 2026 (medidos, no dibujados)
+
 # Con `npm run start:local` levantado:
-node scripts/gate-test.mjs             # matriz pública: 200+CSP, 401 /api/me, CSRF, login OIDC
+node scripts/gate-test.mjs             # matriz pública: 200+CSP, 401 /api/me, CSRF, login OIDC,
+                                       # y la carta (correrlo TAMBIÉN con las DB_* vacías)
 
 # Con `npm run dev:auth` + `npm run dev` levantados (necesita internet):
 node scripts/login-test.mjs            # login real desde /escarapela hasta Microsoft
@@ -541,6 +570,30 @@ bash deploy/descargas-subir.sh         # sube los ZIP que descarga /galeria a DE
   NAVEGANDO: pedirlo sin `accept` esquiva el fallback y por ahí el fallo no se ve) e
   `interactions-test.mjs` (los dos estados). Manual: `docs/SEGURIDAD.md` §Las descargas de
   /galeria.
+- **La carta de presentación digital es un módulo aislado, y su interruptor es la configuración.**
+  `/carta_presentacion/<uuid>` (pública) y `/cdpadmin` (solo el App Role `LOGIN_JEFA`) viven en
+  `server/carta/` y `src/carta/`, y son lo único del sitio que escribe en una base de datos (el
+  esquema `carta` de `PortalG3`, SQL Server, con las fotos DENTRO como WebP ≤ 800 px sin EXIF).
+  Las cinco `DB_*` vacías = el módulo no existe (router sin montar, `/api/carta/*` → 404,
+  `carta: 'no_aplica'` en `/api/me`); a medias = `exigirEntorno()` aborta; completas = al
+  arrancar se auto-comprueba `sharp`, se conecta y se comparan las migraciones por sha256 (si
+  faltan o cambiaron, ABORTA y `deploy.sh` revierte; si la BD no responde, el foro sigue y la
+  carta contesta 503). **Las migraciones jamás se aplican solas**: `scripts/carta-migrar.mjs`
+  con doble llave (`--bd <DB_NAME>`) fuera de `_dev`, y una migración aplicada no se edita: se
+  escribe la siguiente. Cosas que no son obvias: el id público es un UUID v4 de Node y el 404 es
+  el MISMO para mal formado, inexistente y retirado (no hay borrado físico: un QR impreso apunta a
+  un id); la autorización es del servidor y AFIRMATIVA (`soloRol` = `revalidate` → sesión → rol
+  en un array; la interfaz solo pinta el panel con el literal `admin`); la validación rechaza y no
+  sanea (redes acotadas por dominio, teléfonos a E.164, ni `<` ni `>` en ningún campo); las cuatro
+  salidas de texto escapan por su cuenta (React, vCard RFC 6350 plegada a 75 octetos, OG en
+  atributos, `Content-Disposition`); el Open Graph dinámico es la ÚNICA excepción a `esNavegacion`
+  (la forma exacta de la tarjeta recibe HTML sin `Sec-Fetch`, porque así piden Teams y WhatsApp);
+  el QR se pinta con `qr-arte.ts`, el MISMO dibujo de la escarapela; el SQL Server se alcanza por
+  IP y tedious se niega a poner una IP en el SNI (`nombreTls` en `bd.js`); y toda mutación deja su
+  fila en `carta.auditoria` dentro de la misma transacción, con los campos y nunca los valores.
+  Arneses: `carta-server-test.mjs` (puro), `carta-db-test.mjs` (contra `_dev`, limpia) y
+  `gate-test.mjs` en sus DOS ramas. Runbook: `docs/RUNBOOK-CARTA.md`; manual:
+  `docs/SEGURIDAD.md` §La carta de presentación digital.
 - Los pendientes de contenido (sede real del evento, fotos de ponentes) se registran en
   `docs/PENDIENTES-DE-CONTENIDO.md`.
 
@@ -556,3 +609,9 @@ es `off`**: sin configurar, la función no existe. Abrir el envío a todo el ten
 **dos** variables (el modo y vaciar la lista), para que ninguna errata de una sola pueda escribirle
 a la empresa entera; una configuración a medias aborta el arranque en producción en vez de
 encender el envío a medias.
+
+La carta de presentación añade `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (las
+cinco juntas o ninguna), `DB_TRUST_CERT` (`true` explícito: riesgo aceptado), `DB_TLS_SERVERNAME`
+(opcional), `CARTA_ROL_ADMIN` (defecto `LOGIN_JEFA`) y los diales `CARTA_RATE_PUBLICO` /
+`CARTA_RATE_ADMIN` / `CARTA_RATE_FOTO`. En la estación `DB_NAME=PortalG3_dev`; en
+`/etc/gtalks/env`, `DB_NAME=PortalG3` (`DB_NAME_PROD` del `.env` local no la lee nadie).

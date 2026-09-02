@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { iniciales } from '../data/foro'
 import { useSesion } from '../data/sesion'
 import './SesionMenu.css'
@@ -40,6 +41,8 @@ export default function SesionMenu({ variante = 'header' }: { variante?: 'header
 
   if (sesion.estado !== 'dentro') return null
   const { usuario } = sesion
+  // Solo el literal `admin` que confirma el servidor pinta el panel: fallo cerrado.
+  const administraCartas = sesion.carta === 'admin'
 
   // El cargo puede no existir (invitado B2B, Graph caído): el correo es el respaldo honesto.
   const segundaLinea = usuario.cargo || usuario.email || usuario.upn
@@ -50,6 +53,11 @@ export default function SesionMenu({ variante = 'header' }: { variante?: 'header
         <p className="gt-dato gt-sesion__rotulo">Tu sesión</p>
         <p className="gt-sesion__nombre">{usuario.nombre_completo}</p>
         <p className="gt-sesion__cargo">{segundaLinea}</p>
+        {administraCartas && (
+          <Link className="gt-sesion__accion" to="/cdpadmin">
+            Cartas de presentación
+          </Link>
+        )}
         <a className="gt-sesion__accion" href="/auth/login?select=1">
           Cambiar de cuenta
         </a>
@@ -86,6 +94,16 @@ export default function SesionMenu({ variante = 'header' }: { variante?: 'header
           {usuario.area && <p className="gt-sesion__panel-area">{usuario.area}</p>}
           <p className="gt-sesion__panel-correo">{usuario.email || usuario.upn}</p>
 
+          {administraCartas && (
+            <Link
+              className="gt-sesion__accion"
+              to="/cdpadmin"
+              role="menuitem"
+              onClick={() => setAbierto(false)}
+            >
+              Cartas de presentación
+            </Link>
+          )}
           <a className="gt-sesion__accion" href="/auth/login?select=1" role="menuitem">
             Cambiar de cuenta
           </a>

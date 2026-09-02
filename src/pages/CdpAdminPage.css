@@ -1,0 +1,410 @@
+/* /cdpadmin  el panel de las cartas. El chasis (.gt-pagina, .gt-pagina__intro) vive en
+   PonentesPage.css, el vocabulario de formulario en carta/formulario.css y la tarjeta en
+   carta/Tarjeta.css; aquí van el gate (copiado del de /certificado), los mandos, la tabla
+   y el detalle a dos columnas.                                                            */
+
+.gt-cdp {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--gt-space-6);
+}
+
+.gt-cdp__texto {
+  max-width: 52rem;
+}
+
+.gt-cdp__alerta {
+  margin: 0;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-chico);
+  color: var(--gt-texto);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-cdp__alerta a {
+  color: var(--gt-acento);
+}
+
+.gt-cdp__estado {
+  margin: 0;
+  color: var(--gt-texto-suave);
+  font-size: var(--gt-fs-sm);
+}
+
+/* --- El gate (mismo patrón que /certificado) --------------------------------- */
+.gt-cdp__acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gt-space-3);
+}
+
+.gt-cdp__acciones:empty {
+  display: none;
+}
+
+.gt-cdp__entrar-logo {
+  inline-size: 1.05em;
+  block-size: 1.05em;
+}
+
+.gt-cdp__otra-cuenta {
+  color: var(--gt-acento);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-cdp__registro {
+  margin: 0;
+  max-width: 38rem;
+  color: var(--gt-texto-suave);
+  font-size: var(--gt-fs-xs);
+  line-height: var(--gt-lh-normal);
+}
+
+.gt-cdp__gate {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gt-space-3);
+}
+
+.gt-cdp__aviso {
+  position: absolute;
+  top: calc(100% + var(--gt-space-2));
+  left: 0;
+  z-index: 1;
+  width: max-content;
+  max-width: min(32rem, 88vw);
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radio-chico);
+  font-size: var(--gt-fs-xs);
+  line-height: var(--gt-lh-normal);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--gt-transicion), visibility 0s var(--gt-dur-rapida);
+}
+
+.gt-cdp__gate:hover .gt-cdp__aviso,
+.gt-cdp__gate:focus-within .gt-cdp__aviso,
+.gt-cdp__gate--avisando .gt-cdp__aviso {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity var(--gt-transicion);
+}
+
+/* Escape gana a hover y a foco (WCAG 1.4.13). La clase va DOBLADA porque `:focus-within`
+   también puntúa como clase: con dos solas, el foco ganaría el empate. */
+.gt-cdp__gate.gt-cdp__gate--suprimido .gt-cdp__aviso {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.gt-cdp__acciones:has(.gt-cdp__gate) {
+  padding-block-end: var(--gt-space-16);
+}
+
+/* --- Los mandos del listado ---------------------------------------------------- */
+.gt-cdp__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-6);
+}
+
+.gt-cdp__mandos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--gt-space-4) var(--gt-space-6);
+}
+
+.gt-cdp__filtro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.gt-cdp__filtro legend {
+  padding: 0;
+  margin-bottom: var(--gt-space-2);
+  float: left;
+  width: 100%;
+  color: var(--gt-texto-suave);
+}
+
+.gt-cdp__radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding: 0.5rem 0.9rem;
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-pildora);
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-semibold);
+  cursor: pointer;
+  transition: border-color var(--gt-transicion), color var(--gt-transicion);
+}
+
+.gt-cdp__radio:has(input:checked) {
+  border-color: var(--gt-celeste);
+  color: var(--gt-celeste);
+}
+
+.gt-cdp__radio:has(input:focus-visible) {
+  outline: 2px solid var(--gt-foco);
+  outline-offset: 3px;
+}
+
+.gt-cdp__radio input {
+  /* El control nativo se oculta; la píldora es el control y hereda el foco arriba. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.gt-cdp__busqueda {
+  flex: 1 1 16rem;
+  max-width: 28rem;
+}
+
+.gt-cdp__nueva {
+  margin-inline-start: auto;
+}
+
+.gt-cdp__vacio {
+  margin: 0;
+  color: var(--gt-texto-suave);
+}
+
+/* --- La tabla ------------------------------------------------------------------
+   Sobre el campo oscuro y separada por hairlines, como todo. En pantallas angostas
+   el marco desplaza en horizontal: una tabla de seis columnas no cabe en 390 px y
+   partirla en tarjetas escondería justo lo que el panel es para comparar.       */
+.gt-cdp__tabla-marco {
+  overflow-x: auto;
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-cdp__tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-cdp__tabla th,
+.gt-cdp__tabla td {
+  padding: var(--gt-space-3) var(--gt-space-3);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-cdp__tabla thead th {
+  font-size: var(--gt-fs-micro);
+  font-weight: var(--gt-fw-semibold);
+  letter-spacing: var(--gt-tracking-micro);
+  text-transform: uppercase;
+  color: var(--gt-texto-suave);
+  white-space: nowrap;
+}
+
+.gt-cdp__tabla tbody th {
+  font-weight: var(--gt-fw-bold);
+}
+
+.gt-cdp__correo {
+  overflow-wrap: anywhere;
+}
+
+.gt-cdp__editar {
+  color: var(--gt-acento);
+  font-weight: var(--gt-fw-semibold);
+  white-space: nowrap;
+}
+
+/* --- El detalle ---------------------------------------------------------------- */
+.gt-cdp__detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-6);
+}
+
+.gt-cdp__volver {
+  margin: 0;
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-cdp__volver a {
+  color: var(--gt-acento);
+}
+
+.gt-cdp__volver a::before {
+  content: '← ';
+}
+
+.gt-cdp__columnas {
+  display: grid;
+  gap: var(--gt-space-12);
+}
+
+@media (min-width: 72rem) {
+  .gt-cdp__columnas {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+  .gt-cdp__previa {
+    position: sticky;
+    top: 7rem;
+  }
+}
+
+.gt-cdp__editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-6);
+  min-width: 0;
+}
+
+.gt-cdp__nombre {
+  font-size: var(--gt-fs-h2);
+}
+
+.gt-cdp__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-3);
+  margin: 0;
+}
+
+.gt-cdp__meta-texto {
+  color: var(--gt-texto-suave);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-cdp__bloque {
+  display: grid;
+  gap: var(--gt-space-4);
+  padding-top: var(--gt-space-6);
+  border-top: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-cdp__bloque > h3 {
+  font-size: var(--gt-fs-h3);
+}
+
+.gt-cdp__enlaces {
+  margin: 0;
+}
+
+.gt-cdp__auditoria {
+  display: grid;
+  gap: var(--gt-space-2);
+  font-size: var(--gt-fs-sm);
+}
+
+.gt-cdp__auditoria li {
+  display: grid;
+  gap: var(--gt-space-1);
+  padding-bottom: var(--gt-space-2);
+  border-bottom: var(--gt-borde) solid var(--gt-linea);
+}
+
+.gt-cdp__auditoria .gt-dato {
+  color: var(--gt-texto-suave);
+}
+
+.gt-cdp__previa {
+  display: grid;
+  gap: var(--gt-space-4);
+  min-width: 0;
+}
+
+.gt-cdp__previa-titulo {
+  color: var(--gt-texto-suave);
+}
+
+/* La previsualización es la tarjeta a escala de columna: el retrato no se estira. */
+.gt-cdp__previa .gt-tarjeta__cuerpo {
+  grid-template-columns: 1fr;
+}
+
+.gt-cdp__previa .gt-tarjeta__retrato {
+  max-width: 14rem;
+}
+
+.gt-cdp__previa .gt-tarjeta__retrato .gt-marco__lienzo {
+  height: auto;
+  aspect-ratio: var(--gt-marco-ratio, auto);
+}
+
+.gt-cdp__previa .gt-tarjeta__placa {
+  height: auto;
+}
+
+.gt-cdp__previa .gt-tarjeta__nombre {
+  font-size: var(--gt-fs-h2);
+}
+
+/* --- La foto en el panel -------------------------------------------------------- */
+.gt-subida-foto {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--gt-space-4);
+}
+
+.gt-subida-foto__vista {
+  width: clamp(5.5rem, 12vw, 8rem);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 34px 0 34px 0;
+  background: var(--gt-navy);
+}
+
+.gt-subida-foto__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gt-subida-foto__vacio {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: var(--gt-borde) dashed var(--gt-linea-fuerte);
+  border-radius: inherit;
+}
+
+.gt-subida-foto__controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+
+.gt-subida-foto__controles .gt-campo__ayuda {
+  flex-basis: 100%;
+}
+
+.gt-subida-foto__controles label:focus-within {
+  outline: 2px solid var(--gt-foco);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.gt-subida-foto__aviso {
+  margin: 0;
+  flex-basis: 100%;
+  font-size: var(--gt-fs-sm);
+}

@@ -42,9 +42,23 @@ export interface Inscripcion {
  */
 export type EstadoCertificado = 'disponible' | 'no_aplica'
 
+/**
+ * La carta de presentación digital (`server/carta/`). `admin` solo llega con el
+ * módulo encendido Y el App Role de Entra en la sesión; es lo único que pinta
+ * el enlace del menú y el panel de /cdpadmin. La autorización REAL la hace el
+ * servidor en cada ruta: esto decide qué se enseña, no qué se permite.
+ */
+export type EstadoCarta = 'admin' | 'no_aplica'
+
 export type EstadoSesion =
   | { estado: 'cargando' }
-  | { estado: 'dentro'; usuario: Usuario; inscripcion: Inscripcion; certificado: EstadoCertificado }
+  | {
+      estado: 'dentro'
+      usuario: Usuario
+      inscripcion: Inscripcion
+      certificado: EstadoCertificado
+      carta: EstadoCarta
+    }
   | { estado: 'sin-sesion' } // sin identidad: visitante anónimo, o servido sin el server (preview)
 
 /**
@@ -77,6 +91,8 @@ async function consultarSesion(): Promise<EstadoSesion> {
       // Fallo cerrado: solo `disponible` literal habilita la descarga. Cualquier otra cosa
       // incluido un servidor que no conozca el campo es `no_aplica`.
       certificado: datos.certificado === 'disponible' ? 'disponible' : 'no_aplica',
+      // Mismo fallo cerrado: solo el literal `admin` pinta el panel de las cartas.
+      carta: datos.carta === 'admin' ? 'admin' : 'no_aplica',
     }
   } catch {
     return { estado: 'sin-sesion' }

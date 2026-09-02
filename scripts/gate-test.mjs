@@ -64,7 +64,10 @@ const SUBRECURSO = (dest) => ({
 // ─────────────────────────────────────── navegaciones: públicas, con cabeceras
 console.log('\nNavegación sin sesión → el sitio se sirve, con la CSP puesta')
 
-for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas', '/certificado', '/galeria']) {
+/** Un id de tarjeta que no existe: la ruta es válida para la SPA aunque el perfil no. */
+const UUID_NADIE = '00000000-0000-4000-8000-000000000000'
+
+for (const ruta of ['/', '/ponentes', '/ponentes/karen-henriquez-leal', '/escarapela', '/encuestas', '/certificado', '/galeria', '/cdpadmin', `/carta_presentacion/${UUID_NADIE}`]) {
   const r = await pedir(ruta, { headers: NAVEGA })
   const csp = r.headers['content-security-policy'] || ''
   check(`${ruta} se sirve (200, HTML)`, r.status === 200 && (r.headers['content-type'] || '').includes('text/html'), String(r.status))
@@ -310,6 +313,74 @@ console.log('\nDescargas de /galeria → estado público, entrega coherente')
 
   const post = await pedir('/api/descargas', { method: 'POST', headers: { 'sec-fetch-site': 'same-origin' } })
   check('POST /api/descargas no existe', post.status === 404, String(post.status))
+}
+
+// ─────────────────────────── la carta de presentación: pública la tarjeta, cerrado el panel
+// Ramifica por lo que /health declara: con las DB_* puestas el módulo existe y se exige la
+// matriz entera; sin ellas, TODO /api/carta/* tiene que ser 404, que es «el módulo no existe».
+console.log('\nCarta de presentación → la tarjeta es pública, el panel exige sesión Y rol')
+{
+  const salud = JSON.parse((await pedir('/health', { headers: SUBRECURSO('empty') })).cuerpo)
+  const carta = salud.carta || {}
+  console.log(`  (/health dice carta.configurada=${carta.configurada} bd=${carta.bd} migraciones=${carta.migraciones})`)
+
+  // Un rastreador de vista previa (Teams, WhatsApp) pide la tarjeta sin Sec-Fetch y sin Accept:
+  // tiene que recibir HTML igual, con la CSP. Es la excepción acotada de `esNavegacion`.
+  const rastreador = await pedir(`/carta_presentacion/${UUID_NADIE}`, { headers: { 'user-agent': 'WhatsApp/2.0' } })
+  check('la tarjeta pedida sin Sec-Fetch ni Accept recibe HTML (rastreadores OG)', rastreador.status === 200 && (rastreador.headers['content-type'] || '').includes('text/html'), String(rastreador.status))
+  check('  con la CSP', (rastreador.headers['content-security-policy'] || '').includes("default-src 'none'"))
+  check('  y sin cookie', rastreador.headers['set-cookie'] === undefined)
+  // Pero SOLO esa forma exacta: cualquier otra ruta sin cabeceras sigue siendo 404 JSON.
+  const otra = await pedir('/cdpadmin', { headers: { 'user-agent': 'WhatsApp/2.0' } })
+  check('  /cdpadmin sin cabeceras NO abre la excepción (404 JSON)', otra.status === 404, String(otra.status))
+  const mal = await pedir('/carta_presentacion/no-es-uuid', { headers: { 'user-agent': 'WhatsApp/2.0' } })
+  check('  ni un id que no sea UUID', mal.status === 404, String(mal.status))
+
+  if (carta.configurada === true) {
+    check('/health: bd ok', carta.bd === 'ok', String(carta.bd))
+    check('/health: migraciones al día', carta.migraciones === 'al_dia', String(carta.migraciones))
+
+    const admin = await pedir('/api/carta/admin/perfiles', { headers: SUBRECURSO('empty') })
+    check('GET /api/carta/admin/perfiles sin sesión → 401 JSON', admin.status === 401 && admin.cuerpo.includes('"authenticated":false'), String(admin.status))
+    check('  no-store', (admin.headers['cache-control'] || '').includes('no-store'))
+    check('  sin cookie', admin.headers['set-cookie'] === undefined)
+    const adminNav = await pedir('/api/carta/admin/perfiles', { headers: NAVEGA })
+    check('  navegado también 401 JSON (no cae al fallback)', adminNav.status === 401 && !(adminNav.headers['content-type'] || '').includes('html'), String(adminNav.status))
+    const putSin = await pedir(`/api/carta/admin/perfiles/${UUID_NADIE}`, { method: 'PUT', headers: { 'sec-fetch-site': 'same-origin', 'content-type': 'application/json' } })
+    check('PUT same-origin sin sesión → 401', putSin.status === 401, String(putSin.status))
+    const putX = await pedir(`/api/carta/admin/perfiles/${UUID_NADIE}`, { method: 'PUT', headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site', 'content-type': 'application/json' } })
+    check('PUT cross-site → 403 (CSRF antes que nada)', putX.status === 403, String(putX.status))
+    const postSin = await pedir('/api/carta/admin/perfiles', { method: 'POST', headers: { 'content-type': 'application/json' } })
+    check('POST sin Origin ni Sec-Fetch-Site → 403', postSin.status === 403, String(postSin.status))
+    const delX = await pedir(`/api/carta/admin/perfiles/${UUID_NADIE}/foto`, { method: 'DELETE', headers: { 'sec-fetch-site': 'cross-site' } })
+    check('DELETE cross-site → 403', delX.status === 403, String(delX.status))
+
+    const pub = await pedir(`/api/carta/perfiles/${UUID_NADIE}`, { headers: SUBRECURSO('empty') })
+    check('GET perfil público inexistente → 404 JSON', pub.status === 404 && (pub.headers['content-type'] || '').includes('json'), String(pub.status))
+    check('  sin PII en el cuerpo', !/nombre|correo|@|tel/i.test(pub.cuerpo), pub.cuerpo.slice(0, 40))
+    check('  no-store y sin cookie', (pub.headers['cache-control'] || '').includes('no-store') && pub.headers['set-cookie'] === undefined)
+    for (const ruta of ['/api/carta/perfiles/not-a-uuid', `/api/carta/perfiles/${UUID_NADIE}/foto`, `/api/carta/perfiles/${UUID_NADIE}/vcard`]) {
+      const r = await pedir(ruta, { headers: NAVEGA })
+      check(`${ruta} navegado → 404 JSON, nunca HTML`, r.status === 404 && !(r.headers['content-type'] || '').includes('html'), `${r.status} ${r.headers['content-type'] || ''}`)
+    }
+    const listado = await pedir('/api/carta/perfiles', { headers: SUBRECURSO('empty') })
+    check('GET /api/carta/perfiles (listado público) no existe', listado.status === 404, String(listado.status))
+    const postPub = await pedir('/api/carta/perfiles', { method: 'POST', headers: { 'sec-fetch-site': 'same-origin', 'content-type': 'application/json' } })
+    check('POST público no existe', postPub.status === 404, String(postPub.status))
+  } else {
+    console.log('  (módulo apagado: se exige que NADA de /api/carta/* exista)')
+    for (const [ruta, method] of [
+      ['/api/carta/admin/perfiles', 'GET'],
+      [`/api/carta/perfiles/${UUID_NADIE}`, 'GET'],
+      [`/api/carta/perfiles/${UUID_NADIE}/foto`, 'GET'],
+      [`/api/carta/perfiles/${UUID_NADIE}/vcard`, 'GET'],
+      ['/api/carta/admin/perfiles', 'POST'],
+    ]) {
+      const r = await pedir(ruta, { method, headers: { ...SUBRECURSO('empty'), 'sec-fetch-site': 'same-origin' } })
+      check(`${method} ${ruta} → 404 (módulo apagado)`, r.status === 404, String(r.status))
+    }
+    check('/health: bd apagada', carta.bd === 'apagada', String(carta.bd))
+  }
 }
 
 // ──────────────────────────────────────────── el login sigue vivo, y es explícito

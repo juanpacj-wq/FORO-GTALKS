@@ -5,6 +5,7 @@
 //   node scripts/interactions-test.mjs   # en otra
 import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
+import { ID_FIXTURE, ID_INEXISTENTE, PERFIL_PUBLICO, instalarMocks } from './fixture-carta.mjs'
 
 const base = process.argv[2] ?? 'http://localhost:4173'
 
@@ -117,6 +118,61 @@ check(
 // quedó en título + lead + párrafo + botón. Este check impide que vuelva sin decisión.
 check('y no hay vista previa: la página anuncia y entrega, no enseña',
   (await desktop.locator('.gt-certificado__pieza').count()) === 0)
+
+console.log('\nCarta de presentación')
+// Lo estructural de la tarjeta pública. Las interacciones CON sesión (el gate del panel, el
+// formulario, el PNG del QR decodificado) viven en sesion-test.mjs. Aquí: que la ruta sea de
+// primera clase (un id inexistente pinta su aviso en su URL y NO redirige a `/`, al revés que
+// el comodín de abajo), el plegado del QR, la copia del enlace y el `rel` de lo que sale.
+{
+  const carta = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await carta.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true })
+    window.__copiado = null
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: async (t) => { window.__copiado = t } },
+      configurable: true,
+    })
+  })
+  await instalarMocks(carta, { me: null })
+
+  await carta.goto(base + `/carta_presentacion/${ID_INEXISTENTE}`, { waitUntil: 'networkidle' })
+  check(
+    'una tarjeta inexistente NO redirige a /: pinta «no disponible» en su URL',
+    new URL(carta.url()).pathname === `/carta_presentacion/${ID_INEXISTENTE}` &&
+      (await carta.locator('.gt-carta-pagina__aviso h1').count()) === 1,
+    carta.url(),
+  )
+
+  await carta.goto(base + `/carta_presentacion/${ID_FIXTURE}`, { waitUntil: 'networkidle' })
+  const abrir = carta.locator('.gt-qr-tarjeta__abrir')
+  check('el QR arranca plegado', (await abrir.getAttribute('aria-pressed')) === 'false' && (await carta.locator('.gt-qr-tarjeta__codigo').count()) === 0)
+  await abrir.click()
+  check(
+    'y el botón lo despliega',
+    await esperarA(async () => (await carta.locator('.gt-qr-tarjeta__codigo').count()) === 1),
+  )
+  check('  con la URL absoluta de la tarjeta dentro',
+    (await carta.locator('.gt-qr-tarjeta__codigo').getAttribute('data-contenido')) === PERFIL_PUBLICO.url)
+  await abrir.click()
+  check('y lo vuelve a plegar',
+    await esperarA(async () => (await carta.locator('.gt-qr-tarjeta__codigo').count()) === 0))
+
+  await carta.click('.gt-tarjeta__compartir')
+  check('«Compartir» copia el enlace cuando no hay navigator.share',
+    await esperarA(async () => (await carta.evaluate(() => window.__copiado)) === PERFIL_PUBLICO.url))
+
+  const externos = await carta.$$eval('.gt-tarjeta a.gt-boton--externo', (as) =>
+    as.map((a) => ({ href: a.href, target: a.target, rel: a.rel })),
+  )
+  check(
+    'los botones que salen del sitio van --externo con target y rel seguros',
+    externos.length === 4 &&
+      externos.every((a) => a.target === '_blank' && a.rel.includes('noopener') && a.rel.includes('noreferrer')),
+    JSON.stringify(externos),
+  )
+  await carta.close()
+}
 
 console.log('\nAltura de arranque')
 // Pedido del usuario (2026-08-12): /ponentes, /encuestas y /certificado arrancan a la MISMA

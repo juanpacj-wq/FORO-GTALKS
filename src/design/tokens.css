@@ -23,7 +23,14 @@
   --gt-navy-deep: #1d2a4c;     /*  2.21% · círculo tras el numeral «1»        */
   --gt-celeste: #8bd0e5;       /* 47.89% · arcos, franjas, caja destacada     */
   --gt-carta: #ededed;         /* 55.95% · tarjeta contenedora de la agenda   */
-  --gt-azul-gecelca: #004a96;  /*  0.73% · logo Gecelca e íconos              */
+  /* La marca GECELCA cambió en agosto de 2026. Este azul NO sale de los PDF
+     del foro (allí medía #004A96): está medido en marca-origen/
+     Logo-gecelca-color.jpg (Comunicaciones, 2026-08) por
+     scripts/build-marca-gecelca.py, el color exacto más frecuente de la masa
+     azul. El verde de la hoja (#009950) va literal dentro de los SVG del logo
+     y no es token: ningún CSS lo usa. Ver docs/SISTEMA-DE-DISENO.md §La marca
+     cambió en 2026-08.                                                       */
+  --gt-azul-gecelca: #0053a3;  /* logo Gecelca, tinta del QR                   */
   --gt-tinta: #1d1d1b;         /* 16.07% · texto de cuerpo                    */
   --gt-blanco: #ffffff;        /*  5.59%                                      */
 

@@ -31,7 +31,7 @@ formas más la caja de los textos. Sirven para distinguir un fondo de un acento.
 | `--gt-blanco` | `#FFFFFF` | 5.59% | texto sobre navy, fondo general |
 | `--gt-azul-medio` | `#1D71B8` → **`#1C6FB4`** | 3.98% | títulos de cada bloque de la agenda *ver Accesibilidad* |
 | `--gt-navy-deep` | `#1D2A4C` | 2.21% | círculo tras el numeral «1» (solo en `invitacion gtalk`) |
-| `--gt-azul-gecelca` | `#004A96` | 0.73% | logo Gecelca, wordmark G-TALKS, íconos |
+| `--gt-azul-gecelca` | `#004A96` → **`#0053A3`** | 0.73% | logo Gecelca, tinta del QR. El valor medido en los PDF es el primero; el vigente es el de la marca 2026, *ver La marca cambió en 2026-08* |
 | `--gt-celeste-tinte` | `#BCDEE9` | derivado | filas logísticas de la agenda |
 
 ### De la hoja impresa a la pantalla: los derivados
@@ -227,11 +227,68 @@ background: color-mix(in srgb, var(--gt-celeste) 50%, var(--gt-carta));
 
 - `#006533` (verde) 0.028% del área. Solo existe dentro del trazo del logo Gecelca; nunca
   se usa como color de interfaz. Vive dentro de `logo-gecelca.svg` y no se expone como token.
+  Desde agosto de 2026 ese verde es `#009950` (marca nueva, *ver La marca cambió en 2026-08*),
+  con el mismo estatus: literal dentro del SVG, sin token.
 - `#010101` un segundo negro tipográfico, presente solo en `invitación expertos`. Es
   redundante con `--gt-tinta` y unificarlo no cambia nada perceptible (20.87:1 vs 16.88:1
   sobre blanco).
 
 ---
+
+### La marca cambió en 2026-08: medida en los raster de Comunicaciones, no en los PDF del foro
+
+En agosto de 2026 GECELCA renovó su identidad, y Comunicaciones entregó la marca nueva SOLO en
+raster (`marca-origen/`, carpeta ignorada por git: `G-color.jpg` a 1000×1000 y
+`Logo-gecelca-color.jpg` a 2000×495, más las variantes en blanco, gris y negro). Es la única
+pieza del sistema que ya no sale de los tres PDF del foro, y el sitio la adoptó entera: el logo
+del pie, la «G» del centro del QR y la tinta del propio QR (escarapela, correo del envío masivo
+y carta de presentación).
+
+La regla siguió siendo la misma: **nada se dibuja ni se cita de memoria, se mide.** Lo hace
+`scripts/build-marca-gecelca.py`, con el método de `escarapela-iconos.py` y una diferencia:
+
+1. **Las tintas se miden** como el color exacto más frecuente de cada masa, y el script aborta
+   si se apartan más de 2/255 por canal de lo esperado (así una entrega distinta no pasa en
+   silencio). Medido en las dos piezas, con desvío 0:
+
+   | Tinta | Medida | Antes (PDF del foro) | Dónde vive |
+   |---|---|---|---|
+   | azul | **`#0053A3`** | `#004A96` | `--gt-azul-gecelca`, `QR_TINTA` (qr-arte.ts), los dos SVG |
+   | verde | **`#009950`** | `#006533` | solo dentro de los SVG del logo; sin token, como antes |
+
+2. **Dos tintas que se tocan.** La hoja verde va montada sobre la G azul, así que el modelo de
+   una tinta sobre fondo del vectorizador de iconos no sirve: un píxel del canto entre ambas es
+   mezcla de azul y verde, no de tinta y papel. Cada píxel se descompone por mínimos cuadrados
+   en `blanco + b·(azul − blanco) + g·(verde − blanco)`, y `b` y `g` son las coberturas. El
+   canto azul/verde sale con el mismo subpíxel que el canto tinta/papel.
+3. Ampliación ×4 LANCZOS, marching squares a 0.5 y Douglas-Peucker a 0.3 px de la pieza, los
+   mismos umbrales de los iconos del carné (el marching squares va vectorizado con numpy: la G
+   mide 900 px y el logo 2000, y el bucle en Python puro tardaría minutos).
+
+Lo que salió, y lo que cambia en el código:
+
+| Archivo | viewBox (caja de tinta) | alto/ancho | Vértices |
+|---|---|---|---|
+| `public/img/marca-g.svg` | `0 0 896 896` | **1.00000** | 174 azul + 58 verde |
+| `public/img/logo-gecelca.svg` | `0 0 1968 289` | 0.14685 | 696 azul + 37 verde |
+
+- `ASPECTO_MARCA` en `qr-arte.ts` pasa de 46.24/51.62 a 896/896: la «G» nueva es un cuadrado
+  exacto, así que la caja del claro del QR (`cajaMarca`) también lo es. `anidarMarca()` sigue
+  aceptando el SVG (exige `viewBox` y `<path`), comprobado con `svgQrAutonomo`.
+- `--gt-azul-gecelca` y `QR_TINTA` pasan a `#0053A3`. Sobre blanco da **7.59:1** (el viejo daba
+  8.68:1); sigue cumpliendo AAA como texto y de sobra como tinta de un QR. El verde da 3.70:1 y
+  por eso sigue sin ser token: no vale para texto normal y ningún CSS lo usa.
+- Los correos que ya salieron (inscripción, envío del QR del 4 y 5 de agosto) llevan la tinta
+  vieja dentro de sus PNG y **no se retocan**: son piezas históricas, y `inscripcion-test.mjs`
+  compara contra los bytes del archivo.
+- Las menciones a `#004A96` y `#006533` que quedan en este documento, en `CLAUDE.md` y en
+  `scripts/extract-pdf-design.py` son **mediciones de los PDF** y siguen siendo verdad sobre los
+  PDF; lo que cambió es que la marca ya no manda desde ahí.
+
+La verificación es a ojo pero con arnés: `node scripts/marca-compare.mjs` renderiza cada SVG
+sobre su JPG de origen en `shots/marca-*.png` (raster arriba, vector abajo, y una tercera fila
+con el SVG en `mix-blend-mode: difference`, donde cualquier canto que no coincida se ve claro).
+Si algún día llega un vector oficial, se sustituyen los dos SVG y no hay que tocar nada más.
 
 ## Tipografía
 
@@ -259,7 +316,9 @@ casos.
 Urbanist coincide con la del proyecto hermano PORTALES GECELCA, así que el *cross-check*
 tipográfico pasa. **El de color no**: allí los azules son `#0046A0` / `#002F6D` y aquí son
 `#004A96` / `#1F335E`. El azul del logo es casi el mismo; el navy es otro. Estas piezas son
-de la línea G-TALKS y mandan sobre la memoria del proyecto hermano.
+de la línea G-TALKS y mandan sobre la memoria del proyecto hermano. (Desde agosto de 2026 el
+azul del logo es `#0053A3`, que ya no sale de ninguna de las dos fuentes: *ver La marca cambió
+en 2026-08*.)
 
 ### Archivos y por qué están declarados así
 
@@ -776,10 +835,10 @@ la escarapela; 234 px, se midió sobre sus píxeles):
 
 | Qué | Medido en la pieza | Implementado |
 |---|---|---|
-| Tinta | `#023F86` (con antialias de un PNG pequeño) | `--gt-azul-gecelca` `#004A96` el azul de marca ya medido; la diferencia es ruido de borde |
+| Tinta | `#023F86` (con antialias de un PNG pequeño) | `--gt-azul-gecelca`: era `#004A96`, el azul de marca medido en los PDF (la diferencia con la pieza es ruido de borde); desde agosto de 2026 es `#0053A3`, el de la marca nueva, *ver La marca cambió en 2026-08* |
 | Punto | ⌀ 0.62 del módulo (sesgado a la baja ~1 px por borde por el antialias) | ⌀ **0.72** del módulo mismo gesto de puntos separados |
 | Marcadores | anillo y cuadrado interior redondeados | rects apilados rx 2.1 / 1.5 / 1.0 (respetando el 1:1:3:1:1 canónico: un anillo desigual ciega al decodificador) |
-| Logo | «G» de Gecelca al 14.5 % del ancho (solo la ráfaga verde) ≈ 16 % el lockup completo | `public/img/marca-g.svg` al **16 %** del lado (extraída de `logo-gecelca.svg` con viewBox acotado bicolor de marca, va como `<image>`) |
+| Logo | «G» de Gecelca al 14.5 % del ancho (solo la ráfaga verde) ≈ 16 % el lockup completo | `public/img/marca-g.svg` al **16 %** del lado (bicolor de marca, va como `<image>`). Hasta agosto de 2026 se extraía de `logo-gecelca.svg` con el viewBox acotado (46.24/51.62); hoy la vectoriza `scripts/build-marca-gecelca.py` del raster de la marca nueva y su caja es un cuadrado exacto (896/896), *ver La marca cambió en 2026-08* |
 | Claro del logo | ceñido, ~1 módulo más allá de la «G» | círculo de radio 10 % del lado (~3 % de oclusión) |
 
 `ecc: 'Q'` (25 %) absorbe la oclusión del logo. El borde del encode es de **2 módulos**: la zona
@@ -890,7 +949,7 @@ La misma división que en el resto del sistema:
    transformaciones por movimiento de puntero; más allá de ±5 pasos una tarjeta queda tapada por
    sus vecinas.
 4. **El mazo es circular** (pedido del usuario, 2026-08-12): tras la 80 viene la 1 y antes de la
-   1 está la 80 —botones, flechas, arrastre y visor—, y el abanico va SIEMPRE lleno por los dos
+   1 está la 80, botones, flechas, arrastre y visor, y el abanico va SIEMPRE lleno por los dos
    lados: en la 1, a la izquierda asoman 80, 79, 78…. La ventana se calcula por corrimiento
    respecto del centro (`mod(indice + o)`), no partiendo la lista, y como la `key` de cada
    tarjeta es su foto, la que sigue en pantalla tras un paso conserva su nodo y transiciona a su
@@ -968,6 +1027,9 @@ python -m venv .venv-design
 .venv-design/Scripts/python scripts/build-assets.py         # → public/img/
 .venv-design/Scripts/python scripts/escarapela-medir.py     # mide la pieza del carné → cotas y ondas
 .venv-design/Scripts/python scripts/escarapela-iconos.py    # vectoriza sus 3 iconos sólidos
+.venv-design/Scripts/pip install numpy
+.venv-design/Scripts/python scripts/build-marca-gecelca.py  # marca-origen/ → marca-g.svg + logo-gecelca.svg
+node scripts/marca-compare.mjs                              # → shots/marca-*.png, para mirarlos
 
 # La galería pide además el códec HEIC:
 .venv-design/Scripts/pip install pillow-heif

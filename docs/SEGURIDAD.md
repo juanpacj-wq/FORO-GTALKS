@@ -27,6 +27,8 @@ No hay allowlist local ni roles de negocio.
 | `GET /api/me` sin sesión | 401 JSON, `no-store` |
 | `GET /api/encuestas` | 200 JSON público, `no-store`, sin cookie. La URL de la encuesta de satisfacción **solo aparece cuando el reloj del servidor pasó `fecha.cierreIso`** (ver §La encuesta de satisfacción abre por reloj) |
 | `GET /api/descargas` y `GET /descargas/<rol>` | 200 público: el estado y los dos ZIP de `/galeria`, pre-armados en la estación (ver §Las descargas de /galeria). Rol fuera del manifiesto → 404 JSON |
+| `GET /api/carta/perfiles/<uuid>` (+ `/foto`, `/vcard`) | 200 público, `no-store`, sin cookie: la tarjeta de UNA persona, solo si está activa; cualquier otra cosa (id mal formado, inexistente, retirada) es el 404 uniforme. Sin listado público (ver §La carta de presentación digital) |
+| `/api/carta/admin/*` | 401 sin sesión; 403 con sesión sin el App Role `LOGIN_JEFA`; la revalidación contra Entra corre antes, como en `/api/me`. Con las `DB_*` vacías nada de `/api/carta/*` existe (404) |
 | Métodos que no son de lectura, cross-site | 403 (`csrfMiddleware`: `Sec-Fetch-Site` u `Origin` contra `PUBLIC_ORIGIN`) |
 | Subrecurso inexistente | 404 JSON (el fallback SPA es solo para navegaciones) |
 | Errores del callback OIDC | 302 → `/escarapela?auth=<motivo>`, que la SPA explica junto al botón |
@@ -113,7 +115,14 @@ node scripts/inscripcion-test.mjs   # el correo de inscripción, sin red ni cred
 npm run start:local          # o `npm start` con el entorno puesto
 node scripts/gate-test.mjs   # matriz pública: 200+CSP en navegaciones, 401 /api/me, CSRF,
                              # login OIDC sin prompt=none, cabeceras, sin Set-Cookie anónimo,
-                             # y la encuesta de satisfacción: URL retenida hasta el cierre
+                             # la encuesta de satisfacción: URL retenida hasta el cierre,
+                             # y la carta: panel 401/403, tarjeta inexistente 404, y con las
+                             # DB_* vacías NADA de /api/carta/* existe (se corre en las dos ramas)
+node scripts/carta-server-test.mjs                 # la carta, PURA: config, migraciones, validación,
+                                                   # vCard, foto, guardias, OG y la matriz HTTP con
+                                                   # repositorio falso (sin BD ni servidor)
+node --env-file=.env scripts/carta-db-test.mjs     # la carta contra PortalG3_dev: CRUD, foto, 304,
+                                                   # auditoría, cortacircuitos; limpia lo que crea
 ```
 
 `inscripcion-test.mjs` no necesita servidor: levanta un **Graph falso** en loopback y se lo inyecta
@@ -451,6 +460,79 @@ ve) e `interactions-test.mjs` (los dos estados de los botones).
 
 ---
 
+## La carta de presentación digital
+
+Es el mismo producto que la app COMUNICACIONES retirada del servidor el 2026-07-31, integrado
+como módulo aislado del sitio: `/carta_presentacion/<uuid>` es la tarjeta pública de una persona
+(foto, cargo, contacto, redes, vCard, QR) y `/cdpadmin` el panel donde se crean y editan. Vive en
+`server/carta/` y `src/carta/`, y es lo único del sitio que **escribe en una base de datos** (el
+esquema `carta` de `PortalG3`, SQL Server) y que **recibe cuerpos** (JSON de 16 KB, fotos de 5 MB).
+Runbook: `docs/RUNBOOK-CARTA.md`.
+
+**El interruptor es la configuración, y no admite medias tintas.** Las cinco `DB_*` vacías = el
+módulo no existe (router sin montar, `/api/carta/*` → 404, `carta: 'no_aplica'` en `/api/me`,
+sin enlace en el menú). A medias, o con un valor que no vale = `exigirEntorno()` aborta el
+arranque en producción. Completas = al arrancar el servidor auto-comprueba `sharp`, conecta con
+la BD y compara las migraciones de `server/carta/sql/` con `carta.migracion` (por sha256): si
+faltan o alguna cambió, **aborta** y `deploy.sh` revierte. Si la BD no responde, no aborta: avisa,
+`/health` dice `bd: no_disponible`, las rutas de la carta contestan 503 con `Retry-After` y el
+foro sigue en pie, porque el foro no pasa por ese pool. **Las migraciones nunca se aplican
+solas**: `scripts/carta-migrar.mjs` las lista (`--estado`) y las aplica (`--confirmar`), con doble
+llave (`--bd <DB_NAME>`) cuando el nombre no termina en `_dev`.
+
+**La autorización es del servidor, y es afirmativa.** `soloRol('LOGIN_JEFA')`
+(`server/auth/guardias.js`) encadena `revalidate` → sesión → rol: pasa solo si `roles` es un
+array que contiene el rol; un string suelto, `null` o el rol de otro es 403. `revalidate` va
+delante a propósito: quitar el rol o desasignar a la persona en Entra corta el panel en a lo sumo
+20 minutos, igual que corta `/api/me`. La interfaz solo **pinta** el panel cuando `/api/me`
+confirma el literal `carta: 'admin'`; sin él, botón retenido con aviso. Nada de eso decide nada.
+
+**Lo público es una tarjeta, no un directorio.** El id es un UUID v4 generado en Node (no
+enumerable), no hay listado público, y el 404 es el mismo para un id mal formado, uno que no
+existe y una tarjeta retirada: retirar (`activo = 0`) es indistinguible de no haber existido. No
+hay borrado físico: un QR impreso apunta a un id, y ese id no puede desaparecer ni reasignarse.
+La foto va con `Cache-Control: private, no-cache` y `ETag` = sha256 (el navegador revalida con
+un 304 que no mueve el blob), para que ninguna caché compartida se quede con la foto de una
+tarjeta retirada.
+
+**Lo que entra se rechaza, no se sanea** (`server/carta/validacion.js`): allowlists por campo
+(letras y marcas para nombres, sin `<` ni `>` ni controles en ningún sitio), correo en
+minúsculas y único (409), teléfonos a E.164, redes acotadas por dominio (`linkedin.com` o un
+subdominio, `https` obligatorio, sin userinfo ni fragmento: `https://x.com@evil.com` cae por el
+hostname), sitio web sin IP literal. Cada rechazo devuelve un código por campo y la interfaz lo
+traduce; el 400 nunca devuelve lo que se envió. Las fotos las deciden sus **bytes** (magia de
+JPEG/PNG/WebP, no el `Content-Type` ni la extensión), `sharp` las decodifica con
+`limitInputPixels` de 40 MP (una cabecera que declare 20000×20000 se rechaza sin reservar
+memoria) y guarda **una** derivada WebP ≤ 800 px, sin EXIF (el original trae GPS y equipo; a la
+BD llegan solo píxeles) y con la orientación horneada. Un multipart truncado es 400, no 500.
+
+**Las cuatro salidas de texto escapan por su cuenta**, sin fiarse de la validación: React en la
+SPA; la vCard (`\` `;` `,` y saltos, RFC 6350, plegada a 75 octetos); el Open Graph dinámico
+(`& < > " '` en atributos, sobre cuatro etiquetas del `index.html` que este repo escribe; perfil
+ausente, retirado o BD lenta más de 1,5 s → el `index.html` intacto); y el `Content-Disposition`
+de la vCard (ASCII en `filename`, UTF-8 en `filename*`). El OG es además la **única excepción**
+a `esNavegacion`: `/carta_presentacion/<uuid>` exacto recibe HTML aunque llegue sin `Sec-Fetch`
+ni `Accept`, porque así piden los rastreadores de Teams y WhatsApp; `/cdpadmin` sin cabeceras
+sigue siendo 404 JSON, y `gate-test.mjs` lo fija.
+
+**Toda mutación deja rastro en la misma transacción** (`carta.auditoria`: quién, qué acción, qué
+campos cambiaron, desde qué IP; nunca los valores) y la fila sobrevive a todo (sin FK). El SQL
+va siempre con parámetros tipados; ninguna consulta concatena texto del cliente. Los logs llevan
+el código del error del transporte (`ETIMEOUT`, `ELOGIN`), nunca la cadena de conexión ni la
+consulta.
+
+**Diales**: `CARTA_RATE_PUBLICO` / `CARTA_RATE_ADMIN` / `CARTA_RATE_FOTO` (1200 / 600 / 60 por IP
+y 15 min), como `AUTH_RATE_LIMIT`: cortacircuitos, no política. En el borde, `location
+/api/carta/` es el único que admite `PUT`/`DELETE` y cuerpos de hasta 6 MB.
+
+Verificación: `carta-server-test.mjs` (todo lo de arriba sin BD: 32 casos hostiles de validación,
+la bomba de píxeles, los guardias con sesiones inventadas, el escapado del OG y la matriz HTTP
+completa con un repositorio falso) y `carta-db-test.mjs` (contra `PortalG3_dev`: CRUD, foto, 304,
+auditoría sin valores, cortacircuitos con un puerto cerrado; se niega a correr si `DB_NAME` no
+termina en `_dev`, y limpia lo que crea). `gate-test.mjs` corre en las dos ramas (módulo
+configurado y apagado) y `deploy.sh` exige `bd: ok`, `migraciones: al_dia`, 401 y 404, o
+revierte.
+
 ## Secretos
 
 Viven en `/etc/gtalks/env`, **fuera del directorio de la app**, con permisos `0600 root:root`:
@@ -473,6 +555,12 @@ el `.env` del repo.
   login rota también el del correo, en un solo `systemctl restart`. Si algún día se separa la app,
   aparece una **segunda** fecha de expiración que vigilar, y esa es la razón real para no separarlas
   a la ligera: el fallo típico de un sitio anual es un secreto que vence sin que nadie se entere.
+- **La clave de la base de datos (`DB_PASSWORD`) es el único secreto nuevo de la carta de
+  presentación.** Se rota en el SQL Server, se escribe en `/etc/gtalks/env` y en el `.env` de la
+  estación, `systemctl restart gtalks`, y `/health` debe volver a decir `bd: ok`. No vive en ningún
+  archivo del repo, no se escribe en logs (los errores del transporte llevan solo el código) y el
+  pool no la guarda en disco. Hoy es la cuenta `db_owner` de `PortalG3` compartida con los otros
+  portales: ver §Riesgos aceptados.
 - El fallo realista de un sitio anual no es que roben el secreto: es que **expire y nadie se entere**.
   Anotar aquí la fecha de expiración y poner recordatorio de calendario.
 
@@ -551,6 +639,10 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 | **Rate limit por IP** no detiene a un atacante decidido | Con NAT corporativo toda la sede comparte IP: un límite que tolere 300 entradas legítimas no puede ser estricto. Es un cortacircuitos contra bucles, no una política de seguridad. La defensa real es fail2ban en el borde. (Con el sitio público el pico del login ya no es «todo el auditorio a la misma hora»: solo pasa por `/auth/*` quien abre su escarapela) | Ajustar con los rangos de egress cuando IT los entregue |
 | **El nombre y la cédula del certificado van en Poppins Regular, que NO es la fuente exacta de la pieza** | Se midieron 13 candidatas con tres arneses (`scripts/certificado-fuente.py`); ninguna ES la de la pieza (mejor IoU alineado 0.608). Poppins Regular clava el peso (asta 3.00 px, la misma) y es la más cercana en forma; al cuerpo del diploma la diferencia no se percibe sin comparar glifo a glifo. Decisión del usuario, 2026-08-10 | Si Comunicaciones entrega la fuente original: añadirla a CANDIDATAS, correr el arnés, regenerar y resubir |
 | **`GET /api/certificado` es la primera ruta HTTP que sirve un dato del registro de asistencia** | La «peor puerta» de EXPORTAR-INSCRITOS era una que sirviera EL registro; esta sirve UN archivo estático, solo al dueño del oid de la sesión, sin parámetros ni enumeración posibles, con `revalidate` y `no-store`. El dato que entrega ya pertenece a quien lo pide | Cada edición: si la función no se repite, vaciar `CERTIFICADOS_DIR` y la ruta responde 404 para todo el mundo |
+| **`DB_TRUST_CERT=true`: el certificado del SQL Server no se verifica** | El servidor presenta un certificado autofirmado y con `false` la conexión cifrada no se establece (comprobado desde la estación el 2026-09-02). La conexión sigue CIFRADA (`encrypt: true`); lo que se pierde es la garantía de que el otro extremo es quien dice ser, dentro de la red corporativa. Se exige explícito (`true` literal) y nunca por defecto | Instalar la CA del SQL Server en el servidor, poner `false` y, como el host es una IP, dar el nombre del certificado en `DB_TLS_SERVERNAME` |
+| **La cuenta de BD es `db_owner` de `PortalG3`**, no una acotada al esquema `carta` | Es la única cuenta que se entregó, y la comparten los otros portales. El código solo nombra objetos de `carta` (lo fija `carta-server-test.mjs` sobre las migraciones), pero una inyección que no existe hoy tendría toda la base al alcance | Pedir a quien administre el SQL Server un login con `ALTER, SELECT, INSERT, UPDATE, DELETE ON SCHEMA::carta` y nada más; el cambio es solo `DB_USER`/`DB_PASSWORD` |
+| **Un rol quitado en Entra sigue vivo hasta 20 minutos en la sesión** | `revalidate` refresca los roles cada `REVALIDATE_INTERVAL_MS`, no en cada petición: pedirle a Entra un token por cada clic del panel lo haría inusable. En sentido contrario (rol recién asignado) la persona ve el botón retenido y el aviso le dice que cierre sesión y vuelva a entrar | Si hace falta corte inmediato: bajar el intervalo, o cerrar la sesión desde Entra (revocación) |
+| **El Open Graph dinámico abre `esNavegacion` a peticiones sin cabeceras** | Solo para la forma exacta `/carta_presentacion/<uuid v4>`; lo que sale es el mismo `index.html` con la misma CSP y cuatro etiquetas sustituidas y escapadas. Sin ello la vista previa de Teams y WhatsApp saldría como una URL pelada | `gate-test.mjs` fija que `/cdpadmin` y un id que no sea UUID siguen siendo 404 sin cabeceras |
 
 ---
 

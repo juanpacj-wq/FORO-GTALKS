@@ -1,0 +1,138 @@
+/* El vocabulario de formulario del sistema. Nació con la carta de presentación: hasta
+   entonces el sitio no tenía ni un `<input>` de texto. Solo tokens existentes.
+
+   El control va transparente sobre el campo oscuro, con el hairline fuerte de borde: es
+   el mismo trazo con el que el sistema dibuja los chips y el botón base. El foco es el
+   anillo global (`:focus-visible` en base.css). El error no inventa un color: el texto va
+   en `--gt-texto` con el nombre del campo delante, y el borde pasa a 2 px de celeste, que
+   es el mismo cambio que hace el botón al recibir atención.                             */
+
+.gt-campo {
+  display: grid;
+  gap: var(--gt-space-1);
+  min-width: 0;
+}
+
+.gt-campo__etiqueta {
+  font-size: var(--gt-fs-sm);
+  font-weight: var(--gt-fw-semibold);
+  color: var(--gt-texto);
+}
+
+.gt-campo__obligatorio {
+  color: var(--gt-acento);
+}
+
+.gt-campo__control {
+  font: inherit;
+  min-height: 2.75rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  background: transparent;
+  color: var(--gt-texto);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-chico);
+  transition: border-color var(--gt-transicion);
+}
+
+.gt-campo__control::placeholder {
+  color: var(--gt-texto-suave);
+  opacity: 1;
+}
+
+.gt-campo__control:hover {
+  border-color: var(--gt-celeste-alto);
+}
+
+.gt-campo--invalido .gt-campo__control {
+  border-width: 2px;
+  border-color: var(--gt-celeste);
+  /* Compensa el píxel extra del borde: el texto no salta al marcarse el error. */
+  padding: calc(0.7rem - 1px) calc(0.9rem - 1px);
+}
+
+.gt-campo__ayuda,
+.gt-campo__error {
+  margin: 0;
+  font-size: var(--gt-fs-xs);
+  line-height: var(--gt-lh-normal);
+}
+
+.gt-campo__ayuda {
+  color: var(--gt-texto-suave);
+}
+
+.gt-campo__error {
+  color: var(--gt-texto);
+  font-weight: var(--gt-fw-semibold);
+}
+
+/* --- Agrupación ------------------------------------------------------------- */
+
+.gt-formulario {
+  display: grid;
+  gap: var(--gt-space-6);
+}
+
+/* Un conjunto de campos con su título. `fieldset` y `legend` sin el cromo del navegador:
+   la separación la hace el hairline, como en el resto del sitio.                       */
+.gt-formulario__grupo {
+  margin: 0;
+  padding: var(--gt-space-6) 0 0;
+  border: 0;
+  border-top: var(--gt-borde) solid var(--gt-linea);
+  display: grid;
+  gap: var(--gt-space-4);
+  min-width: 0;
+}
+
+.gt-formulario__grupo > legend {
+  padding: 0;
+  margin-bottom: var(--gt-space-2);
+  float: left; /* saca la leyenda del cromo del fieldset para que entre en la rejilla */
+  width: 100%;
+  font-size: var(--gt-fs-h3);
+  font-weight: var(--gt-fw-bold);
+  letter-spacing: var(--gt-tracking-tight);
+}
+
+.gt-formulario__grupo > legend + * {
+  clear: both;
+}
+
+/* Dos columnas cuando caben: nombres y apellidos, teléfono y WhatsApp. */
+.gt-formulario__fila {
+  display: grid;
+  gap: var(--gt-space-4);
+}
+
+@media (min-width: 48rem) {
+  .gt-formulario__fila {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+}
+
+.gt-formulario__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-4);
+}
+
+/* El resumen de errores, anunciado como alerta al enviar. Misma caja hairline que las
+   alertas del callback OIDC en /escarapela y /certificado.                            */
+.gt-formulario__alerta {
+  margin: 0;
+  padding: var(--gt-space-3) var(--gt-space-4);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-chico);
+  color: var(--gt-texto);
+  font-size: var(--gt-fs-sm);
+}
+
+/* Un botón de acción (submit) hereda `.gt-boton`; el que envía va sólido. Mientras se
+   guarda, se retiene con `aria-busy` y el cursor lo dice.                             */
+.gt-boton[aria-busy='true'] {
+  cursor: progress;
+  opacity: 0.7;
+}

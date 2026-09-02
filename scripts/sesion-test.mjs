@@ -7,7 +7,17 @@
 // automatizar (MFA de por medio). Así que se intercepta `/api/me` y se responde con una identidad
 // de prueba: lo que se verifica es que la interfaz pinta lo que el server le entrega y que las
 // salidas apuntan a donde deben. El server en sí lo cubre `gate-test.mjs`.
+import { readFileSync } from 'node:fs'
 import { chromium } from 'playwright'
+import { readBarcodes } from 'zxing-wasm/reader'
+import {
+  ID_FIXTURE,
+  ID_INEXISTENTE,
+  IDENTIDAD_ADMIN,
+  PERFIL_PUBLICO,
+  RESPUESTA_400,
+  instalarMocks,
+} from './fixture-carta.mjs'
 
 let fallos = 0
 function check(nombre, ok, detalle = '') {
@@ -287,6 +297,210 @@ for (const [nombre, extra, esperaDescarga] of [
   await p.keyboard.press('Escape')
   await p.waitForTimeout(250)
   check('  Escape lo cierra sin soltar el foco', !(await aviso.isVisible()))
+  await p.close()
+}
+
+// ───────────────────────────────── la carta de presentación, en la interfaz
+// Misma regla que el certificado: solo el literal `carta: 'admin'` que confirma el servidor
+// pinta el enlace del menú y el panel; `no_aplica` (y el campo ausente) caen en el botón
+// retenido. La autorización real es del servidor; aquí se verifica lo que se ENSEÑA.
+console.log('\nLa carta de presentación: el menú y el gate del panel')
+
+{
+  // `IDENTIDAD` (roles: []) sigue sin pintar el enlace: los roles no deciden nada aquí.
+  const sinRol = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await sinRol.route('**/api/me', (ruta) => ruta.fulfill({ json: IDENTIDAD }))
+  await sinRol.goto(base + '/', { waitUntil: 'networkidle' })
+  await sinRol.locator('.gt-sesion__boton').click()
+  await sinRol.waitForTimeout(200)
+  check('sin `carta: admin` el menú no ofrece el panel', (await sinRol.locator('.gt-sesion__panel a[href="/cdpadmin"]').count()) === 0)
+  await sinRol.close()
+
+  const conRol = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await conRol.route('**/api/me', (ruta) => ruta.fulfill({ json: IDENTIDAD_ADMIN }))
+  await conRol.goto(base + '/', { waitUntil: 'networkidle' })
+  await conRol.locator('.gt-sesion__boton').click()
+  await conRol.waitForTimeout(200)
+  check(
+    'con `carta: admin` el menú enlaza a /cdpadmin',
+    (await conRol.locator('.gt-sesion__panel a[href="/cdpadmin"]').count()) === 1,
+  )
+  await conRol.close()
+
+  const movilRol = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  await movilRol.route('**/api/me', (ruta) => ruta.fulfill({ json: IDENTIDAD_ADMIN }))
+  await movilRol.goto(base + '/', { waitUntil: 'networkidle' })
+  await movilRol.click('.gt-header__hamburguesa')
+  await movilRol.waitForTimeout(300)
+  check('y también en el menú móvil', (await movilRol.locator('.gt-sesion--movil a[href="/cdpadmin"]').count()) === 1)
+  await movilRol.close()
+}
+
+for (const [nombre, me, espera] of [
+  ['sin sesión', null, 'entrar'],
+  ['no_aplica', { ...IDENTIDAD, carta: 'no_aplica' }, 'retenido'],
+  ['campo ausente (server viejo)', IDENTIDAD, 'retenido'],
+  ['admin', IDENTIDAD_ADMIN, 'panel'],
+]) {
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await instalarMocks(p, { me })
+  await p.goto(base + '/cdpadmin', { waitUntil: 'networkidle' })
+  if (espera === 'entrar') {
+    check(`«${nombre}»: /cdpadmin invita a entrar con retorno`,
+      (await p.locator('a.gt-cdp__entrar').getAttribute('href')) === '/auth/login?destino=/cdpadmin')
+    check('  y no pinta el panel', (await p.locator('.gt-cdp__panel').count()) === 0)
+  } else if (espera === 'retenido') {
+    const retenido = p.locator('button.gt-cdp__entrar')
+    check(`«${nombre}»: el botón retenido existe, enfocable y descrito`,
+      (await retenido.count()) === 1 &&
+      (await retenido.getAttribute('aria-disabled')) === 'true' &&
+      (await retenido.getAttribute('aria-describedby')) === 'gt-cdp-aviso')
+    const aviso = ((await p.locator('#gt-cdp-aviso').textContent()) || '').toLowerCase()
+    check('  y el aviso explica cerrar sesión y volver a entrar', aviso.includes('cerrar sesión'))
+    check('  y no pinta el panel', (await p.locator('.gt-cdp__panel').count()) === 0)
+  } else {
+    check(`«${nombre}»: el panel lista las cartas`, (await p.locator('.gt-cdp__tabla tbody tr').count()) === 2)
+    check('  la tabla lleva caption y encabezados de columna',
+      (await p.locator('.gt-cdp__tabla caption').count()) === 1 &&
+      (await p.locator('.gt-cdp__tabla thead th[scope="col"]').count()) === 6)
+  }
+  await p.close()
+}
+
+{
+  // «Nueva carta» vacía: el resumen es una alerta, los cuatro obligatorios van marcados y
+  // el foco cae en el primero.
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await instalarMocks(p)
+  await p.goto(base + '/cdpadmin', { waitUntil: 'networkidle' })
+  await p.click('.gt-cdp__nueva')
+  await p.waitForSelector('form.gt-formulario')
+  check('el formulario no lleva `action` (la CSP tiene form-action none)',
+    (await p.locator('form.gt-formulario').getAttribute('action')) === null)
+  await p.click('form.gt-formulario button[type="submit"]')
+  await p.waitForTimeout(200)
+  check('vacío: aparece la alerta', (await p.locator('.gt-formulario [role="alert"]').count()) === 1)
+  check('  y los cuatro obligatorios van aria-invalid',
+    (await p.locator('.gt-formulario input[aria-invalid="true"]').count()) === 4)
+  check('  y el foco cae en el primero (Nombres)',
+    await p.evaluate(() => document.activeElement?.getAttribute('name')) === 'nombres')
+
+  // El 400 del servidor: cada código se pinta bajo su campo, con el nombre del campo delante.
+  const p2 = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await instalarMocks(p2, { alGuardar: () => RESPUESTA_400 })
+  await p2.goto(base + '/cdpadmin?perfil=nueva', { waitUntil: 'networkidle' })
+  await p2.waitForSelector('form.gt-formulario')
+  await p2.fill('input[name="nombres"]', 'Ana')
+  await p2.fill('input[name="apellidos"]', 'Pérez')
+  await p2.fill('input[name="cargo"]', 'Jefa')
+  await p2.fill('input[name="correo"]', 'ana@gecelca')
+  await p2.fill('input[name="linkedin"]', 'https://evil.example/')
+  await p2.click('form.gt-formulario button[type="submit"]')
+  await p2.waitForTimeout(300)
+  const errorCorreo = ((await p2.locator('input[name="correo"] ~ .gt-campo__error').textContent()) || '').trim()
+  check('400 simulado: el error del correo va bajo su campo, con el nombre delante',
+    errorCorreo.startsWith('Correo corporativo:') && errorCorreo.includes('formato'), errorCorreo)
+  check('  el de LinkedIn también, nombrando el dominio',
+    (((await p2.locator('input[name="linkedin"] ~ .gt-campo__error').textContent()) || '')).includes('linkedin.com'))
+  check('  y el foco va al primero inválido (correo)',
+    await p2.evaluate(() => document.activeElement?.getAttribute('name')) === 'correo')
+  check('  sin borrar lo escrito', (await p2.inputValue('input[name="nombres"]')) === 'Ana')
+  await p2.close()
+  await p.close()
+}
+
+console.log('\nLa carta de presentación: la tarjeta pública')
+{
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 }, acceptDownloads: true })
+  // Sin `navigator.share` y con un portapapeles espía: se verifica el respaldo de copiar.
+  await p.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true })
+    window.__copiado = null
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: async (t) => { window.__copiado = t } },
+      configurable: true,
+    })
+  })
+  await instalarMocks(p, { me: null })
+  await p.goto(base + `/carta_presentacion/${ID_FIXTURE}`, { waitUntil: 'networkidle' })
+  await p.evaluate(() => document.fonts.ready)
+
+  check('el nombre es el h1 de la página',
+    (await p.locator('h1').count()) === 1 && (await p.locator('h1').textContent())?.trim() === PERFIL_PUBLICO.nombre)
+  check('«Llamar» marca el E.164', (await p.locator('a.gt-boton[href^="tel:+57"]').count()) === 1)
+  check('«Escribir» abre el correo', (await p.locator(`a.gt-boton[href="mailto:${PERFIL_PUBLICO.correo}"]`).count()) === 1)
+  const wa = p.locator('a.gt-boton[href^="https://wa.me/573001234567"]')
+  check('«WhatsApp» va a wa.me con los dígitos', (await wa.count()) === 1)
+  const externos = await p.$$eval('a[target="_blank"]', (as) => as.map((a) => ({ href: a.href, rel: a.rel })))
+  check('todo lo que sale del sitio lleva noopener noreferrer',
+    externos.length >= 4 && externos.every((a) => a.rel.includes('noopener') && a.rel.includes('noreferrer')),
+    JSON.stringify(externos.map((a) => a.rel)))
+  check('«Guardar contacto» es una descarga del vCard del servidor',
+    (await p.locator(`a[download][href$="/perfiles/${ID_FIXTURE}/vcard"]`).count()) === 1)
+  check('la foto sale del servidor, con el ETag como rompecachés',
+    ((await p.locator('.gt-tarjeta__retrato img').getAttribute('src')) || '').includes(`/perfiles/${ID_FIXTURE}/foto?v=`))
+
+  await p.click('.gt-tarjeta__compartir')
+  await p.waitForTimeout(200)
+  check('«Compartir» sin navigator.share copia el enlace',
+    (await p.evaluate(() => window.__copiado)) === PERFIL_PUBLICO.url)
+  check('  y lo anuncia en una región de estado',
+    ((await p.locator('.gt-tarjeta [role="status"]').textContent()) || '').includes('copiado'))
+
+  const abrir = p.locator('.gt-qr-tarjeta__abrir')
+  check('el QR va plegado tras un botón aria-pressed', (await abrir.getAttribute('aria-pressed')) === 'false')
+  await abrir.click()
+  await p.waitForTimeout(200)
+  check('  al abrirlo, el código lleva la URL absoluta de la tarjeta',
+    (await p.locator('.gt-qr-tarjeta__codigo').getAttribute('data-contenido')) === PERFIL_PUBLICO.url &&
+    (await abrir.getAttribute('aria-pressed')) === 'true')
+  check('  y sin ningún dato de sesión en el DOM', !(await p.content()).includes(IDENTIDAD_ADMIN.user.oid))
+  await p.close()
+}
+
+{
+  // El PNG que descarga el panel se LEE con un decodificador real y dice la URL de la tarjeta.
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 }, acceptDownloads: true })
+  await instalarMocks(p)
+  await p.goto(base + `/cdpadmin?perfil=${ID_FIXTURE}`, { waitUntil: 'networkidle' })
+  await p.waitForSelector('.gt-qr-tarjeta__descargas')
+  const [descarga] = await Promise.all([
+    p.waitForEvent('download', { timeout: 15000 }),
+    p.click('.gt-qr-tarjeta__descargas button:has-text("PNG")'),
+  ])
+  const ruta = await descarga.path()
+  const png = readFileSync(ruta)
+  const res = await readBarcodes(new Uint8Array(png), { formats: ['QRCode'], tryHarder: true })
+  check('el PNG descargado del panel lo decodifica ZXing y dice la URL de la tarjeta',
+    res.length === 1 && res[0].text === PERFIL_PUBLICO.url,
+    res.length ? res[0].text.slice(0, 70) : `no encontró ningún QR (${descarga.suggestedFilename()})`)
+  check('  con nombre de archivo a partir de la persona',
+    descarga.suggestedFilename() === 'qr-Stefany-Vides-Osorio.png', descarga.suggestedFilename())
+  await p.close()
+}
+
+for (const [nombre, opciones, ruta, fragmento, boton] of [
+  ['404', { perfil: 404 }, `/carta_presentacion/${ID_FIXTURE}`, 'no está disponible', 'a[href="/"]'],
+  ['id sin forma de UUID', {}, '/carta_presentacion/no-es-un-uuid', 'no está disponible', 'a[href="/"]'],
+  ['503', { perfil: 503 }, `/carta_presentacion/${ID_FIXTURE}`, 'No pudimos cargar', 'button.gt-boton'],
+]) {
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await instalarMocks(p, { me: null, ...opciones })
+  await p.goto(base + ruta, { waitUntil: 'networkidle' })
+  check(`«${nombre}»: la ruta se queda y pinta su aviso`,
+    new URL(p.url()).pathname === ruta && ((await p.locator('.gt-carta-pagina__aviso h1').textContent()) || '').includes(fragmento))
+  check('  con su salida', (await p.locator(`.gt-carta-pagina__aviso ${boton}`).count()) === 1)
+  await p.close()
+}
+
+{
+  // El 404 de un id válido que no existe tampoco redirige ni filtra nada.
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await instalarMocks(p, { me: null })
+  await p.goto(base + `/carta_presentacion/${ID_INEXISTENTE}`, { waitUntil: 'networkidle' })
+  check('un UUID válido que no existe: «no disponible» en su propia URL',
+    new URL(p.url()).pathname === `/carta_presentacion/${ID_INEXISTENTE}` &&
+    (await p.locator('.gt-carta-pagina__aviso').count()) === 1)
   await p.close()
 }
 

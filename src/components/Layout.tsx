@@ -13,6 +13,8 @@ const TITULOS: Record<string, string> = {
   '/encuestas': `Encuestas ${TITULO_BASE}`,
   '/certificado': `Certificado ${TITULO_BASE}`,
   '/galeria': `Memorias del evento ${TITULO_BASE}`,
+  '/cdpadmin': `Cartas de presentación ${TITULO_BASE}`,
+  // /carta_presentacion/:id pone el nombre de la persona con `useTituloPagina`.
 }
 
 /** Deja que una página fije su propio `<title>`, para las rutas dinámicas. */

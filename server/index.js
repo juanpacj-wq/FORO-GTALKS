@@ -11,6 +11,8 @@
  */
 import { buildAuthApp } from './app.js';
 import { leerConfiguracion } from './correo/inscripcion.js';
+import { leerConfiguracionCarta } from './carta/config.js';
+import { cerrarCarta } from './carta/index.js';
 
 const PORT = Number(process.env.SERVER_PORT || 3000);
 const HOST = process.env.SERVER_HOST || '127.0.0.1';
@@ -60,6 +62,19 @@ function exigirEntorno() {
       '\n  Con INSCRIPCION_MODO=off el resto del bloque no hace falta.'
     );
   }
+
+  // La carta de presentación: misma doctrina. Las cinco DB_* vacías = el módulo no existe;
+  // a medias, o con un valor que no vale = se aborta AQUÍ, en el despliegue, y deploy.sh
+  // revierte. Que la BD responda y que el esquema esté al día se comprueba después, al
+  // arrancar (server/carta/index.js), porque exige red.
+  const carta = leerConfiguracionCarta();
+  if (carta.problemas.length) {
+    throw new Error(
+      'Configuración de la carta de presentación incompleta:\n' +
+      carta.problemas.map((p) => `    · ${p}`).join('\n') +
+      '\n  Con las cinco DB_* vacías el módulo no existe y el resto del bloque no hace falta.'
+    );
+  }
 }
 
 if (esProduccion) exigirEntorno();
@@ -73,6 +88,7 @@ const server = app.listen(PORT, HOST, () => {
 // cortan a media respuesta.
 function apagar(senal) {
   console.log(`\n  ▸ ${senal} recibido cerrando conexiones…`);
+  cerrarCarta().catch(() => {}); // el pool del SQL Server, si lo hay
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref(); // si algo se cuelga, no bloquear el reinicio
 }

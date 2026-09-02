@@ -7,6 +7,8 @@ import EscarapelaPage from './pages/EscarapelaPage'
 import EncuestasPage from './pages/EncuestasPage'
 import CertificadoPage from './pages/CertificadoPage'
 import GaleriaPage from './pages/GaleriaPage'
+import CartaPresentacionPage from './pages/CartaPresentacionPage'
+import CdpAdminPage from './pages/CdpAdminPage'
 
 export default function App() {
   return (
@@ -19,6 +21,11 @@ export default function App() {
         <Route path="/encuestas" element={<EncuestasPage />} />
         <Route path="/certificado" element={<CertificadoPage />} />
         <Route path="/galeria" element={<GaleriaPage />} />
+        {/* La carta de presentación digital: la tarjeta pública (llega por QR o enlace) y su
+            panel. Van ANTES del comodín: la tarjeta pinta su propio «no disponible» en su
+            URL, no redirige a la home. */}
+        <Route path="/carta_presentacion/:id" element={<CartaPresentacionPage />} />
+        <Route path="/cdpadmin" element={<CdpAdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -113,3 +113,8 @@ fuentes-origen/*
 # Anotaciones de operación con inventario interno del servidor (hostnames, IPs,
 # servicios). Como deploy/deploy.env: útil en la estación, no viaja a GitHub.
 /docs/fase1 anotaciones.md
+
+# Los raster de la marca GECELCA 2026 (JPG/PNG de Comunicaciones) de los que
+# scripts/build-marca-gecelca.py vectoriza logo-gecelca.svg y marca-g.svg. Como
+# retratos-origen/: el envío en crudo no viaja a GitHub; el derivado SVG sí.
+marca-origen/

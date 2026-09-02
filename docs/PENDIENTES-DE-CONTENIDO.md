@@ -116,5 +116,23 @@ que buscarlo por un apellido suelto. Corregido en `SIN_QR` y en el listado de pl
 patrón que ya se había usado para KOOP/KOPP; la audiencia pasó de 155 a **156** y `entregaManual`
 quedó vacío.
 
+### La carta de presentación digital: lo que quedó fuera de alcance (2026-09-02)
+
+El módulo `carta` (`/carta_presentacion/<uuid>` y `/cdpadmin`) se entregó completo; estas tres
+cosas no dependen del código y quedan anotadas para no perderlas:
+
+1. **Importar los perfiles de la app anterior.** El respaldo del retiro del 2026-07-31 está en el
+   servidor (`/var/backups/comunicaciones-datos-2026-07-31.tgz`: la SQLite y los uploads). Hoy
+   cada tarjeta se crea a mano desde el panel; un importador tendría que pasar cada foto por el
+   mismo `procesarFoto` y cada campo por la misma validación, y decidir qué hacer con los
+   perfiles que no la pasen.
+2. **Una cuenta de base de datos acotada al esquema `carta`.** La que hay es `db_owner` de
+   `PortalG3`, compartida con los otros portales. Pedirla a quien administre el SQL Server:
+   `ALTER, SELECT, INSERT, UPDATE, DELETE ON SCHEMA::carta`. El cambio en el sitio es solo
+   `DB_USER`/`DB_PASSWORD`.
+3. **La CA del SQL Server**, para poner `DB_TRUST_CERT=false` (riesgo aceptado en
+   `docs/SEGURIDAD.md`). Como el host es una IP, habrá que dar además el nombre del certificado
+   en `DB_TLS_SERVERNAME`.
+
 Todo microcopy **nuevo** de la interfaz (botones, estados vacíos, mensajes de error) va en
 español de Colombia con tuteo.
