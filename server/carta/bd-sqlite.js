@@ -23,9 +23,28 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { createRequire } from 'node:module';
 
 import { BdNoDisponible } from './bd.js';
+
+/**
+ * `node:sqlite` se carga PEREZOSAMENTE, y no con un `import` arriba: existe desde Node 22.13,
+ * y este archivo lo importa `index.js` para TODOS los motores. Con un `import` estático, un
+ * servidor con Node 20 y el motor `mssql` no arrancaría por un módulo que ni usa (pasó en
+ * Melisandre el 2026-09-02, con Node 20.20). Así, sin Node 22 el error sale solo al abrir la
+ * base, con nombre propio, y el resto del sitio sigue en pie.
+ */
+const require = createRequire(import.meta.url);
+function cargarSqlite() {
+  try {
+    return require('node:sqlite').DatabaseSync;
+  } catch (err) {
+    throw Object.assign(
+      new Error(`node:sqlite no está disponible en Node ${process.version}: el motor embebido exige Node 22.13 o más (${err.code || err.message})`),
+      { code: 'SIN_NODE_SQLITE' },
+    );
+  }
+}
 
 /** ¿Es un error de SQLite por restricción UNIQUE (el correo repetido)? */
 export const esDuplicadoSqlite = (err) =>
@@ -40,6 +59,7 @@ export function crearBdSqlite({ ruta }) {
     try {
       const dir = path.dirname(path.resolve(ruta));
       if (!fs.existsSync(dir)) throw Object.assign(new Error(`no existe el directorio ${dir}`), { code: 'ENOENT' });
+      const DatabaseSync = cargarSqlite();
       const nueva = new DatabaseSync(path.resolve(ruta));
       nueva.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA synchronous = NORMAL;');
       db = nueva;
