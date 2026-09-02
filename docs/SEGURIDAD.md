@@ -480,6 +480,18 @@ foro sigue en pie, porque el foro no pasa por ese pool. **Las migraciones nunca 
 solas**: `scripts/carta-migrar.mjs` las lista (`--estado`) y las aplica (`--confirmar`), con doble
 llave (`--bd <DB_NAME>`) cuando el nombre no termina en `_dev`.
 
+**Dos motores, una sola capa de datos.** `DB_MOTOR=mssql` (SQL Server, las cinco `DB_*`) o
+`DB_MOTOR=sqlite` (embebido en el proceso con `node:sqlite`, un archivo en
+`DB_SQLITE_PATH`, en producción `/var/lib/gtalks/carta.db`). El embebido nació el 2026-09-02
+porque el servidor no alcanzaba ningún SQL Server; es el mismo esquema en otro dialecto
+(`server/carta/sql-sqlite/`), el mismo repositorio por interfaz (`repositorio-sqlite.js`) y el
+mismo arnés (`carta-db-test.mjs --sqlite` corre el guion entero contra un archivo temporal). Las
+dos familias de variables a la vez son una configuración a medias y abortan. Lo que cambia en
+seguridad: no hay credenciales de BD que rotar ni certificado que confiar; lo que hay que
+proteger es el ARCHIVO (`0600 gtalks:gtalks`, dentro del `StateDirectory` que solo el servicio
+lee) y su copia (`scripts/carta-respaldar.mjs`, `VACUUM INTO`: nunca `cp` en caliente, que con
+WAL sale a medias). Con `foreign_keys=ON` la foto cae en cascada con el perfil, igual que allí.
+
 **La autorización es del servidor, y es afirmativa.** `soloRol('LOGIN_JEFA')`
 (`server/auth/guardias.js`) encadena `revalidate` → sesión → rol: pasa solo si `roles` es un
 array que contiene el rol; un string suelto, `null` o el rol de otro es 403. `revalidate` va
@@ -658,6 +670,7 @@ Los ponentes que no son de GECELCA entran como invitados del tenant.
 | **`DB_TRUST_CERT=true`: el certificado del SQL Server no se verifica** | El servidor presenta un certificado autofirmado y con `false` la conexión cifrada no se establece (comprobado desde la estación el 2026-09-02). La conexión sigue CIFRADA (`encrypt: true`); lo que se pierde es la garantía de que el otro extremo es quien dice ser, dentro de la red corporativa. Se exige explícito (`true` literal) y nunca por defecto | Instalar la CA del SQL Server en el servidor, poner `false` y, como el host es una IP, dar el nombre del certificado en `DB_TLS_SERVERNAME` |
 | **La cuenta de BD es `db_owner` de `PortalG3`**, no una acotada al esquema `carta` | Es la única cuenta que se entregó, y la comparten los otros portales. El código solo nombra objetos de `carta` (lo fija `carta-server-test.mjs` sobre las migraciones), pero una inyección que no existe hoy tendría toda la base al alcance | Pedir a quien administre el SQL Server un login con `ALTER, SELECT, INSERT, UPDATE, DELETE ON SCHEMA::carta` y nada más; el cambio es solo `DB_USER`/`DB_PASSWORD` |
 | **Un rol quitado en Entra sigue vivo hasta 20 minutos en la sesión** | `revalidate` refresca los roles cada `REVALIDATE_INTERVAL_MS`, no en cada petición: pedirle a Entra un token por cada clic del panel lo haría inusable. En sentido contrario (rol recién asignado) la persona ve el botón retenido y el aviso le dice que cierre sesión y vuelva a entrar | Si hace falta corte inmediato: bajar el intervalo, o cerrar la sesión desde Entra (revocación) |
+| **Con el motor embebido, los datos de la carta viven en un archivo del servidor** (`/var/lib/gtalks/carta.db`) | Es la salida a un servidor que no alcanza ningún SQL Server (2026-09-02). El archivo está fuera de `/opt/gtalks` (los despliegues no lo tocan), es del usuario del servicio y solo él lo lee. Un disco que se pierde se lleva las cartas: por eso el respaldo diario por `VACUUM INTO` a `/var/lib/gtalks/copias-carta`, 30 días | Volver a SQL Server cuando Redes abra el 1433 (traslado con un script aparte), o copiar las copias a otra máquina |
 | **El Open Graph dinámico abre `esNavegacion` a peticiones sin cabeceras** | Solo para la forma exacta `/carta_presentacion/<uuid v4>`; lo que sale es el mismo `index.html` con la misma CSP y cuatro etiquetas sustituidas y escapadas. Sin ello la vista previa de Teams y WhatsApp saldría como una URL pelada | `gate-test.mjs` fija que `/cdpadmin` y un id que no sea UUID siguen siendo 404 sin cabeceras |
 
 ---

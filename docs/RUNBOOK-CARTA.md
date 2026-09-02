@@ -16,6 +16,81 @@ si el esquema no está al día, aborta**. Las migraciones **nunca** se aplican s
 
 ---
 
+## Camino rápido: el motor embebido (sin SQL Server)
+
+Existe desde el 2026-09-02, cuando el servidor no alcanzaba ningún SQL Server (el 1433 hacia
+`PortalG3` bloqueado, Infraestructura de viaje) y la jefa necesitaba su carta ese día. Es la
+MISMA carta con otro motor: SQLite dentro del propio proceso (`node:sqlite`, Node 22.13 o más;
+`node -v` en el servidor lo confirma), un solo archivo en `/var/lib/gtalks/carta.db`, que es el
+`StateDirectory` de systemd y sobrevive a los despliegues como el libro de inscripciones. No se
+instala nada. Las fotos van dentro del archivo, como en SQL Server.
+
+Todo en el servidor, con el código ya desplegado (el bloque de «Redespliegues futuros» de
+`docs/RUNBOOK-DESPLIEGUE-CDP.md`, o `deploy/deploy.sh` desde la estación):
+
+1. Entorno. `sudo nano /etc/gtalks/env`, añadir al final (sin ninguna `DB_HOST`/`DB_NAME`/...):
+
+   ```
+   # ── Carta de presentación: motor embebido (SQLite). Migraciones SOLO con scripts/carta-migrar.mjs ──
+   DB_MOTOR=sqlite
+   DB_SQLITE_PATH=/var/lib/gtalks/carta.db
+   CARTA_ROL_ADMIN=LOGIN_JEFA
+   CARTA_RATE_PUBLICO=1200
+   CARTA_RATE_ADMIN=600
+   CARTA_RATE_FOTO=60
+   ```
+
+2. Esquema. El archivo lo crea el migrador, como el usuario del servicio (dueño del directorio),
+   con la doble llave de la ruta:
+
+   ```bash
+   cd /opt/gtalks
+   sudo -u gtalks env DB_MOTOR=sqlite DB_SQLITE_PATH=/var/lib/gtalks/carta.db \
+     node scripts/carta-migrar.mjs --estado                                        # 4 PENDIENTE
+   sudo -u gtalks env DB_MOTOR=sqlite DB_SQLITE_PATH=/var/lib/gtalks/carta.db \
+     node scripts/carta-migrar.mjs --confirmar --bd /var/lib/gtalks/carta.db      # aplica
+   ls -la /var/lib/gtalks/carta.db                                                # gtalks:gtalks
+   ```
+
+3. `sudo systemctl restart gtalks` y la salud de la sección 6 de abajo: el journal debe decir
+   `[carta] activa · sqlite ok · 4 migraciones al día · rol LOGIN_JEFA`.
+
+4. nginx (sección 4 de abajo): `location /api/carta/` para las fotos y los `PUT`/`DELETE`.
+
+5. Respaldo diario, con la copia consistente que hace `VACUUM INTO` (nunca `cp` del `.db` en
+   caliente: lleva WAL). Como cron del usuario `gtalks`:
+
+   ```bash
+   sudo -u gtalks crontab -e
+   # 30 2 * * * cd /opt/gtalks && /usr/bin/node scripts/carta-respaldar.mjs /var/lib/gtalks/carta.db /var/lib/gtalks/copias-carta 30
+   ```
+
+Volver a SQL Server el día que la ruta exista es cambiar el bloque del entorno (quitar
+`DB_MOTOR`/`DB_SQLITE_PATH`, poner las cinco `DB_*`), aplicar las migraciones allí y reiniciar.
+Los datos no se mueven solos: un traslado sería un script aparte (perfil, foto y auditoría son las
+mismas tres tablas en los dos motores).
+
+### La alternativa que se descartó por hoy: SQL Server en el propio servidor
+
+Se puede: SQL Server 2025 Express es gratuito y soporta Ubuntu 24.04. Exige 2 GB de RAM libres,
+salida a `packages.microsoft.com`, unos 15 minutos y una contraseña de `sa`. No se verificó desde
+la estación (no hay ssh), así que va como receta y no como procedimiento probado:
+
+```bash
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+curl -fsSL https://packages.microsoft.com/config/ubuntu/24.04/mssql-server-2025.list | sudo tee /etc/apt/sources.list.d/mssql-server-2025.list
+sudo apt-get update && sudo apt-get install -y mssql-server
+sudo /opt/mssql/bin/mssql-conf setup     # edición Express (3), aceptar la licencia, contraseña de sa
+systemctl status mssql-server --no-pager
+```
+
+Después, en el entorno: `DB_HOST=127.0.0.1`, `DB_PORT=1433`, `DB_NAME=carta`, `DB_USER=sa`,
+`DB_PASSWORD=...`, `DB_TRUST_CERT=true` (certificado autofirmado), crear la base (`CREATE DATABASE
+carta`) con `sqlcmd` o desde la estación, y aplicar las migraciones con `--bd carta`. El motor
+embebido hace lo mismo sin nada de esto; por eso es el camino por defecto.
+
+---
+
 ## 0. Antes de tocar nada
 
 | Qué | Cómo se comprueba |

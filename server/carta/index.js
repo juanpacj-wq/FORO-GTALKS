@@ -27,8 +27,10 @@ import { soloRol } from '../auth/guardias.js';
 import { crearLimitador } from '../limites.js';
 import { leerConfiguracionCarta } from './config.js';
 import { crearBd } from './bd.js';
-import { estadoMigraciones, listarMigraciones } from './migraciones.js';
+import { aplicarPendientes, estadoMigraciones, listarMigraciones } from './migraciones.js';
 import { crearRepositorio } from './repositorio.js';
+import { aplicarPendientesSqlite, crearBdSqlite, estadoMigracionesSqlite } from './bd-sqlite.js';
+import { crearRepositorioSqlite } from './repositorio-sqlite.js';
 import { crearRutasCarta } from './rutas.js';
 import { comprobarSharp } from './foto.js';
 import { crearHtmlConOg, prepararOg } from './og.js';
@@ -37,6 +39,40 @@ import { crearProveedorDeToken } from '../correo/graph-mailer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const INDEX_HTML = path.resolve(__dirname, '..', '..', 'dist', 'index.html');
+const DIR_SQL_SQLITE = path.resolve(__dirname, 'sql-sqlite');
+
+/**
+ * La capa de datos para una configuración YA activa, según el motor: `bd`, `repositorio`, la
+ * lista de migraciones y dos funciones para comprobarlas y aplicarlas. La comparten el
+ * arranque, scripts/carta-migrar.mjs y scripts/carta-db-test.mjs, así que un motor nuevo
+ * (o un cambio en uno) se enchufa aquí y en ningún otro sitio.
+ */
+export function crearCapaDatos(cfg) {
+  if (cfg.motor === 'sqlite') {
+    const bd = crearBdSqlite(cfg.sqlite);
+    const lista = listarMigraciones(DIR_SQL_SQLITE);
+    return {
+      motor: 'sqlite',
+      descripcion: `sqlite ${bd.ruta}`,
+      bd,
+      repositorio: crearRepositorioSqlite(bd),
+      lista,
+      estadoMigraciones: (conexion) => estadoMigracionesSqlite(conexion, lista),
+      aplicarPendientes: (conexion, opciones) => aplicarPendientesSqlite(conexion, lista, opciones),
+    };
+  }
+  const bd = crearBd(cfg.bd);
+  const lista = listarMigraciones();
+  return {
+    motor: 'mssql',
+    descripcion: `mssql ${cfg.bd.host}:${cfg.bd.puerto}/${cfg.bd.nombre}`,
+    bd,
+    repositorio: crearRepositorio(bd),
+    lista,
+    estadoMigraciones: (pool) => estadoMigraciones(pool, lista),
+    aplicarPendientes: (pool, opciones) => aplicarPendientes(pool, opciones),
+  };
+}
 
 /** Estado del módulo para /api/me y /health. Uno solo por proceso. */
 let estado = {
@@ -83,9 +119,10 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
     return { activa: false, linea: '  [carta] módulo APAGADO (DB_* vacías: la carta de presentación no existe)', arranque: Promise.resolve() };
   }
 
-  const bd = dependencias.bd || crearBd(cfg.bd);
+  const capa = dependencias.capa || crearCapaDatos(cfg);
+  const bd = capa.bd;
   bdActual = bd;
-  const repositorio = dependencias.repositorio || crearRepositorio(bd);
+  const repositorio = dependencias.repositorio || capa.repositorio;
   const origen = String(env.PUBLIC_ORIGIN || '').replace(/\/+$/, '');
   const limites = {
     publico: crearLimitador({ nombre: 'carta/publico', limite: cfg.limites.publico }),
@@ -105,7 +142,7 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
   }
   const router = crearRutasCarta({ repositorio, guardias: { soloRol }, limites, cfg, origen, directorio });
 
-  estado = { configurada: true, bd: 'comprobando', migraciones: 'sin_comprobar', rolAdmin: cfg.rolAdmin, og: false };
+  estado = { configurada: true, motor: capa.motor, bd: 'comprobando', migraciones: 'sin_comprobar', rolAdmin: cfg.rolAdmin, og: false };
 
   // Open Graph: la plantilla se lee una vez. Sin dist/index.html (dev sin build) queda apagado.
   let og = { activo: false, motivo: 'dist/index.html no existe' };
@@ -118,7 +155,7 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
     htmlConOgActivo = async () => null;
   }
 
-  const lista = listarMigraciones();
+  const lista = capa.lista;
 
   // Las comprobaciones asíncronas. `arranque` rechaza SOLO por lo que debe abortar el proceso
   // (sharp roto, migraciones pendientes o alteradas); la BD inalcanzable se degrada.
@@ -136,7 +173,7 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
     }
     let m;
     try {
-      m = await estadoMigraciones(pool, lista);
+      m = await capa.estadoMigraciones(pool);
     } catch (err) {
       estado.bd = 'no_disponible';
       console.error(`  ⚠  [carta] no se pudieron leer las migraciones: ${err.message}`);
@@ -155,7 +192,7 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
       );
     }
     estado.bd = 'ok';
-    console.log(`  [carta] activa · bd ok · ${lista.length} migraciones al día · rol ${cfg.rolAdmin} · sharp ${versiones.sharp || ''} libvips ${versiones.vips || ''}`);
+    console.log(`  [carta] activa · ${capa.motor} ok · ${lista.length} migraciones al día · rol ${cfg.rolAdmin} · sharp ${versiones.sharp || ''} libvips ${versiones.vips || ''}`);
   })();
 
   // Un fallo del arranque en producción tiene que TUMBAR el proceso (deploy.sh revierte); en
@@ -172,7 +209,7 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
   return {
     activa: true,
     router,
-    linea: `  [carta] configurada · bd ${cfg.bd.host}:${cfg.bd.puerto}/${cfg.bd.nombre} · rol ${cfg.rolAdmin} · límites ${cfg.limites.publico}/${cfg.limites.admin}/${cfg.limites.foto} · OG ${estado.og ? 'sí' : 'no'} (comprobando BD y migraciones…)`,
+    linea: `  [carta] configurada · ${capa.descripcion} · rol ${cfg.rolAdmin} · límites ${cfg.limites.publico}/${cfg.limites.admin}/${cfg.limites.foto} · OG ${estado.og ? 'sí' : 'no'} (comprobando BD y migraciones…)`,
     arranque,
   };
 }

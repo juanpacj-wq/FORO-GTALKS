@@ -22,8 +22,10 @@ navega sin autenticarse, y la sesión de Microsoft Entra ID existe solo para la 
 Un slug de ponente que no exista redirige a `/ponentes`; cualquier otra ruta, a `/`.
 
 La carta de presentación es un módulo aparte dentro del mismo proceso (`server/carta/`,
-`src/carta/`): la única pieza del sitio con base de datos (el esquema `carta` de `PortalG3`, SQL
-Server, fotos incluidas). Con las cinco `DB_*` vacías **no existe**; a medias, el arranque aborta.
+`src/carta/`): la única pieza del sitio con base de datos, con dos motores intercambiables: SQLite
+embebido (`DB_MOTOR=sqlite`, un archivo en `/var/lib/gtalks/`, el que corre en producción) o SQL
+Server (`DB_MOTOR=mssql`, el esquema `carta` de `PortalG3`), fotos incluidas en los dos. Sin motor
+configurado **no existe**; a medias, el arranque aborta.
 Cómo se enciende: [`docs/RUNBOOK-CARTA.md`](docs/RUNBOOK-CARTA.md); qué protege:
 [`docs/SEGURIDAD.md`](docs/SEGURIDAD.md) §La carta de presentación digital.
 

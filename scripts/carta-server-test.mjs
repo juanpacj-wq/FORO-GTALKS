@@ -64,6 +64,14 @@ console.log('\nConfiguración: vacío = no existe; a medias = problemas; complet
   check('DB_TRUST_CERT=yes es un problema', leerConfiguracionCarta({ ...base, DB_TRUST_CERT: 'yes' }).problemas.length === 1);
   check('CARTA_ROL_ADMIN con espacios es un problema', leerConfiguracionCarta({ ...base, CARTA_ROL_ADMIN: 'LOGIN JEFA' }).problemas.length === 1);
   check('CARTA_RATE_ADMIN=0 es un problema', leerConfiguracionCarta({ ...base, CARTA_RATE_ADMIN: '0' }).problemas.length === 1);
+  check('el motor por defecto es mssql', completa.motor === 'mssql' && vacio.motor === 'mssql');
+  const sq = leerConfiguracionCarta({ DB_SQLITE_PATH: '/var/lib/gtalks/carta.db' });
+  check('DB_SQLITE_PATH solo → motor sqlite, activa', sq.activa && sq.motor === 'sqlite' && sq.sqlite.ruta === '/var/lib/gtalks/carta.db');
+  check('DB_MOTOR=sqlite sin ruta → problema', leerConfiguracionCarta({ DB_MOTOR: 'sqlite' }).problemas.length === 1);
+  check('DB_MOTOR=sqlite con DB_* puestas → problema', leerConfiguracionCarta({ DB_MOTOR: 'sqlite', DB_SQLITE_PATH: '/x.db', DB_HOST: 'h' }).problemas.length === 1);
+  check('DB_SQLITE_PATH y DB_* sin DB_MOTOR → problema', leerConfiguracionCarta({ ...base, DB_SQLITE_PATH: '/x.db' }).problemas.length === 1);
+  check('DB_MOTOR=otro → problema', leerConfiguracionCarta({ ...base, DB_MOTOR: 'postgres' }).problemas.length === 1);
+  check('sqlite respeta el rol y los diales', leerConfiguracionCarta({ DB_SQLITE_PATH: '/x.db', CARTA_ROL_ADMIN: 'OTRO', CARTA_RATE_FOTO: '9' }).rolAdmin === 'OTRO' && leerConfiguracionCarta({ DB_SQLITE_PATH: '/x.db', CARTA_RATE_FOTO: '9' }).limites.foto === 9);
   check('un host IP recibe un nombre TLS que no es IP', nombreTls('10.0.0.1') === 'sqlserver.gecelca.invalid' && nombreTls('db.gecelca.com.co') === 'db.gecelca.com.co');
   check('  y DB_TLS_SERVERNAME manda', nombreTls('10.0.0.1', 'sql.corp') === 'sql.corp');
 }

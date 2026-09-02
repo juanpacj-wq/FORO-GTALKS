@@ -594,6 +594,20 @@ bash deploy/descargas-subir.sh         # sube los ZIP que descarga /galeria a DE
   Arneses: `carta-server-test.mjs` (puro), `carta-db-test.mjs` (contra `_dev`, limpia) y
   `gate-test.mjs` en sus DOS ramas. Runbook: `docs/RUNBOOK-CARTA.md`; manual:
   `docs/SEGURIDAD.md` §La carta de presentación digital.
+- **La carta tiene DOS motores de datos, y el embebido es el que está en producción.**
+  `DB_MOTOR=mssql` (SQL Server, las cinco `DB_*`) o `DB_MOTOR=sqlite` (`node:sqlite`, Node
+  22.13+, un archivo en `DB_SQLITE_PATH`; en el servidor `/var/lib/gtalks/carta.db`, el
+  `StateDirectory`). Nació el 2026-09-02 porque el servidor no alcanza ningún SQL Server (el
+  1433 hacia `PortalG3` está bloqueado y las migraciones de `PortalG3` ya están aplicadas
+  esperando esa ruta). Todo lo que hay que saber: la capa se elige en UN sitio
+  (`crearCapaDatos` en `server/carta/index.js`) y nadie más sabe qué motor hay debajo; el
+  esquema SQLite es `server/carta/sql-sqlite/` (tablas `carta_*`, mismo número y nombre que
+  las de `sql/`); `repositorio-sqlite.js` cumple la MISMA interfaz y `carta-db-test.mjs
+  --sqlite` corre el guion entero contra un archivo temporal, así que un cambio de contrato
+  rompe los dos arneses; las dos familias de variables a la vez abortan; el migrador exige la
+  doble llave `--bd <ruta>` fuera de `.datos/`; y el respaldo es `scripts/carta-respaldar.mjs`
+  (`VACUUM INTO`), nunca `cp` del `.db` en caliente. Runbook: `docs/RUNBOOK-CARTA.md` §Camino
+  rápido.
 - **La tarjeta pública NO es del sistema de diseño del foro, y es a propósito.** Por pedido del
   usuario (2026-09-02) `src/carta/CartaPublica.tsx` + `.css` replican 1 a 1 el visor de la app
   COMUNICACIONES anterior (`../client-public/src/pages/ProfileCard.tsx`): su paleta (`#023f86`,
@@ -632,8 +646,10 @@ es `off`**: sin configurar, la función no existe. Abrir el envío a todo el ten
 a la empresa entera; una configuración a medias aborta el arranque en producción en vez de
 encender el envío a medias.
 
-La carta de presentación añade `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (las
-cinco juntas o ninguna), `DB_TRUST_CERT` (`true` explícito: riesgo aceptado), `DB_TLS_SERVERNAME`
-(opcional), `CARTA_ROL_ADMIN` (defecto `LOGIN_JEFA`) y los diales `CARTA_RATE_PUBLICO` /
-`CARTA_RATE_ADMIN` / `CARTA_RATE_FOTO`. En la estación `DB_NAME=PortalG3_dev`; en
-`/etc/gtalks/env`, `DB_NAME=PortalG3` (`DB_NAME_PROD` del `.env` local no la lee nadie).
+La carta de presentación añade el motor: `DB_MOTOR=sqlite` + `DB_SQLITE_PATH` (embebido; en
+producción `/var/lib/gtalks/carta.db`) o `DB_MOTOR=mssql` con `DB_HOST`, `DB_PORT`, `DB_NAME`,
+`DB_USER`, `DB_PASSWORD` (las cinco juntas o ninguna), `DB_TRUST_CERT` (`true` explícito: riesgo
+aceptado) y `DB_TLS_SERVERNAME` (opcional). Las dos familias a la vez abortan. Más
+`CARTA_ROL_ADMIN` (defecto `LOGIN_JEFA`) y los diales `CARTA_RATE_PUBLICO` / `CARTA_RATE_ADMIN` /
+`CARTA_RATE_FOTO`. En la estación `DB_NAME=PortalG3_dev` (`DB_NAME_PROD` del `.env` local no la
+lee nadie).

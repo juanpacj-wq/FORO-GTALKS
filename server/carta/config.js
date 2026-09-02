@@ -47,6 +47,40 @@ function leerEntero(env, clave, defecto, problemas) {
 export function leerConfiguracionCarta(env = process.env) {
   const problemas = [];
   const puestas = CLAVES_BD.filter((k) => norm(env[k]));
+
+  // ── El motor ──────────────────────────────────────────────────────────────
+  // `mssql` (SQL Server, las cinco DB_*) o `sqlite` (embebido, node:sqlite, DB_SQLITE_PATH).
+  // Sin DB_MOTOR se deduce: DB_SQLITE_PATH puesto = sqlite; si no, mssql. Las dos familias a la
+  // vez es una configuración a medias: no se adivina cuál manda.
+  const motorPedido = norm(env.DB_MOTOR).toLowerCase();
+  const rutaSqlite = norm(env.DB_SQLITE_PATH);
+  let motor = motorPedido || (rutaSqlite ? 'sqlite' : 'mssql');
+  if (motorPedido && !['mssql', 'sqlite'].includes(motorPedido)) {
+    problemas.push(`DB_MOTOR=«${motorPedido}» no existe (usa mssql o sqlite)`);
+    motor = 'mssql';
+  }
+  if (motor === 'sqlite') {
+    if (!rutaSqlite) problemas.push('DB_MOTOR=sqlite exige DB_SQLITE_PATH (ruta absoluta del archivo .db)');
+    if (puestas.length) problemas.push(`con DB_MOTOR=sqlite las DB_* de SQL Server sobran (hay ${puestas.join(', ')}): déjalas vacías`);
+    const rolAdminS = norm(env.CARTA_ROL_ADMIN) || ROL_POR_DEFECTO;
+    return {
+      activa: problemas.length === 0,
+      motor: 'sqlite',
+      problemas,
+      sqlite: { ruta: rutaSqlite },
+      bd: { host: '', puerto: 0, nombre: '', usuario: '', clave: '', confiarCertificado: false, nombreTls: '' },
+      rolAdmin: rolAdminS,
+      limites: {
+        publico: leerEntero(env, 'CARTA_RATE_PUBLICO', LIMITES_POR_DEFECTO.publico, problemas),
+        admin: leerEntero(env, 'CARTA_RATE_ADMIN', LIMITES_POR_DEFECTO.admin, problemas),
+        foto: leerEntero(env, 'CARTA_RATE_FOTO', LIMITES_POR_DEFECTO.foto, problemas),
+      },
+    };
+  }
+  if (rutaSqlite && puestas.length) {
+    problemas.push('DB_SQLITE_PATH y las DB_* de SQL Server a la vez: elige un motor (DB_MOTOR) y vacía el otro bloque');
+  }
+
   const activa = puestas.length === CLAVES_BD.length;
 
   if (!activa && puestas.length > 0) {
@@ -81,7 +115,9 @@ export function leerConfiguracionCarta(env = process.env) {
 
   return {
     activa: activa && problemas.length === 0,
+    motor: 'mssql',
     problemas,
+    sqlite: { ruta: '' },
     bd: {
       host: norm(env.DB_HOST),
       puerto,
