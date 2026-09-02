@@ -427,9 +427,14 @@ console.log('\nLa carta de presentación: la tarjeta pública')
 
   check('el nombre es el h1 de la página',
     (await p.locator('h1').count()) === 1 && (await p.locator('h1').textContent())?.trim() === PERFIL_PUBLICO.nombre)
-  check('«Llamar» marca el E.164', (await p.locator('a.gt-boton[href^="tel:+57"]').count()) === 1)
-  check('«Escribir» abre el correo', (await p.locator(`a.gt-boton[href="mailto:${PERFIL_PUBLICO.correo}"]`).count()) === 1)
-  const wa = p.locator('a.gt-boton[href^="https://wa.me/573001234567"]')
+  // La página es APARTE del foro: sin header, sin footer, sin navegación a otras secciones.
+  check('sin el chasis del foro (ni header ni footer ni nav)',
+    (await p.locator('.gt-header, .gt-footer, nav').count()) === 0)
+  check('con el título del original («Nombre - Cargo - GECELCA»)',
+    (await p.title()) === `${PERFIL_PUBLICO.nombre} - ${PERFIL_PUBLICO.cargo} - GECELCA`, await p.title())
+  check('«Llamar» marca el E.164', (await p.locator('.cp__accion[href^="tel:+57"]').count()) === 1)
+  check('«Escribir» abre el correo', (await p.locator(`.cp__accion[href="mailto:${PERFIL_PUBLICO.correo}"]`).count()) === 1)
+  const wa = p.locator('.cp__accion[href^="https://wa.me/573001234567"]')
   check('«WhatsApp» va a wa.me con los dígitos', (await wa.count()) === 1)
   const externos = await p.$$eval('a[target="_blank"]', (as) => as.map((a) => ({ href: a.href, rel: a.rel })))
   check('todo lo que sale del sitio lleva noopener noreferrer',
@@ -438,23 +443,59 @@ console.log('\nLa carta de presentación: la tarjeta pública')
   check('«Guardar contacto» es una descarga del vCard del servidor',
     (await p.locator(`a[download][href$="/perfiles/${ID_FIXTURE}/vcard"]`).count()) === 1)
   check('la foto sale del servidor, con el ETag como rompecachés',
-    ((await p.locator('.gt-tarjeta__retrato img').getAttribute('src')) || '').includes(`/perfiles/${ID_FIXTURE}/foto?v=`))
+    ((await p.locator('img.cp__foto').getAttribute('src')) || '').includes(`/perfiles/${ID_FIXTURE}/foto?v=`))
+  check('el logo del héroe es el blanco de la marca 2026',
+    ((await p.locator('.cp__logo').getAttribute('src')) || '') === '/img/logo-gecelca-blanco.png')
 
-  await p.click('.gt-tarjeta__compartir')
+  await p.click('.cp__compartir')
   await p.waitForTimeout(200)
   check('«Compartir» sin navigator.share copia el enlace',
     (await p.evaluate(() => window.__copiado)) === PERFIL_PUBLICO.url)
   check('  y lo anuncia en una región de estado',
-    ((await p.locator('.gt-tarjeta [role="status"]').textContent()) || '').includes('copiado'))
+    ((await p.locator('.cp [role="status"]').textContent()) || '').includes('copiado'))
 
-  const abrir = p.locator('.gt-qr-tarjeta__abrir')
-  check('el QR va plegado tras un botón aria-pressed', (await abrir.getAttribute('aria-pressed')) === 'false')
+  const abrir = p.locator('.cp__qr-abrir')
+  check('el QR vive en un diálogo cerrado (aria-haspopup=dialog, aria-expanded=false)',
+    (await abrir.getAttribute('aria-haspopup')) === 'dialog' && (await abrir.getAttribute('aria-expanded')) === 'false' &&
+    (await p.locator('.cp__qr-modal').count()) === 0)
   await abrir.click()
   await p.waitForTimeout(200)
   check('  al abrirlo, el código lleva la URL absoluta de la tarjeta',
-    (await p.locator('.gt-qr-tarjeta__codigo').getAttribute('data-contenido')) === PERFIL_PUBLICO.url &&
-    (await abrir.getAttribute('aria-pressed')) === 'true')
+    (await p.locator('.cp__qr-modal [role="dialog"], .cp__qr-modal').count()) >= 1 &&
+    (await p.locator('.cp__qr-modal .gt-qr-tarjeta__codigo').getAttribute('data-contenido')) === PERFIL_PUBLICO.url &&
+    (await abrir.getAttribute('aria-expanded')) === 'true')
+  check('  el foco entra al botón de cerrar', await p.locator('.cp__qr-cerrar').evaluate((el) => el === document.activeElement))
+  await p.keyboard.press('Escape')
+  await p.waitForTimeout(200)
+  check('  Escape lo cierra y devuelve el foco', (await p.locator('.cp__qr-modal').count()) === 0 &&
+    await abrir.evaluate((el) => el === document.activeElement))
   check('  y sin ningún dato de sesión en el DOM', !(await p.content()).includes(IDENTIDAD_ADMIN.user.oid))
+  await p.close()
+}
+
+{
+  // El prellenado desde el directorio de Entra: se teclea, se elige y el formulario se rellena;
+  // y lo rellenado sigue siendo editable.
+  const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
+  await instalarMocks(p)
+  await p.goto(base + '/cdpadmin?perfil=nueva', { waitUntil: 'networkidle' })
+  const buscar = p.locator('.gt-directorio input[role="combobox"]')
+  check('la carta nueva ofrece rellenar desde el directorio', (await buscar.count()) === 1)
+  await buscar.fill('Ste')
+  await p.waitForSelector('.gt-directorio__lista [role="option"]', { timeout: 5000 })
+  check('  al teclear aparecen las candidatas como listbox',
+    (await p.locator('.gt-directorio__lista [role="option"]').count()) === 2)
+  await p.keyboard.press('Enter')
+  await p.waitForTimeout(150)
+  const valor = (sel) => p.locator(sel).inputValue()
+  check('  Enter elige la primera y rellena nombres, apellidos, cargo, área, correo y teléfonos',
+    (await valor('input[name="nombres"]')) === 'Stefany' && (await valor('input[name="apellidos"]')) === 'Vides Osorio' &&
+    (await valor('input[name="cargo"]')) === PERFIL_PUBLICO.cargo && (await valor('input[name="area"]')) === PERFIL_PUBLICO.area &&
+    (await valor('input[name="correo"]')) === PERFIL_PUBLICO.correo && (await valor('input[name="telefono"]')) === '+576053700000' &&
+    (await valor('input[name="whatsapp"]')) === '+573001234567')
+  check('  y lo anuncia', ((await p.locator('.gt-directorio__elegida').textContent()) || '').includes('Stefany Vides Osorio'))
+  await p.fill('input[name="cargo"]', 'Cargo corregido a mano')
+  check('  lo rellenado sigue siendo editable', (await valor('input[name="cargo"]')) === 'Cargo corregido a mano')
   await p.close()
 }
 
@@ -479,17 +520,20 @@ console.log('\nLa carta de presentación: la tarjeta pública')
   await p.close()
 }
 
-for (const [nombre, opciones, ruta, fragmento, boton] of [
-  ['404', { perfil: 404 }, `/carta_presentacion/${ID_FIXTURE}`, 'no está disponible', 'a[href="/"]'],
-  ['id sin forma de UUID', {}, '/carta_presentacion/no-es-un-uuid', 'no está disponible', 'a[href="/"]'],
-  ['503', { perfil: 503 }, `/carta_presentacion/${ID_FIXTURE}`, 'No pudimos cargar', 'button.gt-boton'],
+// Los avisos son los del original: «Página no encontrada» sin salida a ningún otro sitio (la
+// página no navega al foro), y el 503 con «Reintentar».
+for (const [nombre, opciones, ruta, fragmento, salidas] of [
+  ['404', { perfil: 404 }, `/carta_presentacion/${ID_FIXTURE}`, 'Página no encontrada', 0],
+  ['id sin forma de UUID', {}, '/carta_presentacion/no-es-un-uuid', 'Página no encontrada', 0],
+  ['503', { perfil: 503 }, `/carta_presentacion/${ID_FIXTURE}`, 'No pudimos cargar', 1],
 ]) {
   const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
   await instalarMocks(p, { me: null, ...opciones })
   await p.goto(base + ruta, { waitUntil: 'networkidle' })
   check(`«${nombre}»: la ruta se queda y pinta su aviso`,
-    new URL(p.url()).pathname === ruta && ((await p.locator('.gt-carta-pagina__aviso h1').textContent()) || '').includes(fragmento))
-  check('  con su salida', (await p.locator(`.gt-carta-pagina__aviso ${boton}`).count()) === 1)
+    new URL(p.url()).pathname === ruta && ((await p.locator('.cp__aviso h1').textContent()) || '').includes(fragmento))
+  check(`  ${salidas ? 'con «Reintentar»' : 'sin ningún enlace al foro'}`,
+    (await p.locator('.cp__aviso a').count()) === 0 && (await p.locator('.cp__aviso button.cp__reintentar').count()) === salidas)
   await p.close()
 }
 
@@ -498,9 +542,9 @@ for (const [nombre, opciones, ruta, fragmento, boton] of [
   const p = await browser.newPage({ viewport: { width: 1440, height: 1200 } })
   await instalarMocks(p, { me: null })
   await p.goto(base + `/carta_presentacion/${ID_INEXISTENTE}`, { waitUntil: 'networkidle' })
-  check('un UUID válido que no existe: «no disponible» en su propia URL',
+  check('un UUID válido que no existe: «no encontrada» en su propia URL',
     new URL(p.url()).pathname === `/carta_presentacion/${ID_INEXISTENTE}` &&
-    (await p.locator('.gt-carta-pagina__aviso').count()) === 1)
+    (await p.locator('.cp__aviso').count()) === 1)
   await p.close()
 }
 

@@ -9,7 +9,16 @@
  * formulario los traduce a texto junto a cada control. Un fallo de red (fetch que revienta)
  * es un `ErrorApi` con `status: 0`, que la interfaz trata como «sin servicio», igual que un 503.
  */
-import type { PerfilAdmin, PerfilPublico, PerfilResumen, Auditoria, CodigoCampo, ValoresFormulario, FotoAdmin } from './tipos'
+import type {
+  PerfilAdmin,
+  PerfilPublico,
+  PerfilResumen,
+  PersonaDirectorio,
+  Auditoria,
+  CodigoCampo,
+  ValoresFormulario,
+  FotoAdmin,
+} from './tipos'
 
 export class ErrorApi extends Error {
   status: number
@@ -95,4 +104,9 @@ export function subirFoto(id: string, archivo: Blob): Promise<{ foto: FotoAdmin 
 
 export function quitarFoto(id: string): Promise<{ ok: true }> {
   return pedir(`/api/carta/admin/perfiles/${id}/foto`, { method: 'DELETE' })
+}
+
+/** Personas del directorio de Entra cuyo nombre o correo empieza por `q` (hasta 8). */
+export function buscarDirectorio(q: string, signal?: AbortSignal): Promise<{ personas: PersonaDirectorio[] }> {
+  return pedir(`/api/carta/admin/directorio?q=${encodeURIComponent(q)}`, { signal })
 }

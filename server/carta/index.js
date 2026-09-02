@@ -32,6 +32,8 @@ import { crearRepositorio } from './repositorio.js';
 import { crearRutasCarta } from './rutas.js';
 import { comprobarSharp } from './foto.js';
 import { crearHtmlConOg, prepararOg } from './og.js';
+import { crearDirectorio } from './directorio.js';
+import { crearProveedorDeToken } from '../correo/graph-mailer.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const INDEX_HTML = path.resolve(__dirname, '..', '..', 'dist', 'index.html');
@@ -90,7 +92,18 @@ export function iniciarCarta(env = process.env, { dependencias = {} } = {}) {
     admin: crearLimitador({ nombre: 'carta/admin', limite: cfg.limites.admin }),
     foto: crearLimitador({ nombre: 'carta/foto', limite: cfg.limites.foto }),
   };
-  const router = crearRutasCarta({ repositorio, guardias: { soloRol }, limites, cfg, origen });
+  // El directorio de Entra para prellenar cartas: con las mismas credenciales de aplicación del
+  // login (User.Read.All). Sin ellas (un entorno sin M365_*), el buscador no existe y la carta
+  // se escribe a mano; nada más cambia.
+  let directorio = null;
+  if (env.M365_TENANT_ID && env.M365_CLIENT_ID && env.M365_CLIENT_SECRET) {
+    directorio = dependencias.directorio || crearDirectorio({
+      obtenerToken: crearProveedorDeToken({
+        tenantId: env.M365_TENANT_ID, clientId: env.M365_CLIENT_ID, clientSecret: env.M365_CLIENT_SECRET,
+      }),
+    });
+  }
+  const router = crearRutasCarta({ repositorio, guardias: { soloRol }, limites, cfg, origen, directorio });
 
   estado = { configurada: true, bd: 'comprobando', migraciones: 'sin_comprobar', rolAdmin: cfg.rolAdmin, og: false };
 

@@ -31,6 +31,7 @@ import { componerOg, escapar, prepararOg } from '../server/carta/og.js';
 import { crearRutasCarta } from '../server/carta/rutas.js';
 import { BdNoDisponible, nombreTls } from '../server/carta/bd.js';
 import { CorreoDuplicado } from '../server/carta/repositorio.js';
+import { DirectorioNoDisponible, aPropuesta, crearDirectorio, filtroDe, normalizarBusqueda, partirNombre } from '../server/carta/directorio.js';
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -269,6 +270,48 @@ console.log('\nOpen Graph: apagado si faltan etiquetas; escapa; el resto byte-id
   check('el resto del HTML es idéntico', pelar(out) === pelar(og.plantilla));
 }
 
+// ───────────────────────────────────────────────────── el directorio de Entra
+console.log('\nDirectorio: la búsqueda se acota, el filtro escapa, la propuesta se normaliza');
+{
+  check('menos de 2 caracteres → nada', normalizarBusqueda('a') === null && normalizarBusqueda('  ') === null);
+  check('61 caracteres → nada', normalizarBusqueda('a'.repeat(61)) === null);
+  check('caracteres raros → nada', normalizarBusqueda('ana<b') === null && normalizarBusqueda('a$b') === null && normalizarBusqueda('a(b') === null);
+  check('espacios repetidos colapsan', normalizarBusqueda('  Ana   Pérez ') === 'Ana Pérez');
+  check("la comilla se duplica en el filtro OData", filtroDe("O'Neil").includes("startswith(displayName,'O''Neil')"));
+  check('el filtro exige cuenta habilitada', filtroDe('x').endsWith('and accountEnabled eq true'));
+  check('nombre partido: Graph manda nombres y apellidos', JSON.stringify(partirNombre({ givenName: 'Ana', surname: 'Pérez' })) === '{"nombres":"Ana","apellidos":"Pérez"}');
+  check('  sin ellos, cuatro palabras → 2 + 2', JSON.stringify(partirNombre({ displayName: 'Ana Lucía Pérez Gómez' })) === '{"nombres":"Ana Lucía","apellidos":"Pérez Gómez"}');
+  check('  tres palabras → 2 + 1', JSON.stringify(partirNombre({ displayName: 'Ana Pérez Gómez' })) === '{"nombres":"Ana Pérez","apellidos":"Gómez"}');
+  const prop = aPropuesta({ id: 'u1', displayName: 'Ana Pérez', givenName: 'Ana', surname: 'Pérez', jobTitle: 'Jefa', department: 'Comunicaciones', mail: 'APerez@Gecelca.com.co', businessPhones: ['605 370 0000'], mobilePhone: '300 123 4567' });
+  check('la propuesta normaliza correo y teléfonos a E.164', prop.correo === 'aperez@gecelca.com.co' && prop.telefono === '+576053700000' && prop.whatsapp === '+573001234567');
+  const sinTel = aPropuesta({ id: 'u2', displayName: 'B C', mail: 'b@c.co', businessPhones: ['ext 123'], mobilePhone: 'no' });
+  check('un teléfono que no se reconoce viaja vacío', sinTel.telefono === '' && sinTel.whatsapp === '');
+
+  const llamadas = [];
+  let respuesta = { ok: true, status: 200, json: async () => ({ value: [
+    { id: 'u1', displayName: 'Zoe Vides', givenName: 'Zoe', surname: 'Vides', mail: 'z@gecelca.com.co', accountEnabled: true },
+    { id: 'u2', displayName: 'Ana Vides', givenName: 'Ana', surname: 'Vides', mail: 'a@gecelca.com.co', accountEnabled: true },
+    { id: 'u3', displayName: 'Deshabilitada Vides', mail: 'd@gecelca.com.co', accountEnabled: false },
+    { id: 'u4', displayName: 'Sin Correo', accountEnabled: true },
+  ] }) };
+  const directorio = crearDirectorio({
+    obtenerToken: async () => 'token-falso',
+    baseUrl: 'https://graph.falso.invalid/v1.0',
+    fetchImpl: async (url, init) => { llamadas.push({ url, init }); return respuesta; },
+  });
+  const r = await directorio.buscar('Vid');
+  check('buscar devuelve solo habilitadas con correo, ordenadas por nombre', r.map((p) => p.nombre).join('|') === 'Ana Vides|Zoe Vides');
+  check('  con el token en la cabecera y el filtro en la URL', llamadas[0].init.headers.Authorization === 'Bearer token-falso' && decodeURIComponent(llamadas[0].url).includes("startswith(displayName,'Vid')"));
+  check('  y nunca $search', !llamadas[0].url.includes('$search'));
+  check('buscar con texto inválido no llama a Graph', (await directorio.buscar('a')).length === 0 && llamadas.length === 1);
+  respuesta = { ok: false, status: 403, json: async () => ({}) };
+  const e = await directorio.buscar('Vid').then(() => null, (err) => err);
+  check('Graph 403 → DirectorioNoDisponible(graph_403)', e instanceof DirectorioNoDisponible && e.codigo === 'graph_403');
+  const sinToken = crearDirectorio({ obtenerToken: async () => { throw new Error('graph_sin_token'); }, fetchImpl: async () => respuesta });
+  const e2 = await sinToken.buscar('Vid').then(() => null, (err) => err);
+  check('sin token → DirectorioNoDisponible(sin_token)', e2 instanceof DirectorioNoDisponible && e2.codigo === 'sin_token');
+}
+
 // ─────────────────────────────────────────────────────────── la matriz HTTP
 console.log('\nMatriz HTTP con repositorio falso y sesión inyectada por cabecera (solo en el arnés)');
 {
@@ -317,7 +360,14 @@ console.log('\nMatriz HTTP con repositorio falso y sesión inyectada por cabecer
     if (sitio === 'same-origin' || sitio === 'none') return next();
     return res.status(403).json({ error: 'Origen no permitido', codigo: 'origen_no_permitido' });
   });
-  app.use('/api/carta', crearRutasCarta({ repositorio, guardias, limites, cfg: { rolAdmin: 'LOGIN_JEFA' }, origen: 'https://cdp.gecelca.com.co' }));
+  let directorioCaido = false;
+  const directorio = {
+    async buscar(q) {
+      if (directorioCaido) throw new DirectorioNoDisponible('graph_503');
+      return String(q || '').startsWith('Ste') ? [{ id: 'u1', nombre: 'Stefany Vides', nombres: 'Stefany', apellidos: 'Vides', cargo: 'Jefa', area: '', correo: 's@gecelca.com.co', telefono: '', whatsapp: '' }] : [];
+    },
+  };
+  app.use('/api/carta', crearRutasCarta({ repositorio, guardias, limites, cfg: { rolAdmin: 'LOGIN_JEFA' }, origen: 'https://cdp.gecelca.com.co', directorio }));
   app.use((req, res) => res.status(404).json({ error: 'No encontrado', codigo: 'no_encontrado' }));
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => res.status(500).json({ error: 'Error interno', codigo: 'error_interno' }));
@@ -409,6 +459,22 @@ console.log('\nMatriz HTTP con repositorio falso y sesión inyectada por cabecer
     check('detalle admin de un inactivo → 200 con activo:false y auditoria', d.status === 200 && d.json.perfil.activo === false && Array.isArray(d.json.auditoria));
     const dn = await pedir(`/api/carta/admin/perfiles/${NADIE}`, { headers: A });
     check('detalle de nadie → 404', dn.status === 404);
+
+    const dirSin = await pedir('/api/carta/admin/directorio?q=Ste');
+    check('directorio sin sesión → 401', dirSin.status === 401);
+    const dirRol = await pedir('/api/carta/admin/directorio?q=Ste', { headers: { 'x-sesion-prueba': SESION_SIN_ROL } });
+    check('directorio sin rol → 403', dirRol.status === 403);
+    const dir = await pedir('/api/carta/admin/directorio?q=Ste', { headers: A });
+    check('directorio con rol → 200 {personas}', dir.status === 200 && dir.json.personas.length === 1 && dir.json.personas[0].correo === 's@gecelca.com.co');
+    check('  no-store', (dir.headers['cache-control'] || '').includes('no-store'));
+    const dirVacio = await pedir('/api/carta/admin/directorio?q=zz', { headers: A });
+    check('  sin coincidencias → lista vacía', dirVacio.status === 200 && dirVacio.json.personas.length === 0);
+    directorioCaido = true;
+    const dirCaido = await pedir('/api/carta/admin/directorio?q=Ste', { headers: A });
+    check('  Graph caído → 503 directorio_no_disponible', dirCaido.status === 503 && dirCaido.json.codigo === 'directorio_no_disponible');
+    directorioCaido = false;
+    const dirPost = await pedir('/api/carta/admin/directorio', json({ q: 'Ste' }, A));
+    check('  POST no existe', dirPost.status === 404);
 
     const cx = await pedir('/api/carta/admin/perfiles', json(perfilValido, { 'x-sesion-prueba': SESION_ADMIN, 'sec-fetch-site': 'cross-site', origin: 'https://evil.example' }));
     check('POST cross-site → 403 (CSRF)', cx.status === 403);

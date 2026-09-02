@@ -1,0 +1,55 @@
+/* El bloque de QR del panel (QrTarjeta.tsx): el código en su lámina, la URL escrita y las
+   descargas. Vivía en Tarjeta.css hasta que la tarjeta pública pasó al diseño anterior
+   (CartaPublica.css); el panel sigue en el sistema del foro, así que sus reglas van aquí. */
+
+.gt-qr-tarjeta {
+  display: grid;
+  gap: var(--gt-space-4);
+  justify-items: start;
+}
+
+.gt-qr-tarjeta__panel {
+  display: grid;
+  gap: var(--gt-space-3);
+  justify-items: center;
+  width: min(100%, 22rem);
+  padding: var(--gt-space-4);
+  border-radius: var(--gt-radio-chico);
+}
+
+.gt-qr-tarjeta__codigo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  color: var(--gt-azul-gecelca);
+}
+
+.gt-qr-tarjeta__url {
+  margin: 0;
+  width: 100%;
+  font-size: var(--gt-fs-xs);
+  text-align: center;
+  color: var(--gt-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.gt-qr-tarjeta__descargas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+
+.gt-qr-tarjeta__aviso {
+  margin: 0;
+  font-size: var(--gt-fs-sm);
+}
+
+@media print {
+  .gt-qr-tarjeta__codigo {
+    color: #000;
+  }
+  .gt-qr-tarjeta__panel {
+    border: var(--gt-borde) solid #000;
+  }
+}

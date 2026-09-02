@@ -145,6 +145,8 @@ journalctl -u gtalks -n 40 | grep -i carta
 | La carta contesta 503 | `journalctl -u gtalks -n 80 \| grep -i carta`: `[carta/bd] …` dice el código (ETIMEOUT = red, ELOGIN = credenciales). El foro sigue vivo; el pool reintenta solo cada 5 s. |
 | 413 o 405 al subir una foto | `/var/log/nginx/gtalks.error.log`: es el borde (`client_max_body_size` o `limit_except` del `location /api/carta/`). |
 | El panel dice «Sin permiso» a quien tiene el rol | La sesión aprende los roles al entrar y cada 20 min (`revalidate`). Cerrar sesión y volver a entrar. Comprobar la asignación en la Enterprise App. |
+| El buscador del directorio no aparece, o dice que no responde | No aparece = el servidor no tiene `M365_*` (sin credenciales de Graph no existe). «No responde» = `journalctl` muestra `[carta/directorio] Graph respondió 403` (falta `User.Read.All` de aplicación) o un timeout de red. La carta se escribe a mano mientras tanto. |
+| Un 500 en `/api/carta/*` | `journalctl -u gtalks -n 80 \| grep '\[carta\] error no mapeado'`: la línea trae método, ruta, nombre del error y códigos. Es un fallo que el mapa de errores no conoce; pegar esa línea al reportar. |
 | ¿Quién cambió qué? | `SELECT TOP 20 ts, actor_upn, accion, perfil_id, detalle FROM carta.auditoria ORDER BY ts DESC` (el detalle dice QUÉ campos, nunca sus valores). |
 | El arranque aborta con «esquema no está al día» | Paso 1 no se hizo, o se hizo contra `_dev`. Correrlo contra `PortalG3` y reiniciar. |
 

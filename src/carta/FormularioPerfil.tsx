@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import Campo from './Campo'
 import { ErrorApi } from './api'
 import {
@@ -9,6 +9,7 @@ import {
   type CampoFormulario,
   type CodigoCampo,
   type PerfilAdmin,
+  type PersonaDirectorio,
   type Red,
   type ValoresFormulario,
 } from './tipos'
@@ -90,11 +91,15 @@ export function valoresDe(perfil: PerfilAdmin | null): ValoresFormulario {
  */
 export default function FormularioPerfil({
   inicial,
+  propuesta = null,
   onGuardar,
   onFallo,
   onCancelar,
 }: {
   inicial: PerfilAdmin | null
+  /** La persona elegida en el directorio de Entra: rellena los campos que trae y deja el resto
+   *  como estaba. Es una propuesta: todo sigue siendo editable. */
+  propuesta?: PersonaDirectorio | null
   /** Recibe los valores y lanza `ErrorApi` si el servidor los rechaza. */
   onGuardar: (valores: ValoresFormulario) => Promise<void>
   /** Errores que no son de datos: sesión perdida, sin rol, sin servicio. */
@@ -103,6 +108,24 @@ export default function FormularioPerfil({
 }) {
   const prefijo = useId()
   const [valores, setValores] = useState<ValoresFormulario>(() => valoresDe(inicial))
+
+  // Al elegir a alguien en el directorio, sus datos entran al formulario. Solo los que vienen
+  // con valor: un cargo vacío en Entra no borra el que ya se escribió a mano.
+  useEffect(() => {
+    if (!propuesta) return
+    setValores((v) => ({
+      ...v,
+      nombres: propuesta.nombres || v.nombres,
+      apellidos: propuesta.apellidos || v.apellidos,
+      cargo: propuesta.cargo || v.cargo,
+      area: propuesta.area || v.area,
+      correo: propuesta.correo || v.correo,
+      telefono: propuesta.telefono || v.telefono,
+      whatsapp: propuesta.whatsapp || v.whatsapp,
+    }))
+    setErrores({})
+    setResumen(null)
+  }, [propuesta])
   const [errores, setErrores] = useState<Partial<Record<CampoFormulario, string>>>({})
   const [resumen, setResumen] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
@@ -173,11 +196,13 @@ export default function FormularioPerfil({
     }
   }
 
+  // `key` va siempre: las redes salen de un `map`, y React exige una clave por hijo de lista.
   const campo = (
     nombre: CampoFormulario,
     extra: Partial<Parameters<typeof Campo>[0]> = {},
   ) => (
     <Campo
+      key={nombre}
       id={idDe(nombre)}
       nombre={nombre}
       etiqueta={ETIQUETA[nombre]}

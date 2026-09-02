@@ -1,0 +1,548 @@
+/* La carta de presentación pública: réplica 1 a 1 del visor de la app COMUNICACIONES
+   anterior (client-public/src/pages/ProfileCard.tsx + styles/global.css). Paleta, radios,
+   sombras, tipografía (Inter) y composición móvil de 420 px salen de allí tal cual; por eso
+   este archivo NO usa los tokens --gt-* del foro y va acotado al bloque .cp. Lo que era
+   `style={{…}}` en línea en el original está aquí como clases, que es lo único que cambia.
+   Ver el encabezado de CartaPublica.tsx.                                                  */
+
+.cp {
+  --cp-azul-oscuro: #023f86;
+  --cp-azul-claro: #2178bd;
+  --cp-blanco: #ffffff;
+  --cp-gris-50: #f8fafc;
+  --cp-gris-200: #e2e8f0;
+  --cp-gris-400: #94a3b8;
+  --cp-gris-500: #64748b;
+  --cp-gris-800: #1e293b;
+  --cp-radio-md: 12px;
+  --cp-radio-lg: 16px;
+  --cp-radio-xl: 24px;
+  --cp-rapida: 150ms ease;
+  --cp-normal: 250ms ease;
+
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+  background: var(--cp-azul-oscuro);
+  color: var(--cp-gris-800);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+}
+
+.cp--pagina {
+  min-height: 100dvh;
+  /* Aire al pie para que la última ficha pueda subir por encima de los botones flotantes. */
+  padding-bottom: 100px;
+}
+
+/* La vista previa del panel: el mismo dibujo, con los flotantes anclados al bloque. */
+.cp--previa {
+  min-height: auto;
+  padding-bottom: 96px;
+  border-radius: var(--cp-radio-lg);
+}
+
+.cp a {
+  color: var(--cp-azul-claro);
+  text-decoration: none;
+  transition: color var(--cp-rapida);
+}
+
+.cp a:hover {
+  color: var(--cp-azul-oscuro);
+}
+
+.cp button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+.cp img {
+  display: block;
+  max-width: 100%;
+}
+
+/* El foco del original: anillo blanco con halo azul. Pisa el de base.css dentro del bloque. */
+.cp :focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px var(--cp-azul-claro);
+  border-radius: 4px;
+}
+
+/* --- Las formas geométricas del fondo ------------------------------------- */
+.cp__forma {
+  position: absolute;
+  background: var(--cp-azul-claro);
+  pointer-events: none;
+}
+
+.cp__forma--1 { width: 280px; height: 200px; border-radius: 16px; top: 10%; left: -60px; transform: rotate(-12deg); opacity: 0.5; }
+.cp__forma--2 { width: 220px; height: 160px; border-radius: 12px; top: 5%; right: -40px; transform: rotate(8deg); opacity: 0.4; }
+.cp__forma--3 { width: 300px; height: 220px; border-radius: 18px; bottom: 15%; right: -80px; transform: rotate(-6deg); opacity: 0.35; }
+.cp__forma--4 { width: 180px; height: 140px; border-radius: 10px; bottom: 8%; left: -30px; transform: rotate(15deg); opacity: 0.3; }
+
+/* --- El contenedor ----------------------------------------------------------- */
+.cp__contenedor {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: cp-subir 0.5s ease;
+}
+
+/* --- El héroe: la foto con el texto encima ----------------------------------- */
+.cp__heroe {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--cp-radio-xl);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+  background: var(--cp-azul-claro);
+}
+
+.cp__foto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sin foto todavía: las iniciales sobre el azul claro, en el mismo marco. */
+.cp__foto--iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cp-blanco);
+  font-size: 6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+/* El velo bajo el texto. El original lo llevaba a negro pleno del 0 al 45 %, y en pantalla se
+   leía como una banda negra que se comía media foto (observación del usuario, 2026-09-02): se
+   suaviza a un degradado que arranca al 82 % de negro en el pie y se desvanece antes de la
+   mitad, de modo que la cara sigue viéndose y el texto sigue teniendo fondo. El blanco sobre
+   negro al 82 % (sobre cualquier foto) queda por encima de 7:1. */
+.cp__velo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgb(0 0 0 / 0.82) 0%,
+    rgb(0 0 0 / 0.78) 30%,
+    rgb(0 0 0 / 0.45) 52%,
+    rgb(0 0 0 / 0.12) 70%,
+    transparent 88%
+  );
+}
+
+.cp__heroe-texto {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32px 24px 24px;
+}
+
+.cp__nombre {
+  margin: 0 0 4px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--cp-blanco);
+  line-height: 1.2;
+  letter-spacing: normal;
+  text-wrap: balance;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+}
+
+.cp__cargo {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cp-blanco);
+  line-height: 1.4;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.cp__logo {
+  height: 60px;
+  width: auto;
+  margin-bottom: 20px;
+  opacity: 0.95;
+}
+
+.cp__acciones {
+  display: flex;
+  gap: 12px;
+}
+
+/* Los selectores de los botones y los valores van con `.cp` delante a propósito: la regla
+   general `.cp a` (azul de enlace) tiene la especificidad de dos selectores y, sin el prefijo,
+   ganaba a la clase y pintaba los iconos de azul sobre negro (invisibles). */
+.cp .cp__accion {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.2);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  color: var(--cp-blanco);
+  transition: background var(--cp-normal);
+}
+
+.cp .cp__accion:hover {
+  background: rgb(255 255 255 / 0.32);
+  color: var(--cp-blanco);
+}
+
+/* --- Las fichas blancas ------------------------------------------------------ */
+.cp__ficha {
+  background: var(--cp-blanco);
+  border-radius: var(--cp-radio-lg);
+  padding: 20px 24px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
+}
+
+.cp__ficha-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--cp-gris-200);
+}
+
+.cp__ficha-titulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cp-azul-oscuro);
+}
+
+.cp__icono-azul {
+  color: var(--cp-azul-oscuro);
+  flex: none;
+}
+
+.cp__fila {
+  margin-bottom: 12px;
+}
+
+.cp__fila:last-child {
+  margin-bottom: 0;
+}
+
+.cp__etiqueta {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--cp-gris-500);
+  margin-bottom: 2px;
+}
+
+.cp .cp__valor {
+  font-size: 0.95rem;
+  color: var(--cp-gris-800);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.cp a.cp__valor:hover {
+  color: var(--cp-azul-oscuro);
+}
+
+.cp__web-titulo {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cp-azul-oscuro);
+  text-align: center;
+}
+
+.cp__enlaces {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cp .cp__enlace {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--cp-gris-50);
+  border-radius: var(--cp-radio-md);
+  color: var(--cp-gris-800);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background var(--cp-normal);
+}
+
+.cp .cp__enlace:hover {
+  background: var(--cp-gris-200);
+  color: var(--cp-gris-800);
+}
+
+.cp__chevron {
+  margin-left: auto;
+  color: var(--cp-gris-400);
+  flex: none;
+}
+
+/* --- Los botones flotantes --------------------------------------------------- */
+.cp__flotante-izq {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+/* Los flotantes del original (fondo casi negro, icono blanco). El borde sube del 12 % al 35 %
+   de blanco y la sombra se refuerza: sobre el azul del fondo, con el borde tenue del original
+   los tres botones se perdían (observación del usuario, 2026-09-02). El icono va en blanco
+   pleno, y con `.cp` delante para que `.cp button` y `.cp a` no le hereden otro color. */
+.cp .cp__flotante {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgb(30 30 30 / 0.92);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgb(255 255 255 / 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cp-blanco);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.4);
+  transition: transform var(--cp-rapida), background var(--cp-normal), border-color var(--cp-normal);
+}
+
+.cp .cp__flotante:hover,
+.cp .cp__flotante-der:hover {
+  transform: translateY(-2px);
+  background: rgb(30 30 30 / 1);
+  border-color: rgb(255 255 255 / 0.6);
+  color: var(--cp-blanco);
+}
+
+.cp .cp__flotante-der {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 18px 0 14px;
+  border-radius: 26px;
+  background: rgb(30 30 30 / 0.92);
+  color: var(--cp-blanco);
+  border: 1.5px solid rgb(255 255 255 / 0.35);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.4);
+  transition: transform var(--cp-rapida), background var(--cp-normal), border-color var(--cp-normal);
+  z-index: 10;
+}
+
+.cp__flotante-der-texto {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.cp--previa .cp__flotante-izq,
+.cp--previa .cp__flotante-der {
+  position: absolute;
+}
+
+/* La región de estado («Enlace copiado»): flota sobre los botones, y vacía no ocupa nada. */
+.cp__estado {
+  position: fixed;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cp-blanco);
+}
+
+.cp__estado:not(:empty) {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgb(30 30 30 / 0.9);
+}
+
+.cp--previa .cp__estado {
+  position: absolute;
+}
+
+/* --- El modal del QR --------------------------------------------------------- */
+.cp__qr-velo {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.cp__qr-modal {
+  position: relative;
+  background: var(--cp-blanco);
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+  max-width: min(100%, 360px);
+  animation: cp-subir 0.3s ease;
+}
+
+.cp__qr-cerrar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px;
+  color: var(--cp-gris-500);
+}
+
+.cp__qr-titulo {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--cp-azul-oscuro);
+  letter-spacing: normal;
+}
+
+.cp__qr-marco {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: var(--cp-blanco);
+  border-radius: var(--cp-radio-md);
+  border: 1px solid var(--cp-gris-200);
+}
+
+/* Con `.cp` delante: gana a `.gt-qr-tarjeta__codigo` (QrTarjeta.css), que lo pone al 100 %. */
+.cp .cp__qr {
+  width: 220px;
+  height: 220px;
+  color: var(--cp-azul-oscuro);
+}
+
+/* --- Pantallas de carga y de aviso (la página sin tarjeta) ------------------- */
+.cp__pantalla {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  min-height: 100dvh;
+  padding: 24px;
+  background: var(--cp-azul-oscuro);
+  color: var(--cp-blanco);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  text-align: center;
+}
+
+.cp__pantalla h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  line-height: 1.3;
+}
+
+.cp__pantalla p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.cp__reintentar {
+  margin-top: 8px;
+  padding: 12px 22px;
+  border-radius: 26px;
+  background: var(--cp-blanco);
+  color: var(--cp-azul-oscuro);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform var(--cp-rapida);
+}
+
+.cp__reintentar:hover {
+  transform: translateY(-2px);
+}
+
+.cp__girando {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgb(255 255 255 / 0.2);
+  border-top-color: var(--cp-blanco);
+  border-radius: 50%;
+  animation: cp-girar 0.8s linear infinite;
+}
+
+.cp__oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes cp-subir {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cp-girar {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp__contenedor,
+  .cp__qr-modal,
+  .cp__girando {
+    animation: none;
+  }
+}
+
+@media print {
+  .cp {
+    background: #fff;
+    color: #000;
+    min-height: auto;
+  }
+  .cp__forma,
+  .cp__flotante-izq,
+  .cp__flotante-der,
+  .cp__estado {
+    display: none;
+  }
+}

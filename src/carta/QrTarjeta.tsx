@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { arteQr, cajaMarca, codificarQr } from '../data/qr-arte'
 import { descargarQr } from './qr-descarga'
+import './QrTarjeta.css'
 
 /**
  * El QR de una tarjeta, pintado como `<svg>` en el DOM.
@@ -18,6 +19,36 @@ import { descargarQr } from './qr-descarga'
  * Dos modos: `plegable` (la página pública: un botón «Ver código QR» con `aria-pressed` que lo
  * despliega) y desplegado con descargas (el panel: PNG y SVG por `qr-descarga.ts`).
  */
+/**
+ * Solo el dibujo: el `<svg>` del código con la «G» al centro. Lo comparten el panel (aquí
+ * abajo) y el modal de la tarjeta pública (`CartaPublica.tsx`), para que sea un solo QR por
+ * construcción. La tinta la pone el `color` del contexto (`currentColor`).
+ */
+export function QrDibujo({ url, nombre, className = '' }: { url: string; nombre: string; className?: string }) {
+  const qr = useMemo(() => codificarQr(url), [url])
+  const qrArte = useMemo(() => arteQr(qr), [qr])
+  const marca = useMemo(() => cajaMarca(qr, qrArte.centro), [qr, qrArte.centro])
+  return (
+    <svg
+      className={`gt-qr-tarjeta__codigo ${className}`.trim()}
+      viewBox={`0 0 ${qr.size} ${qr.size}`}
+      role="img"
+      aria-label={`Código QR de la carta de presentación de ${nombre}`}
+      data-contenido={url}
+    >
+      <path d={qrArte.d} fill="currentColor" />
+      {qrArte.marcadores.map(([mx, my]) => (
+        <g key={`${mx}-${my}`}>
+          <rect x={mx} y={my} width={7} height={7} rx={2.1} fill="currentColor" />
+          <rect x={mx + 1} y={my + 1} width={5} height={5} rx={1.5} fill="#ffffff" />
+          <rect x={mx + 2} y={my + 2} width={3} height={3} rx={1} fill="currentColor" />
+        </g>
+      ))}
+      <image href="/img/marca-g.svg" x={marca.x} y={marca.y} width={marca.ancho} height={marca.alto} />
+    </svg>
+  )
+}
+
 export default function QrTarjeta({
   url,
   nombre,
@@ -34,10 +65,6 @@ export default function QrTarjeta({
   const [abierto, setAbierto] = useState(!plegable)
   const [aviso, setAviso] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<'png' | 'svg' | null>(null)
-
-  const qr = useMemo(() => codificarQr(url), [url])
-  const qrArte = useMemo(() => arteQr(qr), [qr])
-  const marca = useMemo(() => cajaMarca(qr, qrArte.centro), [qr, qrArte.centro])
 
   async function descargar(formato: 'png' | 'svg') {
     setAviso(null)
@@ -67,23 +94,7 @@ export default function QrTarjeta({
 
       {abierto && (
         <div className="gt-qr-tarjeta__panel gt-lamina" id="gt-qr-tarjeta-panel">
-          <svg
-            className="gt-qr-tarjeta__codigo"
-            viewBox={`0 0 ${qr.size} ${qr.size}`}
-            role="img"
-            aria-label={`Código QR de la carta de presentación de ${nombre}`}
-            data-contenido={url}
-          >
-            <path d={qrArte.d} fill="currentColor" />
-            {qrArte.marcadores.map(([mx, my]) => (
-              <g key={`${mx}-${my}`}>
-                <rect x={mx} y={my} width={7} height={7} rx={2.1} fill="currentColor" />
-                <rect x={mx + 1} y={my + 1} width={5} height={5} rx={1.5} fill="var(--gt-blanco)" />
-                <rect x={mx + 2} y={my + 2} width={3} height={3} rx={1} fill="currentColor" />
-              </g>
-            ))}
-            <image href="/img/marca-g.svg" x={marca.x} y={marca.y} width={marca.ancho} height={marca.alto} />
-          </svg>
+          <QrDibujo url={url} nombre={nombre} />
           <p className="gt-qr-tarjeta__url">{url}</p>
         </div>
       )}

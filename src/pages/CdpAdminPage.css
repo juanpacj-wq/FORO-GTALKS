@@ -254,6 +254,10 @@
 
 .gt-cdp__columnas {
   display: grid;
+  /* `minmax(0, 1fr)` y no la pista implícita `auto`: con `auto` la columna mide el
+     min-content de la vista previa (la tarjeta pública, 420 px de ancho de diseño) y a
+     320 px de ventana desbordaba el panel entero. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gt-space-12);
 }
 
@@ -334,27 +338,8 @@
   color: var(--gt-texto-suave);
 }
 
-/* La previsualización es la tarjeta a escala de columna: el retrato no se estira. */
-.gt-cdp__previa .gt-tarjeta__cuerpo {
-  grid-template-columns: 1fr;
-}
-
-.gt-cdp__previa .gt-tarjeta__retrato {
-  max-width: 14rem;
-}
-
-.gt-cdp__previa .gt-tarjeta__retrato .gt-marco__lienzo {
-  height: auto;
-  aspect-ratio: var(--gt-marco-ratio, auto);
-}
-
-.gt-cdp__previa .gt-tarjeta__placa {
-  height: auto;
-}
-
-.gt-cdp__previa .gt-tarjeta__nombre {
-  font-size: var(--gt-fs-h2);
-}
+/* La previsualización es la tarjeta pública tal cual (CartaPublica en modo «previa»), con
+   sus flotantes anclados al bloque. No lleva reglas propias: lo que se ve es lo que se publica. */
 
 /* --- La foto en el panel -------------------------------------------------------- */
 .gt-subida-foto {

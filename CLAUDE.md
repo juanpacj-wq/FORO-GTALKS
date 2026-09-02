@@ -594,6 +594,28 @@ bash deploy/descargas-subir.sh         # sube los ZIP que descarga /galeria a DE
   Arneses: `carta-server-test.mjs` (puro), `carta-db-test.mjs` (contra `_dev`, limpia) y
   `gate-test.mjs` en sus DOS ramas. Runbook: `docs/RUNBOOK-CARTA.md`; manual:
   `docs/SEGURIDAD.md` §La carta de presentación digital.
+- **La tarjeta pública NO es del sistema de diseño del foro, y es a propósito.** Por pedido del
+  usuario (2026-09-02) `src/carta/CartaPublica.tsx` + `.css` replican 1 a 1 el visor de la app
+  COMUNICACIONES anterior (`../client-public/src/pages/ProfileCard.tsx`): su paleta (`#023f86`,
+  `#2178bd`, grises Tailwind), Inter autohospedada (`public/fonts/inter-latin.woff2`, declarada
+  en `fonts.css` solo para esto), 420 px de ancho, botones flotantes y modal del QR. Lo único que
+  cambia es la marca (`logo-gecelca-blanco.png` de los raster 2026 y la «G» de `marca-g.svg`).
+  Va acotada al bloque `.cp` y se monta FUERA de `Layout` en `App.tsx`: sin header, sin footer y
+  sin navegación al foro. Tres cosas que costaron: las reglas generales `.cp a` y `.cp button`
+  tienen la especificidad de dos selectores, así que todo botón con color propio va con `.cp`
+  delante (`.cp .cp__accion`), o los iconos salen azules sobre negro e invisibles; el velo del
+  héroe se suavizó respecto del original (negro pleno al 45 %) porque se comía media foto; y el
+  panel la reutiliza como vista previa (`modo="previa"`), por lo que la columna del panel va en
+  `minmax(0, 1fr)` o el min-content de la tarjeta desborda a 320 px. No hay regla de tokens que
+  aplicar aquí: la fuente de verdad es el visor antiguo.
+- **Al crear una carta, el panel PRELLENA desde el directorio de Entra**
+  (`server/carta/directorio.js`, `src/carta/BuscadorDirectorio.tsx`): `GET
+  /api/carta/admin/directorio?q=` con el token de aplicación del login (`User.Read.All`),
+  `$filter=startswith(...)` sobre nombre, apellidos, displayName y correo, nunca `$search` y
+  nunca `$orderby` (Graph responde 400 «Sorting not supported» con ese filtro; se ordena en
+  Node). Es una propuesta: rellena nombres, apellidos, cargo, área, correo y teléfonos (a E.164
+  con la misma `normalizarTelefono`) y todo queda editable. Sin credenciales de Graph el bloque
+  no existe (404 y el buscador desaparece); Graph caído es 503 y se escribe a mano.
 - Los pendientes de contenido (sede real del evento, fotos de ponentes) se registran en
   `docs/PENDIENTES-DE-CONTENIDO.md`.
 

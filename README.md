@@ -16,8 +16,8 @@ navega sin autenticarse, y la sesión de Microsoft Entra ID existe solo para la 
 | `/encuestas`        | Las dos encuestas del foro, enlazadas a Microsoft Forms      | contenido real |
 | `/certificado`      | El certificado de participación, PDF pre-generado por asistente | contenido real |
 | `/galeria`          | Memorias del evento: presentaciones, fotografías y descargas | contenido real |
-| `/carta_presentacion/:id` | La **carta de presentación digital** de una persona de GECELCA (foto, cargo, contacto, redes, vCard, QR). Pública; se llega por QR o enlace. Un id que no exista o esté retirado pinta «no disponible» sin redirigir | módulo `carta` |
-| `/cdpadmin`         | El panel de las cartas: crear, editar, activar o retirar, foto y descarga del QR. Solo para el App Role `LOGIN_JEFA` de Entra | módulo `carta` |
+| `/carta_presentacion/:id` | La **carta de presentación digital** de una persona de GECELCA (foto, cargo, contacto, redes, vCard, QR). Pública; se llega por QR o enlace. Es una página APARTE, con el diseño del visor de la app anterior y sin navegación al foro. Un id que no exista o esté retirado pinta «Página no encontrada» sin redirigir | módulo `carta` |
+| `/cdpadmin`         | El panel de las cartas: crear (con prellenado desde el directorio de Entra), editar, activar o retirar, foto y descarga del QR. Solo para el App Role `LOGIN_JEFA` de Entra | módulo `carta` |
 
 Un slug de ponente que no exista redirige a `/ponentes`; cualquier otra ruta, a `/`.
 

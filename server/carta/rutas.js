@@ -29,6 +29,7 @@ import multer from 'multer';
 
 import { BdNoDisponible } from './bd.js';
 import { CorreoDuplicado } from './repositorio.js';
+import { DirectorioNoDisponible } from './directorio.js';
 import { esUuid, validarEstado, validarPerfil } from './validacion.js';
 import { FotoInvalida, PESO_MAXIMO_SUBIDA, procesarFoto } from './foto.js';
 import { generarVcard, nombreArchivoVcard } from './vcard.js';
@@ -53,7 +54,7 @@ function actorDe(req) {
   return { oid: String(u.oid || ''), upn: String(u.upn || u.email || ''), ip: req.ip || null };
 }
 
-export function crearRutasCarta({ repositorio, guardias, limites, cfg, origen, procesar = procesarFoto }) {
+export function crearRutasCarta({ repositorio, guardias, limites, cfg, origen, procesar = procesarFoto, directorio = null }) {
   const router = express.Router();
   const urlDe = (id) => `${origen}/carta_presentacion/${id}`;
   const fotoDe = (perfil) =>
@@ -130,6 +131,14 @@ export function crearRutasCarta({ repositorio, guardias, limites, cfg, origen, p
     res.json({ perfiles, total: perfiles.length });
   }));
 
+  // El directorio de Entra para PRELLENAR una carta nueva. Solo lectura, solo con el rol, y
+  // solo si el módulo lo tiene configurado (sin credenciales de Graph no existe: 404).
+  admin.get('/directorio', asyncH(async (req, res) => {
+    if (!directorio) return noEncontrado(res);
+    const personas = await directorio.buscar(req.query.q);
+    res.json({ personas });
+  }));
+
   admin.get('/perfiles/:id', conId, asyncH(async (req, res) => {
     const r = await repositorio.obtenerAdmin(req.perfilId);
     if (!r) return noEncontrado(res);
@@ -200,6 +209,10 @@ export function crearRutasCarta({ repositorio, guardias, limites, cfg, origen, p
       res.setHeader('Retry-After', '10');
       return res.status(503).json({ error: 'Servicio no disponible', codigo: 'bd_no_disponible' });
     }
+    if (err instanceof DirectorioNoDisponible) {
+      res.setHeader('Retry-After', '10');
+      return res.status(503).json({ error: 'Directorio no disponible', codigo: 'directorio_no_disponible' });
+    }
     if (err instanceof CorreoDuplicado) {
       return res.status(409).json({ error: 'Correo duplicado', codigo: 'correo_duplicado', campos: { correo: 'duplicado' } });
     }
@@ -220,7 +233,15 @@ export function crearRutasCarta({ repositorio, guardias, limites, cfg, origen, p
     if (err.code === 'LIMIT_UNEXPECTED_FILE' || err.code === 'FORMULARIO_INVALIDO') {
       return res.status(400).json({ error: 'Formulario inválido', codigo: 'formulario_invalido' });
     }
-    next(err); // lo demás, al error-handler genérico de app.js (500 sin internals)
+    // Lo demás va al error-handler genérico de app.js (500 sin internals al cliente), pero
+    // ANTES queda anotado con el prefijo del módulo, el método, la ruta y el código: un 500
+    // aquí es un fallo que el mapa de arriba no conoce, y sin esta línea el único rastro era
+    // un «[server]» genérico difícil de atribuir. Sin cuerpo ni datos de la persona.
+    console.error(
+      `[carta] error no mapeado en ${req.method} ${req.baseUrl}${req.path}: ` +
+      `${err.name || 'Error'} code=${err.code ?? '-'} number=${err.number ?? '-'} ${err.message}`,
+    );
+    next(err);
   });
 
   return router;

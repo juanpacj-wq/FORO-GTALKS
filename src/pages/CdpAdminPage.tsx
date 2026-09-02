@@ -3,10 +3,11 @@ import { Link, useSearchParams } from 'react-router-dom'
 import SectionTitle from '../components/SectionTitle'
 import { useSesion } from '../data/sesion'
 import { MENSAJES_AUTH } from '../data/escarapela'
-import Tarjeta from '../carta/Tarjeta'
+import CartaPublica from '../carta/CartaPublica'
 import QrTarjeta from '../carta/QrTarjeta'
 import FormularioPerfil from '../carta/FormularioPerfil'
 import SubidaFoto from '../carta/SubidaFoto'
+import BuscadorDirectorio from '../carta/BuscadorDirectorio'
 import { ErrorApi, actualizar, cambiarEstado, crear, listar, obtenerAdmin, type FiltroEstado } from '../carta/api'
 import {
   UUID_V4,
@@ -16,6 +17,7 @@ import {
   type PerfilAdmin,
   type PerfilPublico,
   type PerfilResumen,
+  type PersonaDirectorio,
   type ValoresFormulario,
 } from '../carta/tipos'
 import './PonentesPage.css'
@@ -317,6 +319,10 @@ function Detalle({
   const [noExiste, setNoExiste] = useState(false)
   const [fallo, setFallo] = useState<ErrorApi | null>(null)
   const [guardado, setGuardado] = useState<string | null>(null)
+  // La persona elegida en el directorio de Entra: rellena el formulario de una carta NUEVA y
+  // todo queda editable. Cambiar de persona vuelve a rellenar; el formulario conserva lo que
+  // se haya tecleado en los campos que la propuesta trae vacíos.
+  const [propuesta, setPropuesta] = useState<PersonaDirectorio | null>(null)
 
   const tratar = useCallback(
     (err: ErrorApi) => {
@@ -419,9 +425,14 @@ function Detalle({
               </p>
             )}
 
+            {!perfil && (
+              <BuscadorDirectorio elegida={propuesta} onElegir={setPropuesta} onFallo={tratar} />
+            )}
+
             <FormularioPerfil
               key={perfil?.id ?? 'nueva'}
               inicial={perfil}
+              propuesta={propuesta}
               onGuardar={guardar}
               onFallo={tratar}
               onCancelar={perfil ? undefined : onVolver}
@@ -485,7 +496,7 @@ function Detalle({
               <h3 id="gt-cdp-previa" className="gt-dato gt-cdp__previa-titulo">
                 Así se ve la tarjeta
               </h3>
-              <Tarjeta perfil={aPublico(perfil)} nivel="h3" qr={false} />
+              <CartaPublica perfil={aPublico(perfil)} modo="previa" nivel="h3" />
             </aside>
           )}
         </div>

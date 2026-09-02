@@ -145,7 +145,7 @@ export function crearBd(cfg) {
    * Ejecuta `fn(request)` con una petición nueva del pool. `fn` recibe un `sql.Request` con el
    * que declarar los parámetros tipados (`.input('id', sql.UniqueIdentifier, id)`).
    */
-  async function consulta(fn) {
+  async function consulta(fn, reintento = true) {
     let p;
     try {
       p = await conectar();
@@ -155,7 +155,20 @@ export function crearBd(cfg) {
     try {
       return await fn(p.request());
     } catch (err) {
-      throw traducir(err);
+      const t = traducir(err);
+      // Un fallo de transporte en una LECTURA se reintenta UNA vez con el pool ya reseteado: es
+      // el caso de la conexión que el SQL Server o la red cerraron por detrás mientras nadie la
+      // usaba, y que solo se descubre al usarla. Sin esto, la primera petición tras un rato de
+      // silencio fallaba y la segunda funcionaba. Las transacciones no se reintentan: podrían
+      // haber escrito a medias.
+      // Se reintenta solo si el fallo vino de la CONSULTA (no del cortacircuitos, que ya es un
+      // BdNoDisponible de origen): entonces `traducir` acaba de resetear el pool.
+      if (reintento && t instanceof BdNoDisponible && !(err instanceof BdNoDisponible)) {
+        console.warn(`[carta/bd] reintento tras ${t.codigo}`);
+        ultimoFallo = 0;
+        return consulta(fn, false);
+      }
+      throw t;
     }
   }
 

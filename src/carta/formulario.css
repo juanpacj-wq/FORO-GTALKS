@@ -136,3 +136,68 @@
   cursor: progress;
   opacity: 0.7;
 }
+
+/* --- El buscador del directorio (BuscadorDirectorio.tsx) ---------------------
+   Un combobox con su listbox debajo, en el mismo vocabulario de .gt-campo. La lista
+   flota sobre el formulario (absoluta) para no empujarlo mientras se elige.   */
+.gt-directorio {
+  display: grid;
+  gap: var(--gt-space-2);
+  padding: var(--gt-space-4);
+  border: var(--gt-borde) solid var(--gt-linea);
+  border-radius: var(--gt-radio-chico);
+  margin-block-end: var(--gt-space-6);
+}
+
+.gt-directorio__titulo {
+  font-size: var(--gt-fs-h3);
+}
+
+.gt-directorio__campo {
+  position: relative;
+}
+
+.gt-directorio__lista {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: var(--gt-z-sticky);
+  margin-block-start: var(--gt-space-1);
+  padding: var(--gt-space-1);
+  background: var(--gt-abisal);
+  border: var(--gt-borde) solid var(--gt-linea-fuerte);
+  border-radius: var(--gt-radio-chico);
+  box-shadow: var(--gt-sombra-lamina);
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.gt-directorio__opcion {
+  display: grid;
+  gap: 0.1rem;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radio-chico);
+  cursor: pointer;
+}
+
+.gt-directorio__opcion--activa,
+.gt-directorio__opcion:hover {
+  background: color-mix(in oklab, var(--gt-celeste) 22%, var(--gt-abisal));
+}
+
+.gt-directorio__nombre {
+  font-weight: var(--gt-fw-semibold);
+}
+
+.gt-directorio__detalle {
+  font-size: var(--gt-fs-xs);
+  color: var(--gt-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.gt-directorio__elegida {
+  margin: 0;
+  font-size: var(--gt-fs-sm);
+  color: var(--gt-acento);
+}

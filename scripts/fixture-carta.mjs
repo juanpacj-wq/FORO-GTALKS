@@ -84,6 +84,32 @@ export const LISTADO = {
   total: 2,
 }
 
+/** Lo que devuelve el directorio de Entra (`GET /api/carta/admin/directorio?q=`). */
+export const DIRECTORIO = [
+  {
+    id: 'aaaaaaaa-0000-4000-8000-000000000001',
+    nombre: 'Stefany Vides Osorio',
+    nombres: 'Stefany',
+    apellidos: 'Vides Osorio',
+    cargo: 'Jefa de Comunicaciones y Relacionamiento',
+    area: 'Vicepresidencia de Asuntos Corporativos',
+    correo: 'svides@gecelca.com.co',
+    telefono: '+576053700000',
+    whatsapp: '+573001234567',
+  },
+  {
+    id: 'aaaaaaaa-0000-4000-8000-000000000002',
+    nombre: 'Stella Marina Pérez',
+    nombres: 'Stella Marina',
+    apellidos: 'Pérez',
+    cargo: 'Analista',
+    area: '',
+    correo: 'sperez@gecelca.com.co',
+    telefono: '',
+    whatsapp: '',
+  },
+]
+
 /** La identidad con el rol que administra. `roles` lo lleva por fidelidad; la interfaz mira `carta`. */
 export const IDENTIDAD_ADMIN = {
   authenticated: true,
@@ -150,6 +176,10 @@ export async function instalarMocks(page, { me = IDENTIDAD_ADMIN, perfil = 'ok',
     if (me === null) return ruta.fulfill({ status: 401, json: { authenticated: false } })
     if (me.carta !== 'admin') return ruta.fulfill({ status: 403, json: { error: 'Sin permiso', codigo: 'sin_rol' } })
 
+    if (p === '/api/carta/admin/directorio' && metodo === 'GET') {
+      const q = (url.searchParams.get('q') || '').toLowerCase()
+      return ruta.fulfill({ json: { personas: DIRECTORIO.filter((d) => d.nombre.toLowerCase().startsWith(q)) } })
+    }
     if (p === '/api/carta/admin/perfiles' && metodo === 'GET') return ruta.fulfill({ json: LISTADO })
     if (p === '/api/carta/admin/perfiles' && metodo === 'POST') {
       if (alGuardar) return ruta.fulfill(alGuardar(req))

@@ -76,6 +76,22 @@ export interface Auditoria {
   detalle: { campos?: string[]; activo?: boolean; bytes?: number } | null
 }
 
+/**
+ * Una persona del directorio de Entra (`GET /api/carta/admin/directorio?q=`), ya en la forma
+ * del formulario: es una PROPUESTA para prellenar, y todo queda editable antes de guardar.
+ */
+export interface PersonaDirectorio {
+  id: string
+  nombre: string
+  nombres: string
+  apellidos: string
+  cargo: string
+  area: string
+  correo: string
+  telefono: string
+  whatsapp: string
+}
+
 /** Una fila del listado del panel (`GET /api/carta/admin/perfiles`). */
 export interface PerfilResumen {
   id: string

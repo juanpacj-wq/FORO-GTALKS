@@ -140,34 +140,41 @@ console.log('\nCarta de presentación')
   check(
     'una tarjeta inexistente NO redirige a /: pinta «no disponible» en su URL',
     new URL(carta.url()).pathname === `/carta_presentacion/${ID_INEXISTENTE}` &&
-      (await carta.locator('.gt-carta-pagina__aviso h1').count()) === 1,
+      (await carta.locator('.cp__aviso h1').count()) === 1,
     carta.url(),
   )
 
   await carta.goto(base + `/carta_presentacion/${ID_FIXTURE}`, { waitUntil: 'networkidle' })
-  const abrir = carta.locator('.gt-qr-tarjeta__abrir')
-  check('el QR arranca plegado', (await abrir.getAttribute('aria-pressed')) === 'false' && (await carta.locator('.gt-qr-tarjeta__codigo').count()) === 0)
+  check('la tarjeta es una página aparte: sin header, footer ni navegación del foro',
+    (await carta.locator('.gt-header, .gt-footer, nav').count()) === 0)
+  const abrir = carta.locator('.cp__qr-abrir')
+  check('el QR arranca cerrado', (await abrir.getAttribute('aria-expanded')) === 'false' && (await carta.locator('.cp__qr-modal').count()) === 0)
   await abrir.click()
   check(
-    'y el botón lo despliega',
-    await esperarA(async () => (await carta.locator('.gt-qr-tarjeta__codigo').count()) === 1),
+    'y el botón abre el diálogo',
+    await esperarA(async () => (await carta.locator('.cp__qr-modal[role="dialog"] .gt-qr-tarjeta__codigo').count()) === 1),
   )
   check('  con la URL absoluta de la tarjeta dentro',
-    (await carta.locator('.gt-qr-tarjeta__codigo').getAttribute('data-contenido')) === PERFIL_PUBLICO.url)
+    (await carta.locator('.cp__qr-modal .gt-qr-tarjeta__codigo').getAttribute('data-contenido')) === PERFIL_PUBLICO.url)
+  await carta.keyboard.press('Escape')
+  check('y Escape lo cierra',
+    await esperarA(async () => (await carta.locator('.cp__qr-modal').count()) === 0))
   await abrir.click()
-  check('y lo vuelve a plegar',
-    await esperarA(async () => (await carta.locator('.gt-qr-tarjeta__codigo').count()) === 0))
+  await carta.waitForSelector('.cp__qr-modal')
+  await carta.mouse.click(8, 8) // el velo, fuera del diálogo
+  check('y un clic fuera también',
+    await esperarA(async () => (await carta.locator('.cp__qr-modal').count()) === 0))
 
-  await carta.click('.gt-tarjeta__compartir')
+  await carta.click('.cp__compartir')
   check('«Compartir» copia el enlace cuando no hay navigator.share',
     await esperarA(async () => (await carta.evaluate(() => window.__copiado)) === PERFIL_PUBLICO.url))
 
-  const externos = await carta.$$eval('.gt-tarjeta a.gt-boton--externo', (as) =>
+  const externos = await carta.$$eval('.cp a[target="_blank"]', (as) =>
     as.map((a) => ({ href: a.href, target: a.target, rel: a.rel })),
   )
   check(
-    'los botones que salen del sitio van --externo con target y rel seguros',
-    externos.length === 4 &&
+    'todo lo que sale del sitio va con target y rel seguros (WhatsApp ×2, sitio web y dos redes)',
+    externos.length === 5 &&
       externos.every((a) => a.target === '_blank' && a.rel.includes('noopener') && a.rel.includes('noreferrer')),
     JSON.stringify(externos),
   )

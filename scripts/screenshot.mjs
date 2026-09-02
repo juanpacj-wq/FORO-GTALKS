@@ -119,7 +119,17 @@ for (const viewport of [
     await carta.goto(base + route, { waitUntil: 'networkidle' })
     await carta.evaluate(() => document.fonts.ready)
     if (name === 'carta') {
-      await carta.click('.gt-qr-tarjeta__abrir')
+      // La tarjeta se captura dos veces: con el diálogo del QR abierto (solo la ventana) y,
+      // abajo, entera en reposo.
+      await carta.evaluate(async () => {
+        await Promise.allSettled([...document.images].map((img) => img.decode()))
+      })
+      await carta.click('.cp__qr-abrir')
+      await carta.waitForSelector('.cp__qr-modal')
+      await carta.waitForTimeout(350)
+      await carta.screenshot({ path: `${outDir}/${prefix}-carta-qr-abierto-${viewport.name}.png`, fullPage: false })
+      console.log(`${prefix}-carta-qr-abierto-${viewport.name}.png`)
+      await carta.keyboard.press('Escape')
       await carta.waitForTimeout(200)
     }
     await carta.evaluate(async () => {

@@ -185,7 +185,8 @@ for (const ruta of RUTAS) {
   // La tarjeta pública se audita con el QR desplegado: es su único estado con lámina y
   // texto que en reposo no está en el DOM.
   if (ruta.startsWith('/carta_presentacion/')) {
-    await page.click('.gt-qr-tarjeta__abrir')
+    await page.click('.cp__qr-abrir')
+    await page.waitForSelector('.cp__qr-modal')
     await page.waitForTimeout(150)
   }
   const { problemas, h1, lang } = await page.evaluate(AUDITORIA)

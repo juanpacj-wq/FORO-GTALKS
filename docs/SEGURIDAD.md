@@ -28,7 +28,7 @@ No hay allowlist local ni roles de negocio.
 | `GET /api/encuestas` | 200 JSON público, `no-store`, sin cookie. La URL de la encuesta de satisfacción **solo aparece cuando el reloj del servidor pasó `fecha.cierreIso`** (ver §La encuesta de satisfacción abre por reloj) |
 | `GET /api/descargas` y `GET /descargas/<rol>` | 200 público: el estado y los dos ZIP de `/galeria`, pre-armados en la estación (ver §Las descargas de /galeria). Rol fuera del manifiesto → 404 JSON |
 | `GET /api/carta/perfiles/<uuid>` (+ `/foto`, `/vcard`) | 200 público, `no-store`, sin cookie: la tarjeta de UNA persona, solo si está activa; cualquier otra cosa (id mal formado, inexistente, retirada) es el 404 uniforme. Sin listado público (ver §La carta de presentación digital) |
-| `/api/carta/admin/*` | 401 sin sesión; 403 con sesión sin el App Role `LOGIN_JEFA`; la revalidación contra Entra corre antes, como en `/api/me`. Con las `DB_*` vacías nada de `/api/carta/*` existe (404) |
+| `/api/carta/admin/*` | 401 sin sesión; 403 con sesión sin el App Role `LOGIN_JEFA`; la revalidación contra Entra corre antes, como en `/api/me`. Con las `DB_*` vacías nada de `/api/carta/*` existe (404). Incluye `GET /admin/directorio?q=` (solo lectura, hasta 8 personas del directorio de Entra para prellenar una carta; sin credenciales de Graph, 404) |
 | Métodos que no son de lectura, cross-site | 403 (`csrfMiddleware`: `Sec-Fetch-Site` u `Origin` contra `PUBLIC_ORIGIN`) |
 | Subrecurso inexistente | 404 JSON (el fallback SPA es solo para navegaciones) |
 | Errores del callback OIDC | 302 → `/escarapela?auth=<motivo>`, que la SPA explica junto al botón |
@@ -520,6 +520,22 @@ campos cambiaron, desde qué IP; nunca los valores) y la fila sobrevive a todo (
 va siempre con parámetros tipados; ninguna consulta concatena texto del cliente. Los logs llevan
 el código del error del transporte (`ETIMEOUT`, `ELOGIN`), nunca la cadena de conexión ni la
 consulta.
+
+**El prellenado desde el directorio de Entra es lectura, y es una propuesta.** `GET
+/api/carta/admin/directorio?q=` (solo con el rol) pregunta a Microsoft Graph con el token de
+APLICACIÓN de la misma App Registration del login (`User.Read.All`, ya concedido) por las cuentas
+habilitadas cuyo nombre o correo empieza por `q`: `$filter=startswith(...)`, nunca `$search`
+(puntúa por relevancia y devuelve «el mejor», cuando aquí quien busca tiene que ELEGIR). El texto
+se acota (2..60 caracteres, letras, dígitos, espacio, `@ . - '`) y la comilla simple se duplica,
+el único escape de OData. Lo que vuelve rellena el formulario y **todo queda editable**: lo que se
+guarda pasa por `validacion.js` como si se hubiera tecleado. Graph caído o sin permiso es un 503
+que el panel anuncia, y la carta se escribe a mano.
+
+**La tarjeta pública es una página aparte, con el diseño de la app anterior.** Se monta fuera del
+chasis del foro (sin header, footer ni navegación) y replica 1 a 1 el visor de COMUNICACIONES
+(paleta, Inter autohospedada, composición de 420 px), cambiando solo la marca. No cambia nada de
+lo de arriba: los mismos datos, la misma vCard del servidor, el mismo QR de `qr-arte.ts`, y los
+avisos del original («Página no encontrada» sin salida a otro sitio).
 
 **Diales**: `CARTA_RATE_PUBLICO` / `CARTA_RATE_ADMIN` / `CARTA_RATE_FOTO` (1200 / 600 / 60 por IP
 y 15 min), como `AUTH_RATE_LIMIT`: cortacircuitos, no política. En el borde, `location
